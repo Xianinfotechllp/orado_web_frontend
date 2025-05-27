@@ -24,7 +24,7 @@ function RestaurantDetailscard({ restaurant }) {
         <p className="text-xs">Open until 3:00 AM</p>
 
         {/* Small white review card inside overlay */}
-        <div className="absolute bottom-6 right-10 bg-white rounded-lg shadow-md px-2  text-black text-center">
+        <div className="absolute bottom-6 right-10 bg-white rounded-lg shadow-md px-2 text-black text-center hidden md:block">
           <h3 className=" mb-2 text-4xl font-semibold">3.4</h3>
           <h3>
 
