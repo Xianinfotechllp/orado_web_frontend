@@ -9,6 +9,7 @@ import categoryImage2 from "../../assets/category3.png"
 import categoryImage3 from "../../assets/category4.png"
 import categoryImage4 from "../../assets/category5.png"
 import categoryImage5 from "../../assets/category6.png"
+import RestaurantCard from "../../components/home/RestaurantCard";
 
 
 
@@ -61,6 +62,11 @@ function Home() {
 
 
 
+      </div>
+
+      <div className="overflow-x-auto whitespace-nowrap py-4 space-x-4 flex">
+
+<RestaurantCard restaurant={{ images: [categoryImage5] }} /> 
       </div>
     </div>
   );
