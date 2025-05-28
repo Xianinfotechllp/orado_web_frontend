@@ -5,7 +5,7 @@ function RestaurantDetailscard({ restaurant }) {
     <div className="relative w-full h-[22em]  overflow-hidden shadow-lg">
       {/* Background Image */}
       <img
-        src={burger}
+        src={restaurant.images ? restaurant.images[0] : burger}
         alt="Restaurant Banner"
         className="w-full h-full object-cover"
       />

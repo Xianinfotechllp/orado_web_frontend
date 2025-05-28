@@ -4,7 +4,7 @@ import cola2 from "../../assets/cola2.png"
 function Menucard({item}) {
   return (
   
- <div className="w-[496px] h-[245px] bg-white rounded-2xl shadow-xl flex items-center justify-between px-4">
+ <div className="w-[496px] h-[245px] bg-white rounded-2xl shadow-xl flex items-center justify-between  px-4">
   <div className="flex-1 overflow-hidden">
     <h3 className="font-bold">{item.name}</h3>
     <h3 className="font-semibold mt-4 text-sm line-clamp-4">
