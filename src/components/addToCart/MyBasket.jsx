@@ -1,0 +1,134 @@
+import React, { useState } from 'react';
+import { ShoppingBasket, Plus, Minus, Info, ArrowRight, Delete } from 'lucide-react';
+
+export default function MyBasket() {
+  const [items, setItems] = useState([
+    { id: 1, name: "12\" Vegitarian Pizza", description: "No Mushrooms + green peppers", price: 27.90, quantity: 1 },
+    { id: 2, name: "12\" Vegitarian Pizza", description: "No Mushrooms + green peppers", price: 27.90, quantity: 1 },
+    { id: 3, name: "12\" Vegitarian Pizza", description: "No Mushrooms + green peppers", price: 27.90, quantity: 1 },
+    { id: 4, name: "12\" Vegitarian Pizza", description: "No Mushrooms + green peppers", price: 27.90, quantity: 1 }
+  ]);
+
+  const updateQuantity = (id, change) => {
+    setItems(items.map(item => 
+      item.id === id 
+        ? { ...item, quantity: Math.max(0, item.quantity + change) }
+        : item
+    ).filter(item => item.quantity > 0));
+  };
+
+  const removeItem = (id) => {
+    setItems(items.filter(item => item.id !== id));
+  };
+
+  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const discount = -3.00;
+  const deliveryFee = 2.50;
+  const total = subtotal + discount + deliveryFee;
+
+  return (
+    <div className="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden sm:max-w-md md:max-w-lg">
+      {/* Header */}
+      <div className="text-white p-4 flex items-center gap-3" style={{ backgroundColor: '#ea4525' }}>
+        <div className="relative">
+          <ShoppingBasket size={24} />
+          <div className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold" style={{ color: '#ea4525' }}>
+            ✓
+          </div>
+        </div>
+        <h1 className="text-xl font-semibold">My Basket</h1>
+      </div>
+
+      {/* Items List */}
+      <div className="bg-gray-50 p-3 space-y-3 sm:p-4 sm:space-y-4">
+        {items.map((item) => (
+          <div key={item.id} className="bg-white rounded-lg p-3 sm:p-4">
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex-1 min-w-0">
+                <div className="text-green-600 font-semibold text-sm sm:text-base">
+                  £{item.price.toFixed(2)}
+                </div>
+                <h3 className="font-medium text-sm sm:text-base text-gray-900 truncate">
+                  {item.name}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                  {item.description}
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+                <div className="flex items-center border border-gray-300 rounded">
+                  <button 
+                    onClick={() => updateQuantity(item.id, -1)}
+                    className="p-1 hover:bg-gray-100 text-gray-600"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="px-2 py-1 text-sm font-medium min-w-[2rem] text-center">
+                    {item.quantity}
+                  </span>
+                  <button 
+                    onClick={() => updateQuantity(item.id, 1)}
+                    className="p-1 hover:bg-gray-100 text-gray-600"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+                
+                <button 
+                  onClick={() => removeItem(item.id)}
+                  className="text-white w-5 h-5 rounded flex items-center justify-center hover:opacity-80 bg-red-500"
+                >
+                  <Delete size={20} />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Summary */}
+      <div className="p-4 space-y-2 border-t border-gray-200">
+        <div className="flex justify-between text-sm sm:text-base">
+          <span className="font-medium">Sub Total:</span>
+          <span className="font-medium">£{subtotal.toFixed(2)}</span>
+        </div>
+        
+        <div className="flex justify-between text-sm sm:text-base">
+          <span className="font-medium">Discounts:</span>
+          <span className="font-medium" style={{ color: '#ea4525' }}>{discount.toFixed(2)}</span>
+        </div>
+        
+        <div className="flex justify-between text-sm sm:text-base">
+          <span className="font-medium">Delivery Fee:</span>
+          <span className="font-medium">{deliveryFee.toFixed(2)}</span>
+        </div>
+      </div>
+
+      {/* Total Button */}
+      <div className="p-4 pt-0">
+        <button className="w-full text-white font-semibold py-3 px-4 rounded-lg text-base sm:text-lg transition-opacity hover:opacity-90 flex justify-between items-center" style={{ backgroundColor: '#ea4525' }}>
+          <span>Total to pay</span>
+          <span>£{total.toFixed(2)}</span>
+        </button>
+      </div>
+
+      {/* Bottom Actions */}
+      <div className="p-4 pt-0 space-y-2">
+        <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-normal py-3 px-4 rounded text-sm transition-colors flex items-center justify-between">
+          <span>Choose your free item..</span>
+          <div className="w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center">
+            <Info size={12} className="text-white" />
+          </div>
+        </button>
+        
+        <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-normal py-3 px-4 rounded text-sm transition-colors flex items-center justify-between">
+          <span>Apply Coupon Code here</span>
+          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+            <ArrowRight size={12} className="text-white" />
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+}
