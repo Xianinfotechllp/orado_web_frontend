@@ -1,2 +1,7 @@
 @import "tailwindcss";
 @plugin 'tailwind-scrollbar';
+
+
+  .bgOp {
+    background-color: rgba(14, 13, 13, 0.5);
+  }
