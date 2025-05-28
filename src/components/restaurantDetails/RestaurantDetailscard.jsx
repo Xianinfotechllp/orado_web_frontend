@@ -30,7 +30,7 @@ function RestaurantDetailscard({ restaurant }) {
 
 
 
-</h3>
+             </h3>
             <h4>1360 reviews</h4>
         </div>
       </div>
