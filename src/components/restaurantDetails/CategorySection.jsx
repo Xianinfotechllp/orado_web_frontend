@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from "react";
 import Menucard from "./Menucard";
 import { updateCart } from "../../apis/cartApi";
-import { useDispatch,useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addOrUpdateItem } from "../../slices/cartSlice";
 import axios from "axios";
 
-
 function CategorySection({ category, restaurantId }) {
   const dispatch = useDispatch();
-  const [cartItems, setCartItems] = useState({}); // 👈 to store productId: quantity
-   const user =   useSelector((state) => state.auth.user?.user)
-    
+  const [cartItems, setCartItems] = useState({});
+  const user = useSelector((state) => state.auth.user?.user);
+
   useEffect(() => {
+    if (!user?._id) return;
+
     const fetchCart = async () => {
       try {
         const res = await axios.get(`http://localhost:5000/cart/${user._id}`);
         const cartData = res.data.products;
 
-        // Build a map { productId: quantity }
         const cartMap = {};
         cartData.forEach((item) => {
           cartMap[item.productId] = item.quantity;
@@ -30,24 +30,18 @@ function CategorySection({ category, restaurantId }) {
     };
 
     fetchCart();
-  }, []);
+  }, [user]);
 
   const handleAddCart = async (item, quantity) => {
     try {
-      const userId = user._id
+      const userId = user._id;
 
-      console.log(userId,restaurantId)
- setCartItems((prev) => ({
+      setCartItems((prev) => ({
         ...prev,
         [item._id]: quantity,
       }));
-      // Call backend API to update cart
-      await updateCart(restaurantId,userId, item._id, quantity);
 
-      // Update local cartItems state
-     
-
-      // Update Redux cart state
+      await updateCart(restaurantId, userId, item._id, quantity);
       dispatch(addOrUpdateItem({ product: item, quantity }));
     } catch (error) {
       console.error("Failed to update cart", error);
@@ -55,11 +49,11 @@ function CategorySection({ category, restaurantId }) {
   };
 
   return (
-    <div className="my-8 w-full flex flex-col px-auto md:px-10 lg:px-20">
+    <div className="my-8 w-full flex flex-col px-4 sm:px-6 md:px-10 lg:px-20">
       <h2 className="text-2xl font-bold mb-2 text-left">{category.categoryName}</h2>
       <p className="text-gray-600 mb-4 text-left">{category.description}</p>
 
-      <div className="flex flex-wrap gap-4 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {category.items.length > 0 ? (
           category.items.map((item) => (
             <Menucard
