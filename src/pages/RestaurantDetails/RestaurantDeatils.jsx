@@ -21,12 +21,12 @@ useEffect(() => {
       // Fetch restaurant details first
       const restaurantRes = await getRestaurantById(restaurantId);
       console.log("✅ Fetched restaurant:", restaurantRes);
-      setRestaurant(restaurantRes);
+      setRestaurant(restaurantRes.data);
 
       // Then fetch menu data
       const menuRes = await getRestaurantMenu(restaurantId);
       console.log("✅ Fetched menu:", menuRes);
-      setMenu(menuRes.data.menu);
+      setMenu(menuRes.data.data);
 
     } catch (error) {
       console.error("❌ Error fetching restaurant details or menu:", error);
@@ -103,7 +103,7 @@ useEffect(() => {
             )
             .map((category) => (
               <div className=" flex flex-col justify-center items-center">
-              <CategorySection key={category.categoryId} category={category} />
+              <CategorySection key={category.categoryId} category={category}  />
                 </div>
 
             ))

@@ -1,16 +1,56 @@
-import React, { useState } from "react";
-import { FiSearch, FiShoppingBag, FiMenu, FiX, FiMapPin } from "react-icons/fi";
+import React, { useState, useEffect } from "react";
+import {
+  FiSearch,
+  FiShoppingBag,
+  FiMenu,
+  FiX,
+  FiMapPin,
+} from "react-icons/fi";
+import axios from "axios";
 import logo from "../../assets/oradoLogo.png";
-
+import { useDispatch } from "react-redux";
+import { setLocation } from "../../slices/locationSlice";
+import { Link } from "react-router-dom";
 function Navbar() {
+  const dispatch = useDispatch();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [location, setLocation] = useState("Select Location");
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
-  const handleLocationChange = (e) => {
-    setLocation(e.target.value);
-    // optionally: trigger fetchNearbyRestaurants here
+  const fetchSuggestions = async (searchText) => {
+    if (!searchText) return;
+    const res = await axios.get(
+      `https://nominatim.openstreetmap.org/search?q=${searchText}&format=json&addressdetails=1`
+    );
+    setSuggestions(res.data);
+  };
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      fetchSuggestions(query);
+    }, 400);
+
+    return () => clearTimeout(delayDebounce);
+  }, [query]);
+
+  const handleSelect = (place) => {
+    console.log(place)
+    setSelectedLocation({
+      name: place.display_name,
+      lat: place.lat,
+      lon: place.lon,
+    });
+
+    dispatch(setLocation({
+  name: place.display_name,
+  lat: place.lat,
+  lon: place.lon,
+}));
+    setQuery(place.display_name);
+    setSuggestions([]);
   };
 
   return (
@@ -22,19 +62,32 @@ function Navbar() {
           <span className="text-2xl font-semibold text-gray-800">Orado</span>
         </div>
 
-        {/* Location Picker */}
-        <div className="hidden md:flex items-center gap-2 border px-3 py-1 rounded-lg">
-          <FiMapPin size={18} className="text-[#EA4424]" />
-          <select
-            value={location}
-            onChange={handleLocationChange}
-            className="outline-none bg-transparent text-gray-700"
-          >
-            <option disabled>Select Location</option>
-            <option value="Hyderabad">Hyderabad</option>
-            <option value="Mumbai">Mumbai</option>
-            <option value="Bangalore">Bangalore</option>
-          </select>
+        {/* Location Autocomplete */}
+        <div className="hidden md:flex items-center gap-2 relative w-80">
+          <div className="flex items-center gap-2 border px-3 py-1 rounded-lg w-full">
+            <FiMapPin size={18} className="text-[#EA4424]" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search Location"
+              className="outline-none bg-transparent w-full"
+            />
+          </div>
+
+          {suggestions.length > 0 && (
+            <ul className="absolute z-10 top-12 bg-white border w-full mt-1 max-h-48 overflow-auto shadow-md rounded-lg">
+              {suggestions.map((place) => (
+                <li
+                  key={place.place_id}
+                  onClick={() => handleSelect(place)}
+                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                >
+                  {place.display_name}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Desktop Nav */}
@@ -44,8 +97,14 @@ function Navbar() {
           <li className="hover:text-[#EA4424] cursor-pointer">Menu</li>
           <li className="hover:text-[#EA4424] cursor-pointer">Blog</li>
           <li className="hover:text-[#EA4424] cursor-pointer">Contact</li>
-          <li className="cursor-pointer"><FiSearch size={20} /></li>
-          <li className="cursor-pointer"><FiShoppingBag size={20} /></li>
+          <li className="cursor-pointer">
+            <FiSearch size={20} />
+          </li>
+          <Link to="/add-to-cart">
+          <li className="cursor-pointer">
+            <FiShoppingBag size={20} />
+          </li>
+          </Link>
           <button className="bg-[#EA4424] text-white px-6 py-2 rounded-full font-bold hover:bg-[#d1381b] transition">
             Get Started
           </button>
@@ -68,24 +127,14 @@ function Navbar() {
             <li className="hover:text-[#EA4424] cursor-pointer">Menu</li>
             <li className="hover:text-[#EA4424] cursor-pointer">Blog</li>
             <li className="hover:text-[#EA4424] cursor-pointer">Contact</li>
-            <li className="cursor-pointer flex items-center gap-2"><FiSearch /> Search</li>
-            <li className="cursor-pointer flex items-center gap-2"><FiShoppingBag /> Cart</li>
-
-            {/* Location dropdown in mobile */}
-            <li className="flex items-center gap-2">
-              <FiMapPin size={18} className="text-[#EA4424]" />
-              <select
-                value={location}
-                onChange={handleLocationChange}
-                className="outline-none border rounded px-2 py-1"
-              >
-                <option disabled>Select Location</option>
-                <option value="Hyderabad">Hyderabad</option>
-                <option value="Mumbai">Mumbai</option>
-                <option value="Bangalore">Bangalore</option>
-              </select>
+            <li className="cursor-pointer flex items-center gap-2">
+              <FiSearch /> Search
             </li>
-
+         
+            <li className="cursor-pointer flex items-center gap-2">
+              <FiShoppingBag /> Cart
+            </li>
+           
             <button className="bg-[#EA4424] text-white px-6 py-2 rounded-full font-bold hover:bg-[#d1381b] transition">
               Get Started
             </button>

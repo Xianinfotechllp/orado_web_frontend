@@ -5,7 +5,13 @@ import "./App.css";
 import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Auth/Login";
 import Home from "./pages/Home/Home";
+
+import AddToCart from "./pages/AddToCart/AddToCart";
+import OrderManagement from "./pages/OrderManagement/OrderManagement";
+
 import RestaurantDeatils from "./pages/RestaurantDetails/RestaurantDeatils";
+import Signup from "./pages/Auth/SignUp";
+
 function App() {
   const [count, setCount] = useState(0);
 
@@ -13,8 +19,14 @@ function App() {
     <>
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/signup" element={<Signup/>}/>
         <Route  path="/home" element={<Home/>} />
+
+        <Route path="/add-to-cart" element={<AddToCart />} />
+        <Route path="/order-management" element={<OrderManagement />} />
+
         <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils/>}  />
+
       </Routes>
     </>
   );
