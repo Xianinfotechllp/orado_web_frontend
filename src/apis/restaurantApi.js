@@ -9,10 +9,23 @@ const apiClient = axios.create({
 // Fetch restaurant menu
 
 
-export const getRestaurantMenu = (restaurantId) => {
-  return apiClient.get(`/restaurants/${restaurantId}/menu`);
-};
+export const getRestaurantMenu = async (restaurantId, options = {}) => {
+  const {
+    categoryLimit = 10,
+    productPage = 10,
+    productLimit = 30,
+  } = options;
 
+  try {                            
+    const response = await apiClient.get(`/restaurants/${restaurantId}/menu`);
+
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching restaurant menu:', error);
+    // Optionally rethrow or handle error as needed
+    throw error;
+  }
+};
 // Fetch recommended restaurants nearby
 export const getRecommendedRestaurants = async (latitude, longitude) => {
   try {

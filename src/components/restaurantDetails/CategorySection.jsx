@@ -9,7 +9,7 @@ import axios from "axios";
 function CategorySection({ category, restaurantId }) {
   const dispatch = useDispatch();
   const [cartItems, setCartItems] = useState({}); // 👈 to store productId: quantity
-   const user =   useSelector((state) => state.auth.user.user)
+   const user =   useSelector((state) => state.auth.user?.user)
     
   useEffect(() => {
     const fetchCart = async () => {
@@ -35,6 +35,8 @@ function CategorySection({ category, restaurantId }) {
   const handleAddCart = async (item, quantity) => {
     try {
       const userId = user._id
+
+      console.log(userId,restaurantId)
  setCartItems((prev) => ({
         ...prev,
         [item._id]: quantity,

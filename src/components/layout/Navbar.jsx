@@ -90,10 +90,7 @@ function Navbar() {
             </ul>
           )}
         </div>
-        {
-          console.log(user)
-        }
-
+     
         {/* Desktop Nav */}
         <ul className="hidden md:flex items-center gap-6 text-gray-700 font-medium">
           <li className="hover:text-[#EA4424] cursor-pointer">Home</li>
