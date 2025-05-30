@@ -91,7 +91,7 @@ useEffect(() => {
       </div>
 
       {/* Menu */}
-      <div className="px-4 max-w-7xl mx-auto ">
+      <div className="px-4  mx-auto ">
         {loading ? (
           <p className="text-center py-10 text-lg font-semibold">Loading menu...</p>
         ) : menu?.length === 0 ? (

@@ -16,34 +16,21 @@ export default function MyBasket() {
   const [items, setItems] = useState([]);
   const [orderDetails, setOrderDetails] = useState({});
   const [loading, setLoading] = useState(true);
-  const [bill,setBill] =  useState({})
+  const [bill, setBill] = useState({});
   const user = useSelector((state) => state.auth.user.user);
   const location = useSelector((state) => state.location.location);
 
   const fetchCart = async () => {
     try {
       const res = await axios.get(`http://localhost:5000/cart/${user._id}`);
-         const order = res.data;
-         console.log(order)
-         const billres = await getBillSummary({
-        userId: user._id,
-
-        longitude: location.lon,
-        latitude: location.lat,
-        cartId:order._id
-      });
-      setBill(billres.data)
-      console.log(billres)
-   
-
-      if (order && order.products && order.products.length > 0) {
-        setItems(order.products);
-        setOrderDetails(order);
-      } else {
-        setItems([]);
-        setOrderDetails(order || {});
-      }
+      const order = res.data;
+      setOrderDetails(order || {});
+      setItems(order.products || []);
       setLoading(false);
+
+      if (order && order._id) {
+        await fetchBill(order._id);
+      }
     } catch (error) {
       console.error("Error fetching cart:", error);
       setItems([]);
@@ -52,36 +39,45 @@ export default function MyBasket() {
     }
   };
 
+  const fetchBill = async (cartId) => {
+    try {
+      const billres = await getBillSummary({
+        userId: user._id,
+        longitude: location.lon,
+        latitude: location.lat,
+        cartId: cartId,
+      });
+      setBill(billres.billSummary);
+      console.log(billres)
+    } catch (err) {
+      console.error("Error fetching bill summary", err);
+    }
+  };
+
   useEffect(() => {
     fetchCart();
   }, []);
 
-  const updateQuantity = (productId, change) => {
-    setItems((prevItems) =>
-      prevItems
-        .map((item) =>
-          item.productId === productId
-            ? {
-                ...item,
-                quantity: Math.max(0, item.quantity + change),
-                total: item.price * Math.max(0, item.quantity + change),
-              }
-            : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
+  const updateQuantity = async (productId, change) => {
+    try {
+      // Call API to update cart quantity
+    
+
+      // Refetch cart and bill after update
+      fetchCart();
+    } catch (error) {
+      console.error("Failed to update quantity", error);
+    }
   };
 
-  const removeItem = (productId) => {
-    setItems((prevItems) =>
-      prevItems.filter((item) => item.productId !== productId)
-    );
+  const removeItem = async (productId) => {
+    try {
+   
+      fetchCart();
+    } catch (error) {
+      console.error("Failed to remove item", error);
+    }
   };
-
-  const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-  const discount = orderDetails.offerDiscount || 0;
-  const deliveryFee = orderDetails.deliveryFee || 0;
-  const total = subtotal + deliveryFee + discount;
 
   if (loading) {
     return (
@@ -167,7 +163,7 @@ export default function MyBasket() {
               </div>
 
               <div className="text-right text-sm text-gray-600">
-                Total: ₹{bill.subtotal.toFixed(2)}
+                Total: ₹{(item.price * item.quantity).toFixed(2)}
               </div>
             </div>
           ))
@@ -175,26 +171,29 @@ export default function MyBasket() {
       </div>
 
       {/* Summary */}
-      <div className="p-4 space-y-2 border-t border-gray-200">
+      <div className="p-4 space-y-2 border-t">
         <div className="flex justify-between text-sm sm:text-base">
           <span className="font-medium">Sub Total:</span>
-          <span className="font-medium">₹{subtotal.toFixed(2)}</span>
+          <span className="font-medium">₹{(bill?.subtotal || 0).toFixed(2)}</span>
         </div>
 
         <div className="flex justify-between text-sm sm:text-base">
           <span className="font-medium">Discounts:</span>
           <span className="font-medium" style={{ color: "#ea4525" }}>
-            ₹{discount.toFixed(2)}
+            ₹{(bill?.discount || 0).toFixed(2)}
           </span>
         </div>
-         <div className="flex justify-between text-sm sm:text-base">
+
+        <div className="flex justify-between text-sm sm:text-base">
           <span className="font-medium">Tax:</span>
-          <span className="font-medium">₹{bill.tax.toFixed(2)}</span>
+          <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
         </div>
 
         <div className="flex justify-between text-sm sm:text-base">
           <span className="font-medium">Delivery Fee:</span>
-          <span className="font-medium">₹{bill.deliveryFee.toFixed(2)}</span>
+          <span className="font-medium">
+            ₹{(bill?.deliveryFee || 0).toFixed(2)}
+          </span>
         </div>
       </div>
 
@@ -210,7 +209,7 @@ export default function MyBasket() {
           style={{ backgroundColor: "#ea4525" }}
         >
           <span>{items.length === 0 ? "No items to pay" : "Total to pay"}</span>
-          <span>₹{total.toFixed(2)}</span>
+          <span>₹{(bill?.total || 0).toFixed(2)}</span>
         </button>
       </div>
 
