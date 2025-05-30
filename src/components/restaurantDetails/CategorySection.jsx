@@ -16,8 +16,10 @@ function CategorySection({ category, restaurantId }) {
       try {
         const res = await axios.get(`http://localhost:5000/cart/${user._id}`);
         const cartData = res.data.products;
+        
 
         // Build a map { productId: quantity }
+
         const cartMap = {};
         cartData.forEach((item) => {
           cartMap[item.productId] = item.quantity;

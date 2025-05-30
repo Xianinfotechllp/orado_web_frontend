@@ -9,16 +9,32 @@ import {
   RefreshCw,
 } from "lucide-react";
 import axios from "axios";
+import { useSelector } from "react-redux";
+import { getBillSummary } from "../../apis/orderApi";
 
 export default function MyBasket() {
   const [items, setItems] = useState([]);
   const [orderDetails, setOrderDetails] = useState({});
   const [loading, setLoading] = useState(true);
+  const [bill,setBill] =  useState({})
+  const user = useSelector((state) => state.auth.user.user);
+  const location = useSelector((state) => state.location.location);
 
   const fetchCart = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/cart/682c328ea74e4ba29abbfb9f");
-      const order = res.data;
+      const res = await axios.get(`http://localhost:5000/cart/${user._id}`);
+         const order = res.data;
+         console.log(order)
+         const billres = await getBillSummary({
+        userId: user._id,
+
+        longitude: location.lon,
+        latitude: location.lat,
+        cartId:order._id
+      });
+      setBill(billres.data)
+      console.log(billres)
+   
 
       if (order && order.products && order.products.length > 0) {
         setItems(order.products);
@@ -108,7 +124,10 @@ export default function MyBasket() {
           </div>
         ) : (
           items.map((item) => (
-            <div key={item.productId} className="bg-white rounded-lg p-3 sm:p-4">
+            <div
+              key={item.productId}
+              className="bg-white rounded-lg p-3 sm:p-4"
+            >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1 min-w-0">
                   <div className="text-green-600 font-semibold text-sm sm:text-base">
@@ -148,7 +167,7 @@ export default function MyBasket() {
               </div>
 
               <div className="text-right text-sm text-gray-600">
-                Total: ₹{item.total.toFixed(2)}
+                Total: ₹{bill.subtotal.toFixed(2)}
               </div>
             </div>
           ))
@@ -168,10 +187,14 @@ export default function MyBasket() {
             ₹{discount.toFixed(2)}
           </span>
         </div>
+         <div className="flex justify-between text-sm sm:text-base">
+          <span className="font-medium">Tax:</span>
+          <span className="font-medium">₹{bill.tax.toFixed(2)}</span>
+        </div>
 
         <div className="flex justify-between text-sm sm:text-base">
           <span className="font-medium">Delivery Fee:</span>
-          <span className="font-medium">₹{deliveryFee.toFixed(2)}</span>
+          <span className="font-medium">₹{bill.deliveryFee.toFixed(2)}</span>
         </div>
       </div>
 
@@ -180,7 +203,9 @@ export default function MyBasket() {
         <button
           disabled={items.length === 0}
           className={`w-full text-white font-semibold py-3 px-4 rounded-lg text-base sm:text-lg transition-opacity flex justify-between items-center ${
-            items.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"
+            items.length === 0
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:opacity-90"
           }`}
           style={{ backgroundColor: "#ea4525" }}
         >

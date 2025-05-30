@@ -1,6 +1,8 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 export default function DeliveryPaymentForm() {
+   const location = useSelector((state) => state.location.location);
   return (
     <div className="w-full space-y-4">
       {/* Delivery Address Section */}
@@ -13,10 +15,9 @@ export default function DeliveryPaymentForm() {
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-black font-medium text-base">Lorem pesum</h3>
+          <h3 className="text-black font-medium text-base">Home</h3>
           <p className="text-gray-600 text-sm leading-relaxed">
-            Dummy Ipsum is simply dummy text of the printing and typesetting industry. Lorem 
-            Ipsum has been the industry's standard dummy text ever since the 1500s.
+            {location.name}
           </p>
           <p className="text-black font-medium text-sm mt-3">68 mins</p>
         </div>
