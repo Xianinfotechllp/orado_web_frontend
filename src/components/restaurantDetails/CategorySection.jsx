@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Menucard from "./Menucard";
 import { updateCart } from "../../apis/cartApi";
-import { useDispatch } from "react-redux";
+import { useDispatch,useSelector } from "react-redux";
 import { addOrUpdateItem } from "../../slices/cartSlice";
 import axios from "axios";
 
@@ -9,11 +9,12 @@ import axios from "axios";
 function CategorySection({ category, restaurantId }) {
   const dispatch = useDispatch();
   const [cartItems, setCartItems] = useState({}); // 👈 to store productId: quantity
-
+   const user =   useSelector((state) => state.auth.user.user)
+    
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/cart/682c328ea74e4ba29abbfb9f`);
+        const res = await axios.get(`http://localhost:5000/cart/${user._id}`);
         const cartData = res.data.products;
 
         // Build a map { productId: quantity }
@@ -33,13 +34,13 @@ function CategorySection({ category, restaurantId }) {
 
   const handleAddCart = async (item, quantity) => {
     try {
-      const userId = "6836c9a9451788eb5e4e9e0f";
+      const userId = user._id
  setCartItems((prev) => ({
         ...prev,
         [item._id]: quantity,
       }));
       // Call backend API to update cart
-      await updateCart("6836c9a9451788eb5e4e9e0f","682c328ea74e4ba29abbfb9f", item._id, quantity);
+      await updateCart(restaurantId,userId, item._id, quantity);
 
       // Update local cartItems state
      

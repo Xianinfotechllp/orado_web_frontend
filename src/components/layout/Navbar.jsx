@@ -8,16 +8,17 @@ import {
 } from "react-icons/fi";
 import axios from "axios";
 import logo from "../../assets/oradoLogo.png";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setLocation } from "../../slices/locationSlice";
 import { Link } from "react-router-dom";
+import { VscAccount } from "react-icons/vsc";
 function Navbar() {
   const dispatch = useDispatch();
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
-
+  const user = useSelector((state) => state.auth.user.user);
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
   const fetchSuggestions = async (searchText) => {
@@ -89,6 +90,9 @@ function Navbar() {
             </ul>
           )}
         </div>
+        {
+          console.log(user)
+        }
 
         {/* Desktop Nav */}
         <ul className="hidden md:flex items-center gap-6 text-gray-700 font-medium">
@@ -105,8 +109,10 @@ function Navbar() {
             <FiShoppingBag size={20} />
           </li>
           </Link>
-          <button className="bg-[#EA4424] text-white px-6 py-2 rounded-full font-bold hover:bg-[#d1381b] transition">
-            Get Started
+          <button className="  flex  items-center gap-4 text-black px-6 py-2 rounded-full font-bold hover:bg-[#d1381b] transition">
+            <VscAccount size={25} />
+            {console.log(user.name)}
+             {user ? user.name : "Login"}
           </button>
         </ul>
 

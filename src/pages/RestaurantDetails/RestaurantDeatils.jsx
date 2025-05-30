@@ -103,7 +103,7 @@ useEffect(() => {
             )
             .map((category) => (
               <div className=" flex flex-col justify-center items-center">
-              <CategorySection key={category.categoryId} category={category}  />
+              <CategorySection key={category.categoryId} category={category} restaurantId={restaurantId}  />
                 </div>
 
             ))
