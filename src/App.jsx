@@ -7,6 +7,7 @@ import Login from "./pages/Auth/Login";
 import Home from "./pages/Home/Home";
 import AddToCart from "./pages/AddToCart/AddToCart";
 import OrderManagement from "./pages/OrderManagement/OrderManagement";
+import OrdersPage from "./pages/UserProfile/OrdersPage";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -17,6 +18,8 @@ function App() {
         <Route  path="/home" element={<Home/>} />
         <Route path="/add-to-cart" element={<AddToCart />} />
         <Route path="/order-management" element={<OrderManagement />} />
+        {/* User Profile */}
+        <Route path="/my-account/orders" element={<OrdersPage />} />
       </Routes>
     </>
   );
