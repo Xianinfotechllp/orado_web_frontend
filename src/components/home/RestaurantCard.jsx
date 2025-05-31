@@ -1,7 +1,9 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const RestaurantCard = ({ restaurant }) => {
   return (
+    <Link  to={`/restaurant/details/${restaurant._id}`}>
     <div className="min-w-[260px] max-w-[260px] bg-white rounded-2xl shadow-md overflow-hidden hover:scale-105 transition-all cursor-pointer">
       <img
         src={restaurant.images[0] || "https://via.placeholder.com/260x160"}
@@ -20,6 +22,7 @@ const RestaurantCard = ({ restaurant }) => {
         </div>
       </div>
     </div>
+        </Link>
   );
 };
 

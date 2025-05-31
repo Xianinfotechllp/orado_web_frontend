@@ -1,38 +1,93 @@
-import React, { useState } from 'react';
-import { ShoppingBasket, Plus, Minus, Info, ArrowRight, Delete } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  ShoppingBasket,
+  Plus,
+  Minus,
+  Info,
+  ArrowRight,
+  Delete,
+  RefreshCw,
+} from "lucide-react";
+import axios from "axios";
 
 export default function MyBasket() {
-  const [items, setItems] = useState([
-    { id: 1, name: "12\" Vegitarian Pizza", description: "No Mushrooms + green peppers", price: 27.90, quantity: 1 },
-    { id: 2, name: "12\" Vegitarian Pizza", description: "No Mushrooms + green peppers", price: 27.90, quantity: 1 },
-    { id: 3, name: "12\" Vegitarian Pizza", description: "No Mushrooms + green peppers", price: 27.90, quantity: 1 },
-    { id: 4, name: "12\" Vegitarian Pizza", description: "No Mushrooms + green peppers", price: 27.90, quantity: 1 }
-  ]);
+  const [items, setItems] = useState([]);
+  const [orderDetails, setOrderDetails] = useState({});
+  const [loading, setLoading] = useState(true);
 
-  const updateQuantity = (id, change) => {
-    setItems(items.map(item => 
-      item.id === id 
-        ? { ...item, quantity: Math.max(0, item.quantity + change) }
-        : item
-    ).filter(item => item.quantity > 0));
+  const fetchCart = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/cart/682c328ea74e4ba29abbfb9f");
+      const order = res.data;
+
+      if (order && order.products && order.products.length > 0) {
+        setItems(order.products);
+        setOrderDetails(order);
+      } else {
+        setItems([]);
+        setOrderDetails(order || {});
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+      setItems([]);
+      setOrderDetails({});
+      setLoading(false);
+    }
   };
 
-  const removeItem = (id) => {
-    setItems(items.filter(item => item.id !== id));
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  const updateQuantity = (productId, change) => {
+    setItems((prevItems) =>
+      prevItems
+        .map((item) =>
+          item.productId === productId
+            ? {
+                ...item,
+                quantity: Math.max(0, item.quantity + change),
+                total: item.price * Math.max(0, item.quantity + change),
+              }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
   };
 
-  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const discount = -3.00;
-  const deliveryFee = 2.50;
-  const total = subtotal + discount + deliveryFee;
+  const removeItem = (productId) => {
+    setItems((prevItems) =>
+      prevItems.filter((item) => item.productId !== productId)
+    );
+  };
+
+  const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+  const discount = orderDetails.offerDiscount || 0;
+  const deliveryFee = orderDetails.deliveryFee || 0;
+  const total = subtotal + deliveryFee + discount;
+
+  if (loading) {
+    return (
+      <div className="text-center py-10 font-medium text-gray-600">
+        Loading your basket...
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden sm:max-w-md md:max-w-lg">
       {/* Header */}
-      <div className="text-white p-4 flex items-center gap-3" style={{ backgroundColor: '#ea4525' }}>
+      <div
+        className="text-white p-4 flex items-center gap-3"
+        style={{ backgroundColor: "#ea4525" }}
+      >
         <div className="relative">
           <ShoppingBasket size={24} />
-          <div className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold" style={{ color: '#ea4525' }}>
+          <div
+            className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold"
+            style={{ color: "#ea4525" }}
+          >
             ✓
           </div>
         </div>
@@ -41,75 +96,96 @@ export default function MyBasket() {
 
       {/* Items List */}
       <div className="bg-gray-50 p-3 space-y-3 sm:p-4 sm:space-y-4">
-        {items.map((item) => (
-          <div key={item.id} className="bg-white rounded-lg p-3 sm:p-4">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex-1 min-w-0">
-                <div className="text-green-600 font-semibold text-sm sm:text-base">
-                  £{item.price.toFixed(2)}
+        {items.length === 0 ? (
+          <div className="text-center text-gray-600 font-medium py-8 space-y-4">
+            <p>Your basket is empty.</p>
+            <button
+              onClick={fetchCart}
+              className="flex items-center gap-2 bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300 transition"
+            >
+              <RefreshCw size={16} /> Retry
+            </button>
+          </div>
+        ) : (
+          items.map((item) => (
+            <div key={item.productId} className="bg-white rounded-lg p-3 sm:p-4">
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex-1 min-w-0">
+                  <div className="text-green-600 font-semibold text-sm sm:text-base">
+                    ₹{item.price.toFixed(2)}
+                  </div>
+                  <h3 className="font-medium text-sm sm:text-base text-gray-900 truncate">
+                    {item.name}
+                  </h3>
                 </div>
-                <h3 className="font-medium text-sm sm:text-base text-gray-900 truncate">
-                  {item.name}
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                  {item.description}
-                </p>
+
+                <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+                  <div className="flex items-center border border-gray-300 rounded">
+                    <button
+                      onClick={() => updateQuantity(item.productId, -1)}
+                      className="p-1 hover:bg-gray-100 text-gray-600"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="px-2 py-1 text-sm font-medium min-w-[2rem] text-center">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => updateQuantity(item.productId, 1)}
+                      className="p-1 hover:bg-gray-100 text-gray-600"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => removeItem(item.productId)}
+                    className="text-white w-5 h-5 rounded flex items-center justify-center hover:opacity-80 bg-red-500"
+                  >
+                    <Delete size={16} />
+                  </button>
+                </div>
               </div>
-              
-              <div className="flex items-center gap-2 ml-3 flex-shrink-0">
-                <div className="flex items-center border border-gray-300 rounded">
-                  <button 
-                    onClick={() => updateQuantity(item.id, -1)}
-                    className="p-1 hover:bg-gray-100 text-gray-600"
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span className="px-2 py-1 text-sm font-medium min-w-[2rem] text-center">
-                    {item.quantity}
-                  </span>
-                  <button 
-                    onClick={() => updateQuantity(item.id, 1)}
-                    className="p-1 hover:bg-gray-100 text-gray-600"
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
-                
-                <button 
-                  onClick={() => removeItem(item.id)}
-                  className="text-white w-5 h-5 rounded flex items-center justify-center hover:opacity-80 bg-red-500"
-                >
-                  <Delete size={20} />
-                </button>
+
+              <div className="text-right text-sm text-gray-600">
+                Total: ₹{item.total.toFixed(2)}
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Summary */}
       <div className="p-4 space-y-2 border-t border-gray-200">
         <div className="flex justify-between text-sm sm:text-base">
           <span className="font-medium">Sub Total:</span>
-          <span className="font-medium">£{subtotal.toFixed(2)}</span>
+          <span className="font-medium">₹{subtotal.toFixed(2)}</span>
         </div>
-        
+
         <div className="flex justify-between text-sm sm:text-base">
           <span className="font-medium">Discounts:</span>
-          <span className="font-medium" style={{ color: '#ea4525' }}>{discount.toFixed(2)}</span>
+          <span className="font-medium" style={{ color: "#ea4525" }}>
+            ₹{discount.toFixed(2)}
+          </span>
         </div>
-        
+
         <div className="flex justify-between text-sm sm:text-base">
           <span className="font-medium">Delivery Fee:</span>
-          <span className="font-medium">{deliveryFee.toFixed(2)}</span>
+          <span className="font-medium">₹{deliveryFee.toFixed(2)}</span>
         </div>
       </div>
 
       {/* Total Button */}
       <div className="p-4 pt-0">
-        <button className="w-full text-white font-semibold py-3 px-4 rounded-lg text-base sm:text-lg transition-opacity hover:opacity-90 flex justify-between items-center" style={{ backgroundColor: '#ea4525' }}>
-          <span>Total to pay</span>
-          <span>£{total.toFixed(2)}</span>
+        <button
+          disabled={items.length === 0}
+          className={`w-full text-white font-semibold py-3 px-4 rounded-lg text-base sm:text-lg transition-opacity flex justify-between items-center ${
+            items.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"
+          }`}
+          style={{ backgroundColor: "#ea4525" }}
+        >
+          <span>{items.length === 0 ? "No items to pay" : "Total to pay"}</span>
+          <span>₹{total.toFixed(2)}</span>
         </button>
       </div>
 
@@ -121,7 +197,7 @@ export default function MyBasket() {
             <Info size={12} className="text-white" />
           </div>
         </button>
-        
+
         <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-normal py-3 px-4 rounded text-sm transition-colors flex items-center justify-between">
           <span>Apply Coupon Code here</span>
           <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
