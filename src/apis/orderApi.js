@@ -11,3 +11,14 @@ export const getBillSummary = async (data) => {
     throw error;
   }
 };
+
+
+export const placeOrder = async (orderData) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/order/place-order`, orderData);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to place order:", error);
+    throw error;
+  }
+};

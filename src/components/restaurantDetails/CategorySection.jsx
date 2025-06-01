@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Menucard from "./Menucard";
 import { updateCart } from "../../apis/cartApi";
 import { useDispatch, useSelector } from "react-redux";
-import { addOrUpdateItem } from "../../slices/cartSlice";
+import { setCartId } from "../../slices/cartSlice";
 import axios from "axios";
 
 function CategorySection({ category, restaurantId }) {
@@ -31,6 +31,7 @@ function CategorySection({ category, restaurantId }) {
     };
 
     fetchCart();
+    // dispatch(setCartId({cartId:}))
   }, [user]);
 
   const handleAddCart = async (item, quantity) => {

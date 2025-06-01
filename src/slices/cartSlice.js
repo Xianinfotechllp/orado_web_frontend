@@ -1,76 +1,45 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-// Async thunk to fetch cart from backend
-export const fetchCart = createAsyncThunk(
-  'cart/fetchCart',
-  async (userId) => {
-    const response = await axios.get(`http://localhost:5000/cart/${userId}`);
-    return response.data; // your backend cart JSON
-  }
-);
+import { createSlice } from '@reduxjs/toolkit';
 
 const cartSlice = createSlice({
   name: 'cart',
   initialState: {
-    items: [],      // items: [{ product: {...}, quantity: number }]
-    status: 'idle',
-    error: null,
+    cartId: null, // this will hold the cartId from backend or generated
+    items: [],    // [{ product: {...}, quantity: number }]
   },
   reducers: {
-    addOrUpdateItem: (state, action) => {
+    setCartId: (state, action) => {
+      state.cartId = action.payload;
+    },
+
+    addItem: (state, action) => {
       const { product, quantity } = action.payload;
-      const existingIndex = state.items.findIndex(
-        (item) => item.product._id === product._id
-      );
-      if (existingIndex >= 0) {
-        state.items[existingIndex].quantity = quantity;
+      const existingItem = state.items.find(item => item.product._id === product._id);
+      if (existingItem) {
+        existingItem.quantity += quantity;
       } else {
         state.items.push({ product, quantity });
       }
     },
+
     updateQuantity: (state, action) => {
-      const { productId, change } = action.payload;
-      const item = state.items.find((i) => i.product._id === productId);
+      const { productId, quantity } = action.payload;
+      const item = state.items.find(item => item.product._id === productId);
       if (item) {
-        item.quantity = Math.max(0, item.quantity + change);
-        // Remove if quantity zero
-        if (item.quantity === 0) {
-          state.items = state.items.filter((i) => i.product._id !== productId);
-        }
+        item.quantity = quantity;
       }
     },
+
     removeItem: (state, action) => {
-      state.items = state.items.filter((item) => item.product._id !== action.payload);
+      state.items = state.items.filter(item => item.product._id !== action.payload);
     },
+
     clearCart: (state) => {
+      state.cartId = null;
       state.items = [];
-    }
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchCart.pending, (state) => {
-        state.status = 'loading';
-      })
-      .addCase(fetchCart.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        const products = action.payload.products || [];
-        state.items = products.map((p) => ({
-          product: {
-            _id: p.productId,
-            name: p.name,
-            price: p.price,
-            // add more fields if needed
-          },
-          quantity: p.quantity,
-        }));
-      })
-      .addCase(fetchCart.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message;
-      });
+    },
   },
 });
 
-export const { addOrUpdateItem, updateQuantity, removeItem, clearCart } = cartSlice.actions;
+// Export actions and reducer
+export const { setCartId, addItem, updateQuantity, removeItem, clearCart } = cartSlice.actions;
 export default cartSlice.reducer;
