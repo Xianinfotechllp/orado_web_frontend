@@ -1,9 +1,17 @@
 import React from 'react'
-import AddressAndPayment from '../../components/addToCart/AddressandPayment'
+import AddressAndPayment from '../../components/addToCart/AddressAndPayment'
 import MyBasket from '../../components/addToCart/MyBasket'
 import Navbar from '../../components/layout/Navbar';
 
+
+
+
 const AddToCart = () => {
+
+    const handleLocationSelect = (location) => {
+    console.log("Selected Location:", location);
+    // Update your form, redux, or API call
+  };
   return (
     <>
       <Navbar />
@@ -14,6 +22,14 @@ const AddToCart = () => {
         <div className="w-full lg:w-1/3">
           <MyBasket />
         </div>
+
+       
+      </div>
+
+      <div>
+   
+
+
       </div>
     </>
   );

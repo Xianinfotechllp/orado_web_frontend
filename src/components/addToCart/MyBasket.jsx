@@ -11,12 +11,15 @@ import {
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { getBillSummary } from "../../apis/orderApi";
+import { updateCart} from "../../apis/cartApi";
 
 export default function MyBasket() {
   const [items, setItems] = useState([]);
   const [orderDetails, setOrderDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [bill, setBill] = useState({});
+  const [buttonLoading, setButtonLoading] = useState(null);
+
   const user = useSelector((state) => state.auth.user.user);
   const location = useSelector((state) => state.location.location);
 
@@ -47,8 +50,8 @@ export default function MyBasket() {
         latitude: location.lat,
         cartId: cartId,
       });
-      setBill(billres.billSummary);
-      console.log(billres)
+      
+      setBill(billres.data);
     } catch (err) {
       console.error("Error fetching bill summary", err);
     }
@@ -60,24 +63,38 @@ export default function MyBasket() {
 
   const updateQuantity = async (productId, change) => {
     try {
-      // Call API to update cart quantity
-    
+      const selectedItem = items.find((item) => item.productId === productId);
+      if (!selectedItem) return;
 
-      // Refetch cart and bill after update
-      fetchCart();
+      const newQuantity = selectedItem.quantity + change;
+      
+
+     
+      const upadteItems = items.map((each) => {
+         if (each.productId === productId) {
+         
+          let newItems = { ...each, quantity: newQuantity};
+         return newItems
+  }
+      })
+      console.log(upadteItems)
+      setItems(upadteItems)
+
+      await updateCart(
+        orderDetails.restaurantId,
+        user._id,
+        productId,
+        newQuantity
+      );
+
+      await fetchCart();
     } catch (error) {
       console.error("Failed to update quantity", error);
+    } finally {
+      setButtonLoading(null);
     }
   };
 
-  const removeItem = async (productId) => {
-    try {
-   
-      fetchCart();
-    } catch (error) {
-      console.error("Failed to remove item", error);
-    }
-  };
 
   if (loading) {
     return (
@@ -120,10 +137,7 @@ export default function MyBasket() {
           </div>
         ) : (
           items.map((item) => (
-            <div
-              key={item.productId}
-              className="bg-white rounded-lg p-3 sm:p-4"
-            >
+            <div key={item.productId} className="bg-white rounded-lg p-3 sm:p-4">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1 min-w-0">
                   <div className="text-green-600 font-semibold text-sm sm:text-base">
@@ -138,7 +152,12 @@ export default function MyBasket() {
                   <div className="flex items-center border border-gray-300 rounded">
                     <button
                       onClick={() => updateQuantity(item.productId, -1)}
-                      className="p-1 hover:bg-gray-100 text-gray-600"
+                    
+                      className={`p-1 ${
+                        item.quantity === 1 || buttonLoading === item.productId
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-gray-100 text-gray-600"
+                      }`}
                     >
                       <Minus size={14} />
                     </button>
@@ -147,7 +166,12 @@ export default function MyBasket() {
                     </span>
                     <button
                       onClick={() => updateQuantity(item.productId, 1)}
-                      className="p-1 hover:bg-gray-100 text-gray-600"
+                      disabled={buttonLoading === item.productId}
+                      className={`p-1 ${
+                        buttonLoading === item.productId
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-gray-100 text-gray-600"
+                      }`}
                     >
                       <Plus size={14} />
                     </button>
@@ -155,7 +179,12 @@ export default function MyBasket() {
 
                   <button
                     onClick={() => removeItem(item.productId)}
-                    className="text-white w-5 h-5 rounded flex items-center justify-center hover:opacity-80 bg-red-500"
+                    disabled={buttonLoading === item.productId}
+                    className={`text-white w-5 h-5 rounded flex items-center justify-center bg-red-500 ${
+                      buttonLoading === item.productId
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:opacity-80"
+                    }`}
                   >
                     <Delete size={16} />
                   </button>
@@ -202,9 +231,7 @@ export default function MyBasket() {
         <button
           disabled={items.length === 0}
           className={`w-full text-white font-semibold py-3 px-4 rounded-lg text-base sm:text-lg transition-opacity flex justify-between items-center ${
-            items.length === 0
-              ? "opacity-50 cursor-not-allowed"
-              : "hover:opacity-90"
+            items.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"
           }`}
           style={{ backgroundColor: "#ea4525" }}
         >

@@ -11,6 +11,7 @@ import OrderManagement from "./pages/OrderManagement/OrderManagement";
 
 import RestaurantDeatils from "./pages/RestaurantDetails/RestaurantDeatils";
 import Signup from "./pages/Auth/SignUp";
+import Faq from "./pages/Faq/Faq";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -26,6 +27,7 @@ function App() {
         <Route path="/order-management" element={<OrderManagement />} />
 
         <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils/>}  />
+        <Route path="/faq" element={<Faq/>}  />
 
       </Routes>
     </>
