@@ -8,7 +8,7 @@ import axios from "axios";
 function CategorySection({ category, restaurantId }) {
   const dispatch = useDispatch();
   const [cartItems, setCartItems] = useState({});
-  const user = useSelector((state) => state.auth.user?.user);
+  const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
     if (!user?._id) return;

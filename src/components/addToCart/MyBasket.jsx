@@ -21,6 +21,7 @@ export default function MyBasket() {
   const [bill, setBill] = useState({});
   const [buttonLoading, setButtonLoading] = useState(null);
 
+
   const user = useSelector((state) => state.auth.user.user);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
  const dipsatch = useDispatch()
@@ -32,6 +33,17 @@ export default function MyBasket() {
       const cart = res.data;
       setCartDetails(cart || {});
       setItems(cart?.products || []);
+
+
+  const location = useSelector((state) => state.location.location);
+
+  const fetchCart = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/cart");
+      const order = res.data;
+      setOrderDetails(order || {});
+      setItems(order.products || []);
+
       setLoading(false);
       
       if (cart?._id) {

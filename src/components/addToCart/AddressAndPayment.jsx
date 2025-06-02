@@ -12,10 +12,15 @@ export default function DeliveryPaymentForm() {
   const [addresses, setAddresses] = useState([]);
   const [localSelectedAddress, setLocalSelectedAddress] = useState(null);
   const [editingAddress, setEditingAddress] = useState(null);
+
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
   const user = useSelector((state) => state.auth.user.user);
   const cartId = useSelector((state) => state.cart.cartId)
+
+
+  const location = useSelector((state) => state.location.location);
+
 
 
   useEffect(() => {
