@@ -1,17 +1,29 @@
-import { useState } from "react";
-import { updateNotificationPreferences, deleteAccount } from "../../../apis/settingsApi"; 
+import { useState, useEffect } from "react";
+import { updateNotificationPreferences, getNotificationPreferences, deleteAccount } from "../../../apis/settingsApi"; 
 
 
 export default function SMSPreferences() {
   // Initialize notification preferences based on controller structure
-  const [notificationPrefs, setNotificationPrefs] = useState({
-    orderUpdates: true,
-    promotions: true,
-    walletCredits: true,
-    newFeatures: true,
-    serviceAlerts: true
-  });
+  const [notificationPrefs, setNotificationPrefs] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    //  Fetch preferences on mount
+  useEffect(() => {
+    const fetchPrefs = async () => {
+      try {
+        const prefs = await getNotificationPreferences();
+        setNotificationPrefs(prefs);
+      } catch (error) {
+        console.error("Failed to load preferences:", error);
+      }
+    };
+    fetchPrefs();
+  }, []);
+
+  // Prevent render until prefs are loaded
+  if (!notificationPrefs) {
+    return <div className="p-6">Loading preferences...</div>;
+  }
 
   const handleToggle = async (key) => {
     const updatedPrefs = {
@@ -147,7 +159,7 @@ export default function SMSPreferences() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bgOp flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Are you sure?

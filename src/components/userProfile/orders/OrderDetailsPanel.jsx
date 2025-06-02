@@ -2,38 +2,83 @@ import React from 'react';
 import { X, MapPin, Home, CheckCircle, Clock } from 'lucide-react';
 import {reorderOrder} from '../../../apis/orderApi'; 
 import { useNavigate } from "react-router-dom";
+import { HiCheckCircle, HiClock, HiTruck, HiXCircle, HiOutlineClock } from "react-icons/hi";
+
 
 const OrderDetailsPanel = ({ order, onClose }) => {
   if (!order) return null;
 
   const navigate = useNavigate();
+  const [isReordering, setIsReordering] = React.useState(false);
+
   
   const handleReorder = async () => {
     try {
-      await reorderOrder(order._id); // Make the API call
-      navigate("/add-to-cart"); // Redirect after success
+      setIsReordering(true);
+      await reorderOrder(order._id);
+      navigate("/add-to-cart");
     } catch (error) {
       console.error("Reorder failed:", error);
+    } finally {
+      setIsReordering(false);
     }
   };
 
   const getStatusIcon = (status) => {
-    if (status === "delivered") {
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
+    switch (status) {
+      case "completed":
+        return <HiCheckCircle className="h-4 w-4 text-green-500" />;
+      case "cancelled_by_customer":
+      case "rejected_by_agent":
+      case "rejected_by_restaurant":
+        return <HiXCircle className="h-4 w-4 text-red-500" />;
+      case "pending":
+      case "pending_agent_acceptance":
+      case "awaiting_agent_assignment":
+        return <HiOutlineClock className="h-4 w-4 text-yellow-500" />;
+      case "preparing":
+      case "accepted_by_restaurant":
+        return <HiClock className="h-4 w-4 text-orange-500" />;
+      case "assigned_to_agent":
+      case "picked_up":
+      case "in_progress":
+      case "arrived":
+        return <HiTruck className="h-4 w-4 text-blue-500" />;
+      default:
+        return <HiClock className="h-4 w-4 text-gray-500" />;
     }
-    return <Clock className="h-4 w-4 text-orange-500" />;
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case "delivered":
-        return "Delivered";
+      case "pending":
+        return "Pending";
+      case "pending_agent_acceptance":
+        return "Awaiting Agent Acceptance";
       case "awaiting_agent_assignment":
         return "Awaiting Agent Assignment";
-      case "in_progress":
-        return "In Progress";
+      case "accepted_by_restaurant":
+        return "Accepted by Restaurant";
+      case "rejected_by_restaurant":
+        return "Rejected by Restaurant";
       case "preparing":
         return "Preparing";
+      case "ready":
+        return "Ready for Pickup";
+      case "assigned_to_agent":
+        return "Assigned to Agent";
+      case "picked_up":
+        return "Picked Up";
+      case "in_progress":
+        return "In Progress";
+      case "arrived":
+        return "Arrived";
+      case "completed":
+        return "Delivered";
+      case "cancelled_by_customer":
+        return "Cancelled by Customer";
+      case "rejected_by_agent":
+        return "Rejected by Agent";
       default:
         return status;
     }
@@ -62,7 +107,7 @@ const OrderDetailsPanel = ({ order, onClose }) => {
             {/* Header */}
             <div className="px-4 py-3 border-b border-gray-200 bg-white">
               <div className="flex items-center justify-between">
-                <h2 className="text-base font-medium text-gray-900">Order #{order._id.slice(-13)}</h2>
+                <h2 className="text-base font-medium text-gray-900">Order #{order._id.slice(-12)}</h2>
                 <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
                   <X className="h-5 w-5" />
                 </button>
@@ -76,7 +121,7 @@ const OrderDetailsPanel = ({ order, onClose }) => {
                   <MapPin className="h-5 w-5 text-gray-400" />
                   <div>
                     <h3 className="font-medium text-gray-900">{order.restaurantId?.name || 'Restaurant'}</h3>
-                    <p className="text-sm text-gray-500">{order.deliveryAddress?.city}</p>
+                    <p className="text-sm text-gray-500">{order.deliveryAddress?.street || 'Unknown street'}</p>
                   </div>
                 </div>
               </div>
@@ -109,7 +154,7 @@ const OrderDetailsPanel = ({ order, onClose }) => {
                 </div>
                 {order.assignedAgent && (
                   <p className="text-sm text-gray-500 mt-1">
-                    by {order.assignedAgent}
+                    by {typeof order.assignedAgent === 'string' ? order.assignedAgent : order.assignedAgent.name}
                   </p>
                 )}
               </div>
@@ -131,7 +176,7 @@ const OrderDetailsPanel = ({ order, onClose }) => {
                           {item.name} x {item.quantity}
                         </span>
                       </div>
-                      <span className="text-sm font-medium">₹ {item.totalPrice}</span>
+                      <span className="text-sm font-medium">₹ {item.totalPrice || (item.price * item.quantity)}</span>
                     </div>
                   ))}
                 </div>
@@ -200,11 +245,12 @@ const OrderDetailsPanel = ({ order, onClose }) => {
 
             {/* Footer */}
             <div className="px-4 py-4 border-t border-gray-200 bg-white">
-              <button 
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-lg font-medium"
+              <button
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-lg font-medium disabled:opacity-50"
                 onClick={handleReorder}
+                disabled={isReordering}
               >
-                REORDER
+                {isReordering ? "Processing..." : "REORDER"}
               </button>
             </div>
           </div>

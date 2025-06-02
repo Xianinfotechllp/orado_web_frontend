@@ -15,6 +15,7 @@ import Faq from "./pages/Faq/Faq";
 
 import OrdersPage from "./pages/UserProfile/OrdersPage";
 import SettingsPage from "./pages/UserProfile/SettingsPage";
+import NotificationPage from "./pages/Notification/NotificationPage";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -30,6 +31,7 @@ function App() {
 
         <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils/>}  />
         <Route path="/faq" element={<Faq/>}  />
+        <Route path="/notifications" element={<NotificationPage />} />
 
         {/* User Profile */}
         <Route path="/my-account" element={<OrdersPage />} />

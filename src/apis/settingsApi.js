@@ -4,7 +4,7 @@ import apiClient from "./apiClient/apiClient"; // adjust path
 export const updateNotificationPreferences = async (notificationPrefs) => {
   try {
     const response = await apiClient.put(
-      "/user/notifications/preferences",
+      "/user/notifications/preferences/update",
       notificationPrefs
     );
     console.log("Notification preferences updated:", response.data);
@@ -14,6 +14,17 @@ export const updateNotificationPreferences = async (notificationPrefs) => {
     throw error;
   }
 };
+
+export const getNotificationPreferences = async () => {
+  try {
+    const response = await apiClient.get("/user/notifications/preferences");
+    return response.data.notificationPrefs;
+  } catch (error) {
+    console.error("Failed to fetch notification preferences:", error);
+    throw error;
+  }
+};
+
 
 // 2. Delete User Account
 export const deleteAccount = async () => {
