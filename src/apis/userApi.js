@@ -27,7 +27,7 @@ export const updateAddress = async (userId, addressId, updatedAddress) => {
 
 export const addAddress = async (userId, addressData) => {
   try {
-    const response = await BASE_URL.post("/user/address", {
+    const response = await apiClient.post("/user/address", {
       userId:userId,
       type: addressData.type,
       street: addressData.street,

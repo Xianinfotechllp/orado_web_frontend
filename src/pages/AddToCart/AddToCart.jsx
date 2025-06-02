@@ -1,5 +1,5 @@
 import React from 'react'
-import AddressAndPayment from '../../components/addToCart/AddressAndPayment'
+import AddressAndPayment from '../../components/addToCart/DeliveryPaymentForm'
 import MyBasket from '../../components/addToCart/MyBasket'
 import Navbar from '../../components/layout/Navbar';
 

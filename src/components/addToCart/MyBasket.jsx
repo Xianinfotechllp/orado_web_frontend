@@ -10,7 +10,6 @@ import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { getBillSummary } from "../../apis/orderApi";
 import { updateCart, getCart} from "../../apis/cartApi";
-import { updateCart } from "../../apis/cartApi";
 import { setCartId } from "../../slices/cartSlice";
 
 export default function MyBasket() {
@@ -21,7 +20,7 @@ export default function MyBasket() {
   const [buttonLoading, setButtonLoading] = useState(null);
 
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.auth.user.user);
+  const user = useSelector((state) => state.auth.user);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
   const location = useSelector((state) => state.location.location);
 
@@ -29,7 +28,9 @@ export default function MyBasket() {
   const fetchCart = async () => {
     try {
       const order = await getCart();
-      setOrderDetails(order || {});
+      console.log(order);
+      
+      setCartDetails(order || {});
       setItems(order.products || []);
       setLoading(false);
 

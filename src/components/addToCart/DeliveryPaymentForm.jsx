@@ -15,7 +15,7 @@ export default function DeliveryPaymentForm() {
 
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
-  const user = useSelector((state) => state.auth.user.user);
+  const user = useSelector((state) => state.auth.user);
   const cartId = useSelector((state) => state.cart.cartId)
 
 
