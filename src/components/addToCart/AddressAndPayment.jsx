@@ -8,7 +8,7 @@ export default function DeliveryPaymentForm() {
   const [addresses, setAddresses] = useState([]);
   const [editingAddress, setEditingAddress] = useState(null);
   const location = useSelector((state) => state.location.location);
-  const user = useSelector((state) => state.auth.user.user);
+  const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
     const fetchAddresses = async () => {

@@ -20,7 +20,7 @@ export default function MyBasket() {
   const [bill, setBill] = useState({});
   const [buttonLoading, setButtonLoading] = useState(null);
 
-  const user = useSelector((state) => state.auth.user.user);
+  const user = useSelector((state) => state.auth.user);
   const location = useSelector((state) => state.location.location);
 
   const fetchCart = async () => {
