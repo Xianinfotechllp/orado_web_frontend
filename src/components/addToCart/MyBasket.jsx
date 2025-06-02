@@ -3,8 +3,6 @@ import {
   ShoppingBasket,
   Plus,
   Minus,
-  Info,
-  ArrowRight,
   Delete,
   RefreshCw,
 } from "lucide-react";
@@ -21,34 +19,25 @@ export default function MyBasket() {
   const [bill, setBill] = useState({});
   const [buttonLoading, setButtonLoading] = useState(null);
 
-
+  const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user.user);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
- const dipsatch = useDispatch()
+  const location = useSelector((state) => state.location.location);
+
   // Fetch cart and cart details
   const fetchCart = async () => {
     try {
       setLoading(true);
       const res = await axios.get(`http://localhost:5000/cart/${user._id}`);
       const cart = res.data;
+
       setCartDetails(cart || {});
       setItems(cart?.products || []);
-
-
-  const location = useSelector((state) => state.location.location);
-
-  const fetchCart = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/cart");
-      const order = res.data;
-      setOrderDetails(order || {});
-      setItems(order.products || []);
-
       setLoading(false);
-      
+
       if (cart?._id) {
         await fetchBill(cart._id);
-        dipsatch(setCartId(cart._id))
+        dispatch(setCartId(cart._id));
       }
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -63,14 +52,14 @@ export default function MyBasket() {
     if (!cartId || !selectedAddress) return;
 
     try {
-      const billres = await getBillSummary({
+      const billRes = await getBillSummary({
         userId: user._id,
         longitude: selectedAddress.location.longitude,
         latitude: selectedAddress.location.latitude,
         cartId: cartId,
       });
-   console.log(billres)
-      setBill(billres.data);
+
+      setBill(billRes.data);
     } catch (err) {
       console.error("Error fetching bill summary", err);
     }
@@ -83,9 +72,8 @@ export default function MyBasket() {
   }, [user?._id]);
 
   useEffect(() => {
-    if (selectedAddress) {
+    if (cartDetails._id && selectedAddress) {
       fetchBill(cartDetails._id);
-   
     }
   }, [cartDetails._id, selectedAddress]);
 
@@ -98,18 +86,15 @@ export default function MyBasket() {
       if (!selectedItem) return;
 
       const newQuantity = selectedItem.quantity + change;
-      if (newQuantity < 1) return; // Prevent quantity < 1
+      if (newQuantity < 1) return;
 
-      // Update local state optimistically
       const updatedItems = items.map((item) =>
         item.productId === productId ? { ...item, quantity: newQuantity } : item
       );
       setItems(updatedItems);
 
-      // Update on backend
       await updateCart(cartDetails.restaurantId, user._id, productId, newQuantity);
 
-      // Refetch cart to sync
       await fetchCart();
     } catch (error) {
       console.error("Failed to update quantity", error);
@@ -148,10 +133,7 @@ export default function MyBasket() {
       >
         <div className="relative">
           <ShoppingBasket size={24} />
-          <div
-            className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold"
-            style={{ color: "#ea4525" }}
-          >
+          <div className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold" style={{ color: "#ea4525" }}>
             ✓
           </div>
         </div>
@@ -216,9 +198,7 @@ export default function MyBasket() {
                     onClick={() => removeItem(item.productId)}
                     disabled={buttonLoading === item.productId}
                     className={`text-white w-5 h-5 rounded flex items-center justify-center bg-red-500 ${
-                      buttonLoading === item.productId
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:opacity-80"
+                      buttonLoading === item.productId ? "opacity-50 cursor-not-allowed" : "hover:opacity-80"
                     }`}
                   >
                     <Delete size={16} />
@@ -240,19 +220,16 @@ export default function MyBasket() {
           <span className="font-medium">Sub Total:</span>
           <span className="font-medium">₹{(bill?.subtotal || 0).toFixed(2)}</span>
         </div>
-
         <div className="flex justify-between text-sm sm:text-base">
           <span className="font-medium">Discounts:</span>
           <span className="font-medium" style={{ color: "#ea4525" }}>
             ₹{(bill?.discount || 0).toFixed(2)}
           </span>
         </div>
-
         <div className="flex justify-between text-sm sm:text-base">
           <span className="font-medium">Tax:</span>
           <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
         </div>
-
         <div className="flex justify-between text-sm sm:text-base">
           <span className="font-medium">Delivery Fee:</span>
           <span className="font-medium">₹{(bill?.deliveryFee || 0).toFixed(2)}</span>
