@@ -5,6 +5,7 @@ import { placeOrder } from "../../apis/orderApi";
 import EditAddressForm from "../address/EditAddressForm";
 import NewAddressForm from "../address/NewAddressForm";
 import { setSelectedAddress } from "../../slices/addressSlice";
+import { clearCart } from "../../slices/cartSlice";
 
 export default function DeliveryPaymentForm() {
   const dispatch = useDispatch();
@@ -15,7 +16,7 @@ export default function DeliveryPaymentForm() {
 
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
-  const user = useSelector((state) => state.auth.user.user);
+  const user = useSelector((state) => state.auth.user);
   const cartId = useSelector((state) => state.cart.cartId)
 
 
@@ -62,21 +63,24 @@ export default function DeliveryPaymentForm() {
     }
     try {
      const orderPayload = {
-  cartId: cartId,
-  userId: user._id,
-  paymentMethod,
-  longitude: localSelectedAddress.location.longitude,
-  latitude: localSelectedAddress.location.latitude,
-  street: localSelectedAddress.street,
-  area: localSelectedAddress.area,       // if exists
-  landmark: localSelectedAddress.landmark, // if exists
-  city: localSelectedAddress.city,
-  state: localSelectedAddress.state,
-  pincode: localSelectedAddress.zip,     // assuming zip = pincode
-  country: localSelectedAddress.country, // if exists
-};
+        cartId: cartId,
+        userId: user._id,
+        paymentMethod,
+        longitude: localSelectedAddress.location.longitude,
+        latitude: localSelectedAddress.location.latitude,
+        street: localSelectedAddress.street,
+        area: localSelectedAddress.area,       // if exists
+        landmark: localSelectedAddress.landmark, // if exists
+        city: localSelectedAddress.city,
+        state: localSelectedAddress.state,
+        pincode: localSelectedAddress.zip,     // assuming zip = pincode
+        country: localSelectedAddress.country, // if exists
+      };
       const res = await placeOrder(orderPayload);
-      console.log("Order placed successfully:", res);
+      if (res.status === 201) {
+      dispatch(clearCart()); // 🔥 this clears Redux cart
+      // navigate("/order-success"); // or go to order page
+    }
       alert("Order placed successfully!");
       // Redirect or clear cart here
     } catch (error) {

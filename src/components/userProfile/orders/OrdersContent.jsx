@@ -12,6 +12,7 @@ const OrdersContent = () => {
     const fetchOrders = async () => {
       try {
         const data = await getCustomerOrders();
+        console.log("Fetched orders:", data);
         setOrders(data);
       } catch (error) {
         console.error("Failed to load orders", error);
@@ -35,26 +36,10 @@ const OrdersContent = () => {
         orders.map((order, index) => (
           <OrderCard
             key={order._id}
-            order={{
-              restaurant: "Restaurant Name", // Replace with real data if needed
-              location: "Customer Location",
-              address: "N/A", // you can derive from coordinates if needed
-              orderId: order._id,
-              date: new Date(order.orderTime).toLocaleString(),
-              deliveryDate: new Date(order.updatedAt).toLocaleString(),
-              deliveryPartner: order.assignedAgent || "Unassigned",
-              image: order.orderItems.image || "https://via.placeholder.com/150",
-              items: order.orderItems.map(i => `${i.name} x ${i.quantity}`).join(', '),
-              subtotal: order.subtotal,
-              deliveryFee: order.deliveryCharge,
-              discount: order.discountAmount,
-              taxes: order.tax,
-              total: order.totalAmount,
-              paymentMethod: order.paymentMethod,
-              itemsSummary: order.orderItems.map(i => `${i.name} x ${i.quantity}`).join(', ')
-            }}
+            order={order}
             onViewDetails={() => setSelectedOrder(order)}
           />
+
         ))
       )}
 

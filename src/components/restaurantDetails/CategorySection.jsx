@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Menucard from "./Menucard";
-import { updateCart } from "../../apis/cartApi";
+import { updateCart, getCart } from "../../apis/cartApi";
 import { useDispatch, useSelector } from "react-redux";
 import { setCartId } from "../../slices/cartSlice";
-import axios from "axios";
 
 function CategorySection({ category, restaurantId }) {
   const dispatch = useDispatch();
@@ -15,9 +14,12 @@ function CategorySection({ category, restaurantId }) {
 
     const fetchCart = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/cart/${user._id}`);
-        const cartData = res.data.products;
-        
+        const res = await getCart();
+        console.log("getCart response:", res);
+
+        // Use optional chaining in case res or products is undefined
+        // Adjust this depending on what your getCart returns
+        const cartData = res?.data?.products || res?.products || [];
 
         const cartMap = {};
         cartData.forEach((item) => {
@@ -25,14 +27,18 @@ function CategorySection({ category, restaurantId }) {
         });
 
         setCartItems(cartMap);
+
+        // Optionally set cartId in Redux store if available
+        if (res?._id) {
+          dispatch(setCartId(res._id));
+        }
       } catch (error) {
         console.error("Failed to fetch cart", error);
       }
     };
 
     fetchCart();
-    // dispatch(setCartId({cartId:}))
-  }, [user]);
+  }, [user, dispatch]);
 
   const handleAddCart = async (item, quantity) => {
     try {
@@ -43,9 +49,10 @@ function CategorySection({ category, restaurantId }) {
         [item._id]: quantity,
       }));
 
-  await updateCart(restaurantId, userId, item._id, quantity);
+      await updateCart(restaurantId, userId, item._id, quantity);
 
-      dispatch(addOrUpdateItem({ product: item, quantity }));
+      // Assuming you have addOrUpdateItem action imported; if not, remove this line
+      // dispatch(addOrUpdateItem({ product: item, quantity }));
     } catch (error) {
       console.error("Failed to update cart", error);
     }

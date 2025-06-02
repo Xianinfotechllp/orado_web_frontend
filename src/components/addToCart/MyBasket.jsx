@@ -9,7 +9,7 @@ import {
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { getBillSummary } from "../../apis/orderApi";
-import { updateCart } from "../../apis/cartApi";
+import { updateCart, getCart} from "../../apis/cartApi";
 import { setCartId } from "../../slices/cartSlice";
 
 export default function MyBasket() {
@@ -20,24 +20,23 @@ export default function MyBasket() {
   const [buttonLoading, setButtonLoading] = useState(null);
 
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.auth.user.user);
+  const user = useSelector((state) => state.auth.user);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
   const location = useSelector((state) => state.location.location);
 
   // Fetch cart and cart details
   const fetchCart = async () => {
     try {
-      setLoading(true);
-      const res = await axios.get(`http://localhost:5000/cart/${user._id}`);
-      const cart = res.data;
-
-      setCartDetails(cart || {});
-      setItems(cart?.products || []);
+      const order = await getCart();
+      console.log(order);
+      
+      setCartDetails(order || {});
+      setItems(order.products || []);
       setLoading(false);
 
-      if (cart?._id) {
-        await fetchBill(cart._id);
-        dispatch(setCartId(cart._id));
+      if (order?._id) {
+        await fetchBill(order._id);
+        dispatch(setCartId(order._id));
       }
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -46,6 +45,7 @@ export default function MyBasket() {
       setLoading(false);
     }
   };
+
 
   // Fetch bill summary based on cart and location
   const fetchBill = async (cartId) => {
