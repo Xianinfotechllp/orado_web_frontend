@@ -17,7 +17,7 @@ export default function MyBasket() {
 
   const fetchCart = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/cart/682c328ea74e4ba29abbfb9f");
+      const res = await axios.get("http://localhost:5000/cart");
       const order = res.data;
 
       if (order && order.products && order.products.length > 0) {

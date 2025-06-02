@@ -2,12 +2,12 @@ import React from 'react';
 import SidebarItem from './SidebarItem';
 
 const sidebarItems = [
-  { name: 'Orders', path: '/orders' },
-  { name: 'Swiggy One', path: '/swiggy-one' },
+  { name: 'Orders', path: '/my-account/orders' },
+  { name: 'Orado One', path: '/swiggy-one' },
   { name: 'Favourites', path: '/favourites' },
   { name: 'Payments', path: '/payments' },
   { name: 'Addresses', path: '/addresses' },
-  { name: 'Settings', path: '/settings' }
+  { name: 'Settings', path: '/my-account/settings' }
 ];
 
 const Sidebar = () => {

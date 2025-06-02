@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import AppLayout from '../../components/userProfile/layout/AppLayout';
 import Sidebar from '../../components/userProfile/navigation/Sidebar';
-import OrdersContent from '../../components/userProfile/orders/OrdersContent';
 import Navbar from '../../components/layout/Navbar';
-import { Menu } from 'lucide-react'; // icon for mobile toggle
+import Setting from '../../components/userProfile/settings/Setting';
+import { Menu } from 'lucide-react'; // Icon for sidebar toggle on mobile
 
-const OrdersPage = () => {
+const SettingsPage = () => {
   const [showSidebar, setShowSidebar] = useState(false);
 
   return (
@@ -13,15 +13,15 @@ const OrdersPage = () => {
       <Navbar />
       <AppLayout>
         <div className="flex flex-col md:flex-row">
-          {/* Mobile menu button */}
+          {/* Mobile header with toggle */}
           <div className="md:hidden flex justify-between items-center p-4 bg-white border-b">
-            <h2 className="text-xl font-semibold">My Account</h2>
+            <h2 className="text-xl font-semibold">Settings</h2>
             <button onClick={() => setShowSidebar(!showSidebar)}>
               <Menu className="w-6 h-6" />
             </button>
           </div>
 
-          {/* Sidebar - hidden on small screens unless toggled */}
+          {/* Sidebar - toggle visible on small screens */}
           <div
             className={`${
               showSidebar ? 'block' : 'hidden'
@@ -32,7 +32,7 @@ const OrdersPage = () => {
 
           {/* Main content */}
           <div className="flex-1 p-4 md:p-6">
-            <OrdersContent />
+            <Setting />
           </div>
         </div>
       </AppLayout>
@@ -40,4 +40,4 @@ const OrdersPage = () => {
   );
 };
 
-export default OrdersPage;
+export default SettingsPage;

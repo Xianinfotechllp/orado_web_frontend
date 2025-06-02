@@ -13,6 +13,7 @@ import RestaurantDeatils from "./pages/RestaurantDetails/RestaurantDeatils";
 import Signup from "./pages/Auth/SignUp";
 
 import OrdersPage from "./pages/UserProfile/OrdersPage";
+import SettingsPage from "./pages/UserProfile/SettingsPage";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -29,7 +30,9 @@ function App() {
         <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils/>}  />
 
         {/* User Profile */}
+        <Route path="/my-account" element={<OrdersPage />} />
         <Route path="/my-account/orders" element={<OrdersPage />} />
+        <Route path="/my-account/settings" element={<SettingsPage />} />
       </Routes>
     </>
   );
