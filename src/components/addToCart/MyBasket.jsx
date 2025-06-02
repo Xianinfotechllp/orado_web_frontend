@@ -11,7 +11,7 @@ import {
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { getBillSummary } from "../../apis/orderApi";
-import { updateCart} from "../../apis/cartApi";
+import { updateCart, getCart} from "../../apis/cartApi";
 
 export default function MyBasket() {
   const [items, setItems] = useState([]);
@@ -25,8 +25,7 @@ export default function MyBasket() {
 
   const fetchCart = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/cart");
-      const order = res.data;
+      const order = await getCart();
       setOrderDetails(order || {});
       setItems(order.products || []);
       setLoading(false);

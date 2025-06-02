@@ -21,3 +21,13 @@ export const updateCart = async (restaurantId, userId, productId, quantity) => {
     throw error;
   }
 };
+
+export const getCart = async () => {
+  try {
+    const res = await apiClient.get("/cart");
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching cart:", error);
+    throw error;
+  }
+};
