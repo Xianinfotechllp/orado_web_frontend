@@ -25,6 +25,8 @@ export const updateCart = async (restaurantId, userId, productId, quantity) => {
 export const getCart = async () => {
   try {
     const res = await apiClient.get("/cart");
+    console.log("getCart response:", res.data);
+    
     return res.data;
   } catch (error) {
     console.error("Error fetching cart:", error);

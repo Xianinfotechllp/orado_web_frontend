@@ -34,9 +34,9 @@ export default function MyBasket() {
       setItems(order.products || []);
       setLoading(false);
 
-      if (cart?._id) {
-        await fetchBill(cart._id);
-        dispatch(setCartId(cart._id));
+      if (order?._id) {
+        await fetchBill(order._id);
+        dispatch(setCartId(order._id));
       }
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -45,6 +45,7 @@ export default function MyBasket() {
       setLoading(false);
     }
   };
+
 
   // Fetch bill summary based on cart and location
   const fetchBill = async (cartId) => {
