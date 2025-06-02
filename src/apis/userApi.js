@@ -24,3 +24,26 @@ export const updateAddress = async (userId, addressId, updatedAddress) => {
     throw error;
   }
 };
+
+
+
+
+export const addAddress = async (userId, addressData) => {
+  try {
+    const response = await BASE_URL.post("/user/address", {
+      userId:userId,
+      type: addressData.type,
+      street: addressData.street,
+      city: addressData.city,
+      state: addressData.state,
+      zip: addressData.zip,
+      longitude: addressData.location.longitude,
+      latitude: addressData.location.latitude,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Failed to add address:", error);
+    throw error;
+  }
+};

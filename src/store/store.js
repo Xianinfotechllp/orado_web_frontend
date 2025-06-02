@@ -1,6 +1,9 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import locationReducer from "../slices/locationSlice";
 import authReducer from "../slices/authSlice";
+import addressReducer from "../slices/addressSlice";
+import cartReducer from "../slices/cartSlice";  // ✅ import cartSlice
+
 import {
   persistStore,
   persistReducer,
@@ -11,25 +14,28 @@ import {
   PURGE,
   REGISTER,
 } from "redux-persist";
+
 import storageSession from "redux-persist/lib/storage/session";
 
-// Combine your reducers
+// ✅ Combine all reducers including cart
 const rootReducer = combineReducers({
   location: locationReducer,
   auth: authReducer,
+  address: addressReducer,
+  cart: cartReducer,   // ✅ add cart reducer
 });
 
-// Setup persist config
+// ✅ Persist config including cart
 const persistConfig = {
   key: "root",
   storage: storageSession,
-  whitelist: ["auth", "location"], // now both are persisted
+  whitelist: ["auth", "location", "address", "cart"],  // ✅ persist cart too
 };
 
-// Wrap rootReducer with persistReducer
+// Create a persisted reducer
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
-// Configure the store
+// Configure store with middleware adjustment for redux-persist
 const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
@@ -40,6 +46,5 @@ const store = configureStore({
     }),
 });
 
-// Export store and persistor
 export const persistor = persistStore(store);
 export default store;

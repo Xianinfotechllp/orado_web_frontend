@@ -10,6 +10,18 @@ export const getBillSummary = async (data) => {
   }
 };
 
+
+
+export const placeOrder = async (orderData) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/order/place-order`, orderData);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to place order:", error);
+    throw error;
+  }
+};
+
 export const getCustomerOrders = async () => {
   try {
     const response = await apiClient.get("/order/customer/orders");
@@ -30,3 +42,4 @@ export const reorderOrder = async (orderId) => {
     throw error;
   }
 };
+

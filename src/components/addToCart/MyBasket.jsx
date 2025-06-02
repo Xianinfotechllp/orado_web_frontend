@@ -9,18 +9,32 @@ import {
   RefreshCw,
 } from "lucide-react";
 import axios from "axios";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { getBillSummary } from "../../apis/orderApi";
-import { updateCart} from "../../apis/cartApi";
+import { updateCart } from "../../apis/cartApi";
+import { setCartId } from "../../slices/cartSlice";
 
 export default function MyBasket() {
   const [items, setItems] = useState([]);
-  const [orderDetails, setOrderDetails] = useState({});
+  const [cartDetails, setCartDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [bill, setBill] = useState({});
   const [buttonLoading, setButtonLoading] = useState(null);
 
-  const user = useSelector((state) => state.auth.user);
+
+  const user = useSelector((state) => state.auth.user.user);
+  const selectedAddress = useSelector((state) => state.address.selectedAddress);
+ const dipsatch = useDispatch()
+  // Fetch cart and cart details
+  const fetchCart = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`http://localhost:5000/cart/${user._id}`);
+      const cart = res.data;
+      setCartDetails(cart || {});
+      setItems(cart?.products || []);
+
+
   const location = useSelector((state) => state.location.location);
 
   const fetchCart = async () => {
@@ -29,28 +43,33 @@ export default function MyBasket() {
       const order = res.data;
       setOrderDetails(order || {});
       setItems(order.products || []);
-      setLoading(false);
 
-      if (order && order._id) {
-        await fetchBill(order._id);
+      setLoading(false);
+      
+      if (cart?._id) {
+        await fetchBill(cart._id);
+        dipsatch(setCartId(cart._id))
       }
     } catch (error) {
       console.error("Error fetching cart:", error);
       setItems([]);
-      setOrderDetails({});
+      setCartDetails({});
       setLoading(false);
     }
   };
 
+  // Fetch bill summary based on cart and location
   const fetchBill = async (cartId) => {
+    if (!cartId || !selectedAddress) return;
+
     try {
       const billres = await getBillSummary({
         userId: user._id,
-        longitude: location.lon,
-        latitude: location.lat,
+        longitude: selectedAddress.location.longitude,
+        latitude: selectedAddress.location.latitude,
         cartId: cartId,
       });
-      
+   console.log(billres)
       setBill(billres.data);
     } catch (err) {
       console.error("Error fetching bill summary", err);
@@ -58,35 +77,39 @@ export default function MyBasket() {
   };
 
   useEffect(() => {
-    fetchCart();
-  }, []);
+    if (user?._id) {
+      fetchCart();
+    }
+  }, [user?._id]);
 
+  useEffect(() => {
+    if (selectedAddress) {
+      fetchBill(cartDetails._id);
+   
+    }
+  }, [cartDetails._id, selectedAddress]);
+
+  // Update item quantity
   const updateQuantity = async (productId, change) => {
     try {
+      setButtonLoading(productId);
+
       const selectedItem = items.find((item) => item.productId === productId);
       if (!selectedItem) return;
 
       const newQuantity = selectedItem.quantity + change;
-      
+      if (newQuantity < 1) return; // Prevent quantity < 1
 
-     
-      const upadteItems = items.map((each) => {
-         if (each.productId === productId) {
-         
-          let newItems = { ...each, quantity: newQuantity};
-         return newItems
-  }
-      })
-      console.log(upadteItems)
-      setItems(upadteItems)
-
-      await updateCart(
-        orderDetails.restaurantId,
-        user._id,
-        productId,
-        newQuantity
+      // Update local state optimistically
+      const updatedItems = items.map((item) =>
+        item.productId === productId ? { ...item, quantity: newQuantity } : item
       );
+      setItems(updatedItems);
 
+      // Update on backend
+      await updateCart(cartDetails.restaurantId, user._id, productId, newQuantity);
+
+      // Refetch cart to sync
       await fetchCart();
     } catch (error) {
       console.error("Failed to update quantity", error);
@@ -95,6 +118,18 @@ export default function MyBasket() {
     }
   };
 
+  // Remove item from cart
+  const removeItem = async (productId) => {
+    try {
+      setButtonLoading(productId);
+      await updateCart(cartDetails.restaurantId, user._id, productId, 0);
+      await fetchCart();
+    } catch (error) {
+      console.error("Failed to remove item", error);
+    } finally {
+      setButtonLoading(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -152,7 +187,7 @@ export default function MyBasket() {
                   <div className="flex items-center border border-gray-300 rounded">
                     <button
                       onClick={() => updateQuantity(item.productId, -1)}
-                    
+                      disabled={item.quantity === 1 || buttonLoading === item.productId}
                       className={`p-1 ${
                         item.quantity === 1 || buttonLoading === item.productId
                           ? "opacity-50 cursor-not-allowed"
@@ -220,9 +255,7 @@ export default function MyBasket() {
 
         <div className="flex justify-between text-sm sm:text-base">
           <span className="font-medium">Delivery Fee:</span>
-          <span className="font-medium">
-            ₹{(bill?.deliveryFee || 0).toFixed(2)}
-          </span>
+          <span className="font-medium">₹{(bill?.deliveryFee || 0).toFixed(2)}</span>
         </div>
       </div>
 
@@ -237,23 +270,6 @@ export default function MyBasket() {
         >
           <span>{items.length === 0 ? "No items to pay" : "Total to pay"}</span>
           <span>₹{(bill?.total || 0).toFixed(2)}</span>
-        </button>
-      </div>
-
-      {/* Bottom Actions */}
-      <div className="p-4 pt-0 space-y-2">
-        <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-normal py-3 px-4 rounded text-sm transition-colors flex items-center justify-between">
-          <span>Choose your free item..</span>
-          <div className="w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center">
-            <Info size={12} className="text-white" />
-          </div>
-        </button>
-
-        <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-normal py-3 px-4 rounded text-sm transition-colors flex items-center justify-between">
-          <span>Apply Coupon Code here</span>
-          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-            <ArrowRight size={12} className="text-white" />
-          </div>
         </button>
       </div>
     </div>
