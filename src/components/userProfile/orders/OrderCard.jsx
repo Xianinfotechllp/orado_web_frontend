@@ -1,19 +1,21 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { reorderOrder } from '../../../apis/orderApi'; // Adjust the import path as needed
 
 const OrderCard = ({ order, onViewDetails }) => {
-  // Mock navigate function for demo
-  const navigate = (path) => console.log('Navigate to:', path);
-
-  const itemSummary = order.orderItems?.map(item => `${item.name} × ${item.quantity}`).join(', ') || "No items";
+  const navigate = useNavigate();
+  const [isReordering, setIsReordering] = React.useState(false);
 
   const handleReorder = async () => {
     try {
-      // Mock reorderOrder API call for demo
-      console.log('Reordering order:', order._id);
+      setIsReordering(true);
+      await reorderOrder(order._id);
       navigate("/add-to-cart");
     } catch (error) {
       console.error("Reorder failed:", error);
       alert("Failed to reorder. Please try again.");
+    } finally {
+      setIsReordering(false);
     }
   };
 
@@ -49,9 +51,8 @@ const OrderCard = ({ order, onViewDetails }) => {
   };
 
   const statusInfo = getStatusDisplay(order.orderStatus);
-
-  // Get the first item's image for display, fallback to placeholder
-  const displayImage = order.orderItems?.[0]?.image 
+  const itemSummary = order.orderItems?.map(item => `${item.name} × ${item.quantity}`).join(', ') || "No items";
+  const displayImage = order.orderItems?.[0]?.image;
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 mb-4">
@@ -94,7 +95,7 @@ const OrderCard = ({ order, onViewDetails }) => {
               alt="Order"
               className="w-16 h-16 object-cover rounded-lg"
               onError={(e) => {
-                // e.target.src = 'https://via.placeholder.com';
+                e.target.src = 'https://via.placeholder.com/80?text=Food';
               }}
             />
           </div>
@@ -126,10 +127,13 @@ const OrderCard = ({ order, onViewDetails }) => {
         <div className="flex gap-2">
           <button
             type="button"
-            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-xs font-semibold uppercase"
+            className={`flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-xs font-semibold uppercase ${
+              isReordering ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
             onClick={handleReorder}
+            disabled={isReordering}
           >
-            REORDER
+            {isReordering ? 'PROCESSING...' : 'REORDER'}
           </button>
           <button
             type="button"
@@ -151,7 +155,7 @@ const OrderCard = ({ order, onViewDetails }) => {
               alt="Order"
               className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg"
               onError={(e) => {
-                // e.target.src = 'https://via.placeholder.com/120x80?text=Food';
+                e.target.src = 'https://via.placeholder.com/120x80?text=Food';
               }}
             />
           </div>
@@ -214,10 +218,13 @@ const OrderCard = ({ order, onViewDetails }) => {
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <button
             type="button"
-            className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded text-sm font-semibold uppercase"
+            className={`w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded text-sm font-semibold uppercase ${
+              isReordering ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
             onClick={handleReorder}
+            disabled={isReordering}
           >
-            REORDER
+            {isReordering ? 'PROCESSING...' : 'REORDER'}
           </button>
           <button
             type="button"
