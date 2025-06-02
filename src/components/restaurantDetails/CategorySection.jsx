@@ -17,6 +17,7 @@ function CategorySection({ category, restaurantId }) {
       try {
         const res = await axios.get(`http://localhost:5000/cart/${user._id}`);
         const cartData = res.data.products;
+        
 
         const cartMap = {};
         cartData.forEach((item) => {
@@ -41,7 +42,8 @@ function CategorySection({ category, restaurantId }) {
         [item._id]: quantity,
       }));
 
-      await updateCart(restaurantId, userId, item._id, quantity);
+  await updateCart(restaurantId, userId, item._id, quantity);
+
       dispatch(addOrUpdateItem({ product: item, quantity }));
     } catch (error) {
       console.error("Failed to update cart", error);

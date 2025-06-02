@@ -134,10 +134,11 @@ function Navbar() {
             <li className="cursor-pointer flex items-center gap-2">
               <FiSearch /> Search
             </li>
-         
+            <Link to="/add-to-cart">
             <li className="cursor-pointer flex items-center gap-2">
               <FiShoppingBag /> Cart
             </li>
+            </Link>
            
             <button className="bg-[#EA4424] text-white px-6 py-2 rounded-full font-bold hover:bg-[#d1381b] transition">
               Get Started

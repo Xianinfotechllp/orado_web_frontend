@@ -11,6 +11,7 @@ import OrderManagement from "./pages/OrderManagement/OrderManagement";
 
 import RestaurantDeatils from "./pages/RestaurantDetails/RestaurantDeatils";
 import Signup from "./pages/Auth/SignUp";
+import Faq from "./pages/Faq/Faq";
 
 import OrdersPage from "./pages/UserProfile/OrdersPage";
 import SettingsPage from "./pages/UserProfile/SettingsPage";
@@ -28,6 +29,7 @@ function App() {
         <Route path="/order-management" element={<OrderManagement />} />
 
         <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils/>}  />
+        <Route path="/faq" element={<Faq/>}  />
 
         {/* User Profile */}
         <Route path="/my-account" element={<OrdersPage />} />

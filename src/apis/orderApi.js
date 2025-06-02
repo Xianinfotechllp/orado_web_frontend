@@ -1,5 +1,15 @@
 import apiClient from "./apiClient/apiClient";
 
+export const getBillSummary = async (data) => {
+  try {
+    const response = await apiClient.post(`/order/pricesummary`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching bill summary:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export const getCustomerOrders = async () => {
   try {
     const response = await apiClient.get("/order/customer/orders");
