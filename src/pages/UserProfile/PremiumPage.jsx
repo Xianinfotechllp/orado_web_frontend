@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import AppLayout from '../../components/userProfile/layout/AppLayout';
 import Sidebar from '../../components/userProfile/navigation/Sidebar';
-import OrdersContent from '../../components/userProfile/orders/OrdersContent';
+import OradoOne from '../../components/userProfile/premium/Premium';
 import Navbar from '../../components/layout/Navbar';
 import { Menu } from 'lucide-react'; // icon for mobile toggle
 
-const OrdersPage = () => {
+const PremiumPage = () => {
   const [showSidebar, setShowSidebar] = useState(false);
 
   return (
@@ -15,7 +15,7 @@ const OrdersPage = () => {
         <div className="flex flex-col md:flex-row">
           {/* Mobile menu button */}
           <div className="md:hidden flex justify-between items-center p-4 bg-white border-b">
-            <h2 className="text-xl font-semibold">Past Orders</h2>
+            <h2 className="text-xl font-semibold">Orado One</h2>
             <button onClick={() => setShowSidebar(!showSidebar)}>
               <Menu className="w-6 h-6" />
             </button>
@@ -32,7 +32,7 @@ const OrdersPage = () => {
 
           {/* Main content */}
           <div className="flex-1 p-4 md:p-6">
-            <OrdersContent />
+            <OradoOne />
           </div>
         </div>
       </AppLayout>
@@ -40,4 +40,4 @@ const OrdersPage = () => {
   );
 };
 
-export default OrdersPage;
+export default PremiumPage;

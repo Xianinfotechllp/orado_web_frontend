@@ -16,6 +16,9 @@ import Faq from "./pages/Faq/Faq";
 import OrdersPage from "./pages/UserProfile/OrdersPage";
 import SettingsPage from "./pages/UserProfile/SettingsPage";
 import NotificationPage from "./pages/Notification/NotificationPage";
+import AddressPage from "./pages/UserProfile/AddressPage";
+import PremiumPage from "./pages/UserProfile/PremiumPage";
+import FavouriteRestaurantsPage from "./pages/UserProfile/FavouriteRestaurantsPage";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -37,6 +40,9 @@ function App() {
         <Route path="/my-account" element={<OrdersPage />} />
         <Route path="/my-account/orders" element={<OrdersPage />} />
         <Route path="/my-account/settings" element={<SettingsPage />} />
+        <Route path="/my-account/address" element={<AddressPage />} />
+        <Route path="/my-account/favourites" element={<FavouriteRestaurantsPage />} />
+        <Route path="/my-account/premium" element={<PremiumPage />} />
       </Routes>
     </>
   );

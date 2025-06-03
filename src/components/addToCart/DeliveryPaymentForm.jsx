@@ -41,7 +41,7 @@ export default function DeliveryPaymentForm() {
   }, [user?._id, dispatch]);
 
   const handleAddressUpdate = (updatedAddress) => {
-    updateAddress(user._id, updatedAddress.addressId, updatedAddress)
+    updateAddress( updatedAddress.addressId, updatedAddress)
       .then(() => {
         setAddresses((prev) =>
           prev.map((addr) =>
