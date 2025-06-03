@@ -70,6 +70,7 @@ const RestaurantApprovalsPage = () => {
           kycStatus: restaurant.kycStatus || 'pending',
           kycRejectionReason: restaurant.kycRejectionReason || '',
           foodType: restaurant.foodType || 'Not specified',
+          kycDocuments:restaurant.kycDocuments,
           minOrderAmount: restaurant.minOrderAmount || 0,
           openingHours: restaurant.openingHours ?
             Object.entries(restaurant.openingHours).map(([day, hours]) => `${day}: ${hours}`).join(', ') :
@@ -98,7 +99,8 @@ const RestaurantApprovalsPage = () => {
     try {
       const token = sessionStorage.getItem('adminToken');
       const response = await axios.post(
-        `http://localhost:5000/admin/restaurant-application/${id}/approve-status`,
+        
+        `http://localhost:5000/admin/restaurant-application/${id}/update`,
         { action: "approved" },
         {
           headers: {
@@ -117,7 +119,7 @@ const RestaurantApprovalsPage = () => {
       toast.success("Restaurant approved successfully");
     } catch (err) {
       console.error("Failed to approve:", err);
-      toast.error("Failed to approve restaurant");
+      toast.error(err.response.data.message);
     }
   };
 
@@ -490,7 +492,7 @@ const RestaurantApprovalsPage = () => {
       {showDetailsModal && selectedRestaurant && (
   <div className="fixed z-50 inset-0 overflow-y-auto">
     <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity backdrop-blur-sm" aria-hidden="true"></div>
+
       <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
       
       <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full border border-gray-200">
@@ -636,19 +638,35 @@ const RestaurantApprovalsPage = () => {
                       <FiImage className="mr-2 text-orange-500" />
                       Media Gallery
                     </h4>
-                    
-                    {selectedRestaurant.images.length > 0 && (
+                     {console.log(selectedRestaurant.kycDocuments.aadharDocUrl)}
+
+                     
+                    {selectedRestaurant && (
                       <div className="mb-4">
                         <h5 className="text-sm font-medium text-gray-600 mb-2">Restaurant Images</h5>
                         <div className="grid grid-cols-3 gap-2">
-                          {selectedRestaurant.images.slice(0, 6).map((img, index) => (
+                        
                             <img 
-                              key={index} 
-                              src={img} 
-                              alt={`Restaurant ${index + 1}`} 
+                              
+                              src={selectedRestaurant?.kycDocuments?.aadharDocUrl} 
+                           
                               className="h-16 w-full object-cover rounded-md border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
                             />
-                          ))}
+
+                             <img 
+                              
+                              src={selectedRestaurant?.kycDocuments?.fssaiDocUrl} 
+                           
+                              className="h-16 w-full object-cover rounded-md border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                            />
+                           
+                             <img 
+                              
+                              src={selectedRestaurant?.kycDocuments?.fssaiDocUrl?.gstDocUr} 
+                           
+                              className="h-16 w-full object-cover rounded-md border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                            />
+                       
                         </div>
                         {selectedRestaurant.images.length > 6 && (
                           <p className="text-xs text-gray-500 mt-1">+{selectedRestaurant.images.length - 6} more images</p>
