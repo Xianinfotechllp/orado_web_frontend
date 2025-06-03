@@ -16,6 +16,11 @@ import Faq from "./pages/Faq/Faq";
 import OrdersPage from "./pages/UserProfile/OrdersPage";
 import SettingsPage from "./pages/UserProfile/SettingsPage";
 import NotificationPage from "./pages/Notification/NotificationPage";
+import AdminLogin from "./pages/Admin/AdminLogin";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import { ToastContainer } from "react-toastify";
+import RestaurantApprovalsPage from "./pages/Admin/RestaurantApprovalsPage";
+import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDetails";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -23,21 +28,31 @@ function App() {
     <>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Signup/>}/>
-        <Route  path="/home" element={<Home/>} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/home" element={<Home />} />
 
         <Route path="/add-to-cart" element={<AddToCart />} />
         <Route path="/order-management" element={<OrderManagement />} />
 
-        <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils/>}  />
-        <Route path="/faq" element={<Faq/>}  />
+        <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils />} />
+        <Route path="/faq" element={<Faq />} />
         <Route path="/notifications" element={<NotificationPage />} />
 
         {/* User Profile */}
         <Route path="/my-account" element={<OrdersPage />} />
         <Route path="/my-account/orders" element={<OrdersPage />} />
         <Route path="/my-account/settings" element={<SettingsPage />} />
+
+
+        {/* Admin-Side */}
+        <Route path="admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />}>
+          <Route path="restaurant-approvals" element={<RestaurantApprovalsPage />} />
+          <Route path="restaurant-approvals/:id" element={<RestaurantApplicationDetails />} />
+          {/* Add more nested routes as needed */}
+        </Route>
       </Routes>
+      <ToastContainer />
     </>
   );
 }
