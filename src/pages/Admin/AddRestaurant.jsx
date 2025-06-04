@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, MapPin, Phone, Mail, FileText, Clock, CreditCard, User, Building } from 'lucide-react';
-
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css'
+import { createRestaurant } from '../../apis/restaurantApi';
 const AddRestaurant = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -17,19 +20,27 @@ const AddRestaurant = () => {
       zip: '',
       latitude: '',
       longitude: '',
+       openingHours: []
     },
     foodType: 'veg',
     minOrderAmount: 100,
     openingHours: JSON.stringify([]),
     paymentMethods: 'online',
+    
   });
 
-  const [documents, setDocuments] = useState({});
+  const [documents, setDocuments] = useState({
+  fssaiDoc: null,
+  gstDoc: null,
+  aadharDoc: null
+});
+console.log(formData)
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+  
     if (name.includes('address.')) {
       const key = name.split('.')[1];
       setFormData((prev) => ({
@@ -39,11 +50,39 @@ const AddRestaurant = () => {
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
+   
   };
 
+
   const handleFileChange = (e) => {
-    setDocuments({ ...documents, [e.target.name]: e.target.files[0] });
+     const { name, files } = e.target;
+  setDocuments((prev) => ({
+    ...prev,
+    [name]: files[0]
+  }));
   };
+
+const addOpeningHour = () => {
+  setFormData((prev) => ({
+    ...prev,
+    openingHours: [...prev.openingHours, { day: '', open: '', close: '' }]
+  }));
+};
+
+const removeOpeningHour = (index) => {
+  setFormData((prev) => ({
+    ...prev,
+    openingHours: prev.openingHours.filter((_, i) => i !== index)
+  }));
+};
+
+const handleOpeningHoursChange = (index, field, value) => {
+  const updated = [...formData.openingHours];
+  updated[index][field] = value;
+  setFormData((prev) => ({ ...prev, openingHours: updated }));
+};
+
+
 
   const handleLocationSelect = (locationDetails) => {
     setFormData(prev => ({
@@ -60,33 +99,61 @@ const AddRestaurant = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
-    const form = new FormData();
-    for (let key in formData) {
-      if (typeof formData[key] === 'object') {
-        form.append(key, JSON.stringify(formData[key]));
-      } else {
-        form.append(key, formData[key]);
-      }
+  // Create FormData object with a different name
+  const formDataToSend = new FormData();
+  
+  // Basic information
+  formDataToSend.append('name', formData.name);
+  formDataToSend.append('ownerName', formData.ownerName);
+  formDataToSend.append('phone', formData.phone);
+  formDataToSend.append('email', formData.email);
+  
+  // Business details
+  formDataToSend.append('fssaiNumber', formData.fssaiNumber);
+  formDataToSend.append('gstNumber', formData.gstNumber);
+  formDataToSend.append('aadharNumber', formData.aadharNumber);
+  formDataToSend.append('foodType', formData.foodType);
+  formDataToSend.append('minOrderAmount', formData.minOrderAmount);
+  
+  // Opening hours
+  formDataToSend.append('openingHours', JSON.stringify(formData.openingHours));
+  
+  // Address details - need to append each field separately
+  formDataToSend.append('address[street]', formData.address.street);
+  formDataToSend.append('address[city]', formData.address.city);
+  formDataToSend.append('address[state]', formData.address.state);
+  formDataToSend.append('address[zip]', formData.address.zip);
+  formDataToSend.append('address[latitude]', formData.address.latitude);
+  formDataToSend.append('address[longitude]', formData.address.longitude);
+  
+  // Payment methods
+  formDataToSend.append('paymentMethods', formData.paymentMethods);
+  
+  // File uploads
+  if (documents.fssaiDoc) formDataToSend.append('fssaiDoc', documents.fssaiDoc);
+  if (documents.gstDoc) formDataToSend.append('gstDoc', documents.gstDoc);
+  if (documents.aadharDoc) formDataToSend.append('aadharDoc', documents.aadharDoc);
+
+  try {
+    // For testing - log what's being sent
+    for (let [key, value] of formDataToSend.entries()) {
+      console.log(key, value);
     }
-    Object.keys(documents).forEach((key) => {
-      form.append(key, documents[key]);
-    });
-
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      alert('Restaurant Created Successfully!');
-    } catch (err) {
-      alert('Error: ' + (err.response?.data?.message || 'Unknown Error'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await createRestaurant(formData)
+    alert('Restaurant Created Successfully!');
+  } catch (err) {
+    alert('Error: ' + (err.response?.data?.message || 'Unknown Error'));
+  } finally {
+    setLoading(false);
+  }
+};
   const steps = [
     { id: 1, title: 'Basic Information', icon: Building },
     { id: 2, title: 'Address Details', icon: MapPin },
@@ -98,172 +165,54 @@ const AddRestaurant = () => {
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
   // Enhanced Location Picker Component
-  const LocationPicker = ({ onSelectLocation }) => {
-    const mapRef = useRef(null);
-    const [map, setMap] = useState(null);
-    const [marker, setMarker] = useState(null);
-    const [geocoder, setGeocoder] = useState(null);
-    const [currentAddress, setCurrentAddress] = useState('');
-    const [apiLoaded, setApiLoaded] = useState(false);
+const LocationPicker = ({ onSelectLocation }) => {
+  const [position, setPosition] = useState([20.5937, 78.9629]); // Default to India
+  const [currentAddress, setCurrentAddress] = useState('');
 
-    // Load Google Maps API
-    useEffect(() => {
-      if (!window.google) {
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onload = () => setApiLoaded(true);
-        document.head.appendChild(script);
-      } else {
-        setApiLoaded(true);
-      }
+  const customIcon = new L.Icon({
+    iconUrl: 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+  });
 
-      return () => {
-        if (window.google) {
-          // Clean up if needed
-        }
-      };
-    }, []);
-
-    // Initialize map when API is loaded
-    useEffect(() => {
-      if (!apiLoaded) return;
-
-      const initMap = () => {
-        const initialLocation = { lat: 20.5937, lng: 78.9629 }; // Default to India
-        const mapInstance = new window.google.maps.Map(mapRef.current, {
-          center: initialLocation,
-          zoom: 5,
-        });
-
-        const markerInstance = new window.google.maps.Marker({
-          position: initialLocation,
-          map: mapInstance,
-          draggable: true,
-        });
-
-        const geocoderInstance = new window.google.maps.Geocoder();
-
-        // Add click listener to place marker
-        mapInstance.addListener('click', (e) => {
-          markerInstance.setPosition(e.latLng);
-          reverseGeocode(e.latLng, geocoderInstance);
-        });
-
-        // Add dragend listener to marker
-        markerInstance.addListener('dragend', (e) => {
-          reverseGeocode(e.latLng, geocoderInstance);
-        });
-
-        setMap(mapInstance);
-        setMarker(markerInstance);
-        setGeocoder(geocoderInstance);
-      };
-
-      initMap();
-    }, [apiLoaded]);
-
-    const reverseGeocode = (latLng, geocoder) => {
-      geocoder.geocode({ location: latLng }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-          const addressComponents = results[0].address_components;
-          let street = '';
-          let city = '';
-          let state = '';
-          let zip = '';
-
-          addressComponents.forEach(component => {
-            if (component.types.includes('route')) {
-              street = component.long_name;
-            }
-            if (component.types.includes('locality')) {
-              city = component.long_name;
-            }
-            if (component.types.includes('administrative_area_level_1')) {
-              state = component.long_name;
-            }
-            if (component.types.includes('postal_code')) {
-              zip = component.long_name;
-            }
-          });
-
-          setCurrentAddress(results[0].formatted_address);
-          
-          onSelectLocation({
-            street: street,
-            city: city,
-            state: state,
-            zip: zip,
-            latitude: latLng.lat(),
-            longitude: latLng.lng()
-          });
-        }
-      });
-    };
-
-    const handleSearch = (e) => {
-      e.preventDefault();
-      if (!geocoder || !currentAddress.trim()) return;
-
-      geocoder.geocode({ address: currentAddress }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-          const location = results[0].geometry.location;
-          map.setCenter(location);
-          marker.setPosition(location);
-          reverseGeocode(location, geocoder);
-        }
-      });
-    };
-
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center">
-          <input
-            type="text"
-            value={currentAddress}
-            onChange={(e) => setCurrentAddress(e.target.value)}
-            placeholder="Search for an address"
-            className="flex-grow px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-          />
-          <button
-            onClick={handleSearch}
-            className="px-4 py-2 bg-orange-500 text-white rounded-r-lg hover:bg-orange-600 transition-colors"
-          >
-            Search
-          </button>
-        </div>
-        
-        <div 
-          ref={mapRef} 
-          className="w-full h-96 rounded-lg border border-gray-300"
-          style={{ minHeight: '400px' }}
-        />
-        
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-medium text-gray-700 mb-2">Selected Location Details</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-gray-500">Latitude</label>
-              <div className="mt-1">{formData.address.latitude || 'Not selected'}</div>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-500">Longitude</label>
-              <div className="mt-1">{formData.address.longitude || 'Not selected'}</div>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-500">Street</label>
-              <div className="mt-1">{formData.address.street || 'Not selected'}</div>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-500">City</label>
-              <div className="mt-1">{formData.address.city || 'Not selected'}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  const reverseGeocode = async (lat, lon) => {
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+    const data = await response.json();
+    setCurrentAddress(data.display_name);
+    onSelectLocation({
+      address: data.display_name,
+      latitude: lat,
+      longitude: lon
+    });
   };
+
+  const MapClickHandler = () => {
+    useMapEvents({
+      click(e) {
+        const { lat, lng } = e.latlng;
+        setPosition([lat, lng]);
+        reverseGeocode(lat, lng);
+      }
+    });
+    return null;
+  };
+
+  return (
+    <div>
+      <MapContainer center={position} zoom={5} style={{ height: '400px', width: '100%' }}>
+        <TileLayer
+          attribution='© OpenStreetMap'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <Marker position={position} icon={customIcon} />
+        <MapClickHandler />
+      </MapContainer>
+
+      <p><strong>Selected Address:</strong> {currentAddress}</p>
+    </div>
+  );
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white py-8 px-4">
@@ -569,19 +518,57 @@ const AddRestaurant = () => {
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      <Clock className="w-4 h-4 mr-2 text-orange-500" />
-                      Opening Hours
-                    </label>
-                    <input 
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300" 
-                      name="openingHours" 
-                      value={formData.openingHours} 
-                      onChange={handleChange} 
-                      placeholder='JSON format: [{"day": "Monday", "open": "09:00", "close": "22:00"}]' 
-                    />
-                  </div>
+                 <div className="space-y-2">
+  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+    <Clock className="w-4 h-4 mr-2 text-orange-500" />
+    Opening Hours
+  </label>
+
+  {Array.isArray(formData.openingHours) && formData.openingHours.map((item, idx) => (
+    <div key={idx} className="flex items-center gap-2">
+      <input
+        type="text"
+        placeholder="Day"
+        value={item.day}
+        onChange={(e) =>
+          handleOpeningHoursChange(idx, 'day', e.target.value)
+        }
+        className="w-1/3 px-3 py-2 border rounded-lg"
+      />
+      <input
+        type="time"
+        value={item.open}
+        onChange={(e) =>
+          handleOpeningHoursChange(idx, 'open', e.target.value)
+        }
+        className="w-1/4 px-3 py-2 border rounded-lg"
+      />
+      <input
+        type="time"
+        value={item.close}
+        onChange={(e) =>
+          handleOpeningHoursChange(idx, 'close', e.target.value)
+        }
+        className="w-1/4 px-3 py-2 border rounded-lg"
+      />
+      <button
+        type="button"
+        onClick={() => removeOpeningHour(idx)}
+        className="text-red-500 hover:text-red-700"
+      >
+        ✖
+      </button>
+    </div>
+  ))}
+
+  <button
+    type="button"
+    onClick={addOpeningHour}
+    className="flex items-center gap-1 text-orange-600 hover:text-orange-800 mt-2"
+  >
+    ➕ Add Day
+  </button>
+</div>
                 </div>
               </div>
             )}
