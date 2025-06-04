@@ -21,6 +21,7 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import { ToastContainer } from "react-toastify";
 import RestaurantApprovalsPage from "./pages/Admin/RestaurantApprovalsPage";
 import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDetails";
+import AddRestaurantPage from "./pages/Admin/AddRestaurant";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -49,6 +50,7 @@ function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />}>
           <Route path="restaurant-approvals" element={<RestaurantApprovalsPage />} />
           <Route path="restaurant-approvals/:id" element={<RestaurantApplicationDetails />} />
+          <Route path="restaurant-add" element={<AddRestaurantPage />} />
           {/* Add more nested routes as needed */}
         </Route>
       </Routes>

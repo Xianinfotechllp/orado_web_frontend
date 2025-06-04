@@ -54,3 +54,4 @@ export const getRestaurantById = async (restaurantId) => {
     throw error;
   }
 };
+

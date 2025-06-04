@@ -171,19 +171,27 @@ const RestaurantApprovalsPage = () => {
     setShowDetailsModal(true);
   };
 
+ // Filter and sort restaurants
   const filtered = restaurants
-    .filter((r) =>
-      r.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.owner.toLowerCase().includes(search.toLowerCase())
-    )
-    .filter((r) => (locationFilter ? r.location.includes(locationFilter) : true))
-    .filter((r) => (statusFilter ? r.status === statusFilter : true))
+    .filter((r) => {
+      const matchesSearch = search === '' || 
+        r.name.toLowerCase().includes(search.toLowerCase()) ||
+        r.merchantSearchName.toLowerCase().includes(search.toLowerCase()) ||
+        r.email.toLowerCase().includes(search.toLowerCase());
+      
+      const matchesLocation = locationFilter === '' || 
+        r.location.toLowerCase().includes(locationFilter.toLowerCase());
+      
+      const matchesStatus = statusFilter === '' || 
+        r.status.toLowerCase().includes(statusFilter.toLowerCase());
+      
+      return matchesSearch && matchesLocation && matchesStatus;
+    })
     .sort((a, b) => {
       if (sortBy === 'latest') return new Date(b.submittedAt) - new Date(a.submittedAt);
       if (sortBy === 'az') return a.name.localeCompare(b.name);
       return 0;
     });
-
   const statusBadge = (status) => {
     const colors = {
       'Pending': 'bg-yellow-100 text-yellow-800',
