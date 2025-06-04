@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, MapPin, Phone, Mail, FileText, Clock, CreditCard, User, Building } from 'lucide-react';
 
 const AddRestaurant = () => {
@@ -50,12 +50,12 @@ const AddRestaurant = () => {
       ...prev,
       address: {
         ...prev.address,
-        street: locationDetails.street,
-        city: locationDetails.city,
-        state: locationDetails.state,
-        zip: locationDetails.zip,
-        latitude: locationDetails.latitude,
-        longitude: locationDetails.longitude
+        street: locationDetails.street || '',
+        city: locationDetails.city || '',
+        state: locationDetails.state || '',
+        zip: locationDetails.zip || '',
+        latitude: locationDetails.latitude || '',
+        longitude: locationDetails.longitude || ''
       }
     }));
   };
@@ -97,24 +97,170 @@ const AddRestaurant = () => {
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 4));
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
-  // Simple location picker component (replacing the dynamic import)
-  const SimpleLocationPicker = ({ onSelectLocation }) => {
+  // Enhanced Location Picker Component
+  const LocationPicker = ({ onSelectLocation }) => {
+    const mapRef = useRef(null);
+    const [map, setMap] = useState(null);
+    const [marker, setMarker] = useState(null);
+    const [geocoder, setGeocoder] = useState(null);
+    const [currentAddress, setCurrentAddress] = useState('');
+    const [apiLoaded, setApiLoaded] = useState(false);
+
+    // Load Google Maps API
+    useEffect(() => {
+      if (!window.google) {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => setApiLoaded(true);
+        document.head.appendChild(script);
+      } else {
+        setApiLoaded(true);
+      }
+
+      return () => {
+        if (window.google) {
+          // Clean up if needed
+        }
+      };
+    }, []);
+
+    // Initialize map when API is loaded
+    useEffect(() => {
+      if (!apiLoaded) return;
+
+      const initMap = () => {
+        const initialLocation = { lat: 20.5937, lng: 78.9629 }; // Default to India
+        const mapInstance = new window.google.maps.Map(mapRef.current, {
+          center: initialLocation,
+          zoom: 5,
+        });
+
+        const markerInstance = new window.google.maps.Marker({
+          position: initialLocation,
+          map: mapInstance,
+          draggable: true,
+        });
+
+        const geocoderInstance = new window.google.maps.Geocoder();
+
+        // Add click listener to place marker
+        mapInstance.addListener('click', (e) => {
+          markerInstance.setPosition(e.latLng);
+          reverseGeocode(e.latLng, geocoderInstance);
+        });
+
+        // Add dragend listener to marker
+        markerInstance.addListener('dragend', (e) => {
+          reverseGeocode(e.latLng, geocoderInstance);
+        });
+
+        setMap(mapInstance);
+        setMarker(markerInstance);
+        setGeocoder(geocoderInstance);
+      };
+
+      initMap();
+    }, [apiLoaded]);
+
+    const reverseGeocode = (latLng, geocoder) => {
+      geocoder.geocode({ location: latLng }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          const addressComponents = results[0].address_components;
+          let street = '';
+          let city = '';
+          let state = '';
+          let zip = '';
+
+          addressComponents.forEach(component => {
+            if (component.types.includes('route')) {
+              street = component.long_name;
+            }
+            if (component.types.includes('locality')) {
+              city = component.long_name;
+            }
+            if (component.types.includes('administrative_area_level_1')) {
+              state = component.long_name;
+            }
+            if (component.types.includes('postal_code')) {
+              zip = component.long_name;
+            }
+          });
+
+          setCurrentAddress(results[0].formatted_address);
+          
+          onSelectLocation({
+            street: street,
+            city: city,
+            state: state,
+            zip: zip,
+            latitude: latLng.lat(),
+            longitude: latLng.lng()
+          });
+        }
+      });
+    };
+
+    const handleSearch = (e) => {
+      e.preventDefault();
+      if (!geocoder || !currentAddress.trim()) return;
+
+      geocoder.geocode({ address: currentAddress }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          const location = results[0].geometry.location;
+          map.setCenter(location);
+          marker.setPosition(location);
+          reverseGeocode(location, geocoder);
+        }
+      });
+    };
+
     return (
-      <div className="h-64 bg-gray-100 rounded-xl flex items-center justify-center">
-        <button 
-          type="button"
-          onClick={() => onSelectLocation({
-            street: '123 Main St',
-            city: 'Sample City',
-            state: 'Sample State',
-            zip: '12345',
-            latitude: '40.7128',
-            longitude: '-74.0060'
-          })}
-          className="px-4 py-2 bg-orange-500 text-white rounded-lg"
-        >
-          Click to Set Location (Sample)
-        </button>
+      <div className="space-y-4">
+        <div className="flex items-center">
+          <input
+            type="text"
+            value={currentAddress}
+            onChange={(e) => setCurrentAddress(e.target.value)}
+            placeholder="Search for an address"
+            className="flex-grow px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+          <button
+            onClick={handleSearch}
+            className="px-4 py-2 bg-orange-500 text-white rounded-r-lg hover:bg-orange-600 transition-colors"
+          >
+            Search
+          </button>
+        </div>
+        
+        <div 
+          ref={mapRef} 
+          className="w-full h-96 rounded-lg border border-gray-300"
+          style={{ minHeight: '400px' }}
+        />
+        
+        <div className="p-4 bg-gray-50 rounded-lg">
+          <h4 className="font-medium text-gray-700 mb-2">Selected Location Details</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-gray-500">Latitude</label>
+              <div className="mt-1">{formData.address.latitude || 'Not selected'}</div>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-500">Longitude</label>
+              <div className="mt-1">{formData.address.longitude || 'Not selected'}</div>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-500">Street</label>
+              <div className="mt-1">{formData.address.street || 'Not selected'}</div>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-500">City</label>
+              <div className="mt-1">{formData.address.city || 'Not selected'}</div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -245,7 +391,7 @@ const AddRestaurant = () => {
                     <MapPin className="w-4 h-4 mr-2 text-orange-500" />
                     Select Location on Map
                   </label>
-                  <SimpleLocationPicker onSelectLocation={handleLocationSelect} />
+                  <LocationPicker onSelectLocation={handleLocationSelect} />
                 </div>
                 
                 <div className="space-y-2">
