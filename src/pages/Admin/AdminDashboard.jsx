@@ -48,12 +48,12 @@ function AdminDashboard() {
           </SidebarItem>
 
           <SidebarItem title="Restaurant Management" icon={<FiHome />}>
-            <p className="py-1 pl-2 hover:text-[#EA4424] hover:underline cursor-pointer">All Restaurants</p>
             <Link to="restaurant-add" className="block py-1 pl-2 hover:text-[#EA4424] hover:underline">
             Add Restaurants
             </Link>
-            <Link to="restaurant-add" className="block py-1 pl-2 hover:text-[#EA4424] hover:underline">
-            Add Men
+            
+            <Link to="restaurant-edit" className="block py-1 pl-2 hover:text-[#EA4424] hover:underline">
+            All Restaurants 
             </Link>
           </SidebarItem>
 
