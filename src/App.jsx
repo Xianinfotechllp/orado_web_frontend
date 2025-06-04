@@ -24,6 +24,8 @@ import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDet
 import AddRestaurantPage from "./pages/Admin/AddRestaurant";
 import AddMenu from "./pages/Admin/RestaurantList";
 import RestaurantList from "./pages/Admin/RestaurantList";
+import CreateMenu from "./pages/Admin/CreateMenu";
+import RestaurantCategories from "./pages/Admin/RestaurantCategories";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -54,8 +56,12 @@ function App() {
           <Route path="restaurant-approvals/:id" element={<RestaurantApplicationDetails />} />
           <Route path="restaurant-add" element={<AddRestaurantPage />} />
           <Route path="restaurant-edit" element={<RestaurantList />} />
+          <Route path="restaurant-createmenu" element={<CreateMenu />} />
+
           {/* Add more nested routes as needed */}
         </Route>
+        <Route path="/restaurants/:restaurantId/categories" element={<RestaurantCategories />} />
+
       </Routes>
       <ToastContainer />
     </>
