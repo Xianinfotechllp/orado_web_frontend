@@ -6,6 +6,7 @@ import {
   FiClipboard, FiHome, FiLogOut, FiPieChart
 } from 'react-icons/fi';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import Dashboard from './Dashboard';
 
 const SidebarItem = ({ title, icon, children }) => {
   const [open, setOpen] = useState(false);
@@ -78,6 +79,9 @@ function AdminDashboard() {
             <Link to="restaurant-createmenu" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               Create Menu
             </Link>
+            <Link to="restaurant-permission" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+              Restaurant permission
+            </Link>
           </SidebarItem>
 
           <SidebarItem title="Agents" icon={<FiUser size={18} />}>
@@ -113,6 +117,7 @@ function AdminDashboard() {
       <div className="flex-1 overflow-y-auto bg-gray-50">
         <div className="p-6">
           <div className="bg-white rounded-xl shadow-sm p-6">
+            <Dashboard/>
             <Outlet />
           </div>
         </div>

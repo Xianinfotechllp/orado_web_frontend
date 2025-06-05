@@ -37,58 +37,6 @@ const RestaurantList = () => {
   const [editError, setEditError] = useState(null);
   const [editSuccess, setEditSuccess] = useState(false);
 
-  // Mock data for demonstration since we can't make actual API calls
-  const mockRestaurants = [
-    {
-      _id: '1',
-      name: 'Pizza Palace',
-      images: ['https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop'],
-      rating: 4.2,
-      foodType: 'both',
-      paymentMethods: ['online', 'cash'],
-      address: { street: 'MG Road', city: 'Bangalore' },
-      phone: '+91 9876543210',
-      minOrderAmount: 150,
-      autoOnOff: true,
-      deliveryTime: '25-30 mins',
-      offer: '50% OFF up to ₹100',
-      cuisines: ['Italian', 'Continental'],
-      distance: '1.2 km'
-    },
-    {
-      _id: '2',
-      name: 'Spice Garden',
-      images: ['https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=300&fit=crop'],
-      rating: 4.5,
-      foodType: 'veg',
-      paymentMethods: ['online'],
-      address: { street: 'Brigade Road', city: 'Bangalore' },
-      phone: '+91 9876543211',
-      minOrderAmount: 120,
-      autoOnOff: true,
-      deliveryTime: '20-25 mins',
-      offer: '30% OFF up to ₹75',
-      cuisines: ['Indian', 'North Indian'],
-      distance: '0.8 km'
-    },
-    {
-      _id: '3',
-      name: 'Burger Junction',
-      images: ['https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop'],
-      rating: 4.0,
-      foodType: 'non-veg',
-      paymentMethods: ['online', 'cash'],
-      address: { street: 'Commercial Street', city: 'Bangalore' },
-      phone: '+91 9876543212',
-      minOrderAmount: 200,
-      autoOnOff: false,
-      deliveryTime: '35-40 mins',
-      offer: null,
-      cuisines: ['American', 'Fast Food'],
-      distance: '2.1 km'
-    }
-  ];
-
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
@@ -105,6 +53,7 @@ const RestaurantList = () => {
     fetchRestaurants();
   }, []);
 
+  
 
   const filteredRestaurants = restaurants.filter(restaurant => {
     const matchesSearch = restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -181,7 +130,7 @@ const RestaurantList = () => {
 
       // 🔗 Real API call to update the restaurant
       const res = await axios.put(
-        `http://localhost:5000/admin/edit/restaurant/${editingRestaurant._id}`,
+        `http://localhost:5000/a/edit/restaurant/${editingRestaurant._id}`,
         updatedData,
         {
           headers: {

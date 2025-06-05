@@ -20,12 +20,14 @@ import AdminLogin from "./pages/Admin/AdminLogin";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import { ToastContainer } from "react-toastify";
 import RestaurantApprovalsPage from "./pages/Admin/RestaurantApprovalsPage";
-import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDetails";
 import AddRestaurantPage from "./pages/Admin/AddRestaurant";
 import AddMenu from "./pages/Admin/RestaurantList";
 import RestaurantList from "./pages/Admin/RestaurantList";
 import CreateMenu from "./pages/Admin/CreateMenu";
 import RestaurantCategories from "./pages/Admin/RestaurantCategories";
+import CategoryItems from "./pages/Admin/CategoryItems";
+import AdminPermission from "./pages/Admin/AdminPermision";
+import Dashboard from "./pages/Admin/Dashboard";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -52,16 +54,21 @@ function App() {
         {/* Admin-Side */}
         <Route path="admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />}>
+
+          <Route index element={<Dashboard />} />
           <Route path="restaurant-approvals" element={<RestaurantApprovalsPage />} />
-          <Route path="restaurant-approvals/:id" element={<RestaurantApplicationDetails />} />
           <Route path="restaurant-add" element={<AddRestaurantPage />} />
           <Route path="restaurant-edit" element={<RestaurantList />} />
           <Route path="restaurant-createmenu" element={<CreateMenu />} />
+          <Route path="restaurant-permission" element={<AdminPermission />} />
 
           {/* Add more nested routes as needed */}
         </Route>
         <Route path="/restaurants/:restaurantId/categories" element={<RestaurantCategories />} />
-
+        <Route
+          path="/restaurants/:restaurantId/categories/:categoryId/items"
+          element={<CategoryItems />}
+        />
       </Routes>
       <ToastContainer />
     </>
