@@ -21,6 +21,10 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import { ToastContainer } from "react-toastify";
 import RestaurantApprovalsPage from "./pages/Admin/RestaurantApprovalsPage";
 import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDetails";
+
+import About from "./pages/Merchant/AboutMerchant";
+import Partner from "./pages/Merchant/Partner";
+import MerchantDashboard from "./pages/Merchant/MerchantDashboard";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -34,21 +38,34 @@ function App() {
         <Route path="/add-to-cart" element={<AddToCart />} />
         <Route path="/order-management" element={<OrderManagement />} />
 
-        <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils />} />
+        <Route
+          path="/restaurant/details/:restaurantId"
+          element={<RestaurantDeatils />}
+        />
         <Route path="/faq" element={<Faq />} />
         <Route path="/notifications" element={<NotificationPage />} />
+
+        {/* Merchant side */}
+        <Route path="/merchant-detail" element={<About />} />
+        <Route path="/partner-with-orado" element={<Partner />} />
+        <Route path="/merchant" element={<MerchantDashboard />} />
 
         {/* User Profile */}
         <Route path="/my-account" element={<OrdersPage />} />
         <Route path="/my-account/orders" element={<OrdersPage />} />
         <Route path="/my-account/settings" element={<SettingsPage />} />
 
-
         {/* Admin-Side */}
         <Route path="admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />}>
-          <Route path="restaurant-approvals" element={<RestaurantApprovalsPage />} />
-          <Route path="restaurant-approvals/:id" element={<RestaurantApplicationDetails />} />
+          <Route
+            path="restaurant-approvals"
+            element={<RestaurantApprovalsPage />}
+          />
+          <Route
+            path="restaurant-approvals/:id"
+            element={<RestaurantApplicationDetails />}
+          />
           {/* Add more nested routes as needed */}
         </Route>
       </Routes>
