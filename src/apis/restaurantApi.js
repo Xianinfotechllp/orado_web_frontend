@@ -54,3 +54,22 @@ export const getRestaurantById = async (restaurantId) => {
     throw error;
   }
 };
+
+
+// creating restaurant 
+export const createRestaurant = async (formData) => {
+  try {
+    const response = await apiClient.post('/restaurants/register', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    console.log("Restaurant created:", response.data);
+    return response.data;
+
+  } catch (error) {
+    console.error("Error creating restaurant:", error.response?.data || error.message);
+    throw error;
+  }
+};
+

@@ -6,7 +6,6 @@ function Signup() {
   return (
     <div>
       <Navbar />
-
       <div className="mt-18">
         <div className="flex flex-1 flex-col md:flex-row h-screen">
           {/* Left side */}
@@ -59,7 +58,9 @@ function Signup() {
             </div>
 
             <div className="flex gap-5 mt-8">
-              <button className="bg-[#EA4424] px-8 py-2 text-white">Signup</button>
+              <button className="bg-[#EA4424] px-8 py-2 text-white">
+                Signup
+              </button>
               <button className="px-8 py-2 border-[#EA4424] border text-[#EA4424]">
                 Login
               </button>
@@ -68,7 +69,11 @@ function Signup() {
 
           {/* Right side image */}
           <div className="hidden md:block w-1/2 bg-[#FDFCDB] h-screen">
-            <img src={deliveryBoy} alt="Delivery Boy" className="object-contain h-full w-full" />
+            <img
+              src={deliveryBoy}
+              alt="Delivery Boy"
+              className="object-contain h-full w-full"
+            />
           </div>
         </div>
       </div>
