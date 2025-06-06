@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Check, X, ChevronRight, Shield, Settings, Users, AlertCircle } from 'lucide-react';
 import axios from 'axios';
-import { Check, X, ChevronRight } from 'lucide-react';
+
 
 const AdminPermission = () => {
   const token = sessionStorage.getItem('adminToken');
@@ -10,14 +11,19 @@ const AdminPermission = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        const res = await axios.get('http://localhost:5000/admin/getrestuarants/permissions', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    axios
+      .get('http://localhost:5000/admin/getrestuarants/permissions', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        const data = res.data?.data || []; // array of restaurants with permissions
 
-        const data = res.data.data;
+
         setRestaurants(data);
+
+        console.log(res.data?.data);
 
         const initSelections = {};
         data.forEach((rest) => {
@@ -31,15 +37,11 @@ const AdminPermission = () => {
         });
         setSelectedActions(initSelections);
         setLoading(false);
-      } catch (err) {
+      })
+      .catch((err) => {
         console.error('Error fetching restaurants:', err);
-        setError('Failed to load restaurant permissions');
-        setLoading(false);
-      }
-    };
-
-    fetchRestaurants();
-  }, [token]);
+      });
+  }, []);
 
   const handleAction = (restaurantId, permissionKey, actionType) => {
     setSelectedActions((prev) => {
@@ -56,14 +58,19 @@ const AdminPermission = () => {
     });
   };
 
-  const sendUpdatedPermissions = async (restaurantId, updatedPermissionsMap) => {
-    try {
-      const permissionsToSend = {};
-      Object.entries(updatedPermissionsMap).forEach(([key, val]) => {
-        permissionsToSend[key] = val === 'accept';
-      });
+  const sendUpdatedPermissions = (restaurantId, updatedPermissionsMap) => {
+    const permissionsToSend = {};
+    Object.entries(updatedPermissionsMap).forEach(([key, val]) => {
+      permissionsToSend[key] = val === 'accept';
+    });
 
-      await axios.put(
+    console.log('Sending permissions update:', {
+      restaurantId,
+      permissions: permissionsToSend,
+    });
+
+    axios
+      .put(
         'http://localhost:5000/admin/permissions/restuarants',
         {
           restaurantId,
@@ -74,120 +81,174 @@ const AdminPermission = () => {
             Authorization: `Bearer ${token}`,
           },
         }
-      );
-    } catch (err) {
-      console.error('Failed to update permissions:', err);
-    }
+      )
+      .then((res) => {
+        console.log(`Permissions updated for restaurant ${restaurantId}:`, res.data.permissions);
+      })
+      .catch((err) => {
+        console.error('Failed to update permissions:', err);
+      });
   };
 
   const permissionKeys = [
-    { key: 'canManageMenu', label: 'Manage Menu' },
-    { key: 'canAcceptOrder', label: 'Accept Orders' },
-    { key: 'canRejectOrder', label: 'Reject Orders' },
-    { key: 'canManageOffers', label: 'Manage Offers' },
-    { key: 'canViewReports', label: 'View Reports' },
+    { key: 'canManageMenu', label: 'Manage Menu', icon: Settings },
+    { key: 'canAcceptOrder', label: 'Accept Orders', icon: Check },
+    { key: 'canRejectOrder', label: 'Reject Orders', icon: X },
+    { key: 'canManageOffers', label: 'Manage Offers', icon: AlertCircle },
+    { key: 'canViewReports', label: 'View Reports', icon: Users },
   ];
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin h-10 w-10 rounded-full border-t-4 border-orange-500 border-solid"></div>
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center">
+        <div className="text-center space-y-6">
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-orange-200 rounded-full animate-spin"></div>
+            <div className="w-20 h-20 border-4 border-orange-500 rounded-full animate-spin absolute top-0 left-0" style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }}></div>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold text-gray-700">Loading Restaurant Permissions</h3>
+            <p className="text-gray-500">Please wait while we fetch the data...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center space-y-4">
-        <X className="w-12 h-12 text-red-500" />
-        <h2 className="text-xl font-semibold text-gray-700">Error Loading Permissions</h2>
-        <p className="text-gray-500">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-5 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
-        >
-          Retry
-        </button>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center">
+        <div className="max-w-md w-full mx-4">
+          <div className="bg-white rounded-2xl shadow-xl p-8 text-center space-y-6 border border-red-100">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+              <X className="w-8 h-8 text-red-500" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-gray-800">Oops! Something went wrong</h2>
+              <p className="text-gray-600">{error}</p>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold py-3 px-6 rounded-xl hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-6 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Restaurant Permissions</h1>
-            <p className="text-gray-500 mt-1">
-              Grant or restrict restaurant access to manage specific dashboard features.
-            </p>
-          </div>
-          <div className="flex items-center text-sm text-orange-600 mt-4 md:mt-0">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
+      <div className="max-w-7xl mx-auto px- py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex items-center text-sm text-orange-600 mb-4">
+            <Shield className="w-4 h-4 mr-2" />
             <span>Admin Dashboard</span>
             <ChevronRight className="mx-2 h-4 w-4" />
-            <span className="font-medium">Permissions</span>
+            <span className="font-medium">Permissions Management</span>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-orange-100 backdrop-blur-sm">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <h1 className="text-4xl font-serif font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                  Restaurant Permissions
+                </h1>
+                <p className="text-gray-600 text-lg">
+                  Manage and control restaurant access to dashboard features with precision
+                </p>
+              </div>
+              <div className="hidden md:block">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Shield className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm">
+        {/* Permissions Table */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-orange-100">
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm divide-y divide-gray-200">
-              <thead className="bg-orange-50 sticky top-0 z-10">
+            <table className="min-w-full">
+              <thead className="sticky top-0 z-10 bg-gradient-to-r from-orange-500 to-red-500">
                 <tr>
-                  <th className="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-8 py-6 text-left font-bold text-white text-lg">
                     Restaurant
                   </th>
-                  {permissionKeys.map((perm) => (
-                    <th
-                      key={perm.key}
-                      className="px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider"
-                    >
-                      {perm.label}
-                    </th>
-                  ))}
+                  {permissionKeys.map((perm) => {
+                    const Icon = perm.icon;
+                    return (
+                      <th
+                        key={perm.key}
+                        className="px-6 py-6 text-center font-bold text-white"
+                      >
+                        <div className="flex flex-col items-center space-y-2">
+                          <Icon className="w-5 h-5" />
+                          <span className="text-sm">{perm.label}</span>
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
-                {restaurants.map((rest) => (
-                  <tr key={rest._id} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center font-bold">
-                          {rest.name[0].toUpperCase()}
+              <tbody className="divide-y divide-gray-100">
+                {restaurants.map((rest, index) => (
+                  <tr
+                    key={rest._id}
+                    className="hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 transition-all duration-300 transform hover:scale-[1.01]"
+                    style={{
+                      animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`
+                    }}
+                  >
+                    <td className="px-8 py-6">
+                      <div className="flex items-center space-x-4">
+                        <div className="relative">
+                          <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-red-400 rounded-2xl flex items-center justify-center shadow-lg">
+                            <span className="text-white font-bold text-lg">
+                              {rest.name[0].toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
                         </div>
-                        <div>
-                          <div className="font-semibold text-gray-900">{rest.name}</div>
-                          <div className="text-gray-500 text-xs">{rest.email}</div>
+                        <div className="space-y-1">
+                          <h3 className="font-bold text-gray-900 text-lg">{rest.name}</h3>
+                          <p className="text-gray-500 text-sm">{rest.email}</p>
                         </div>
                       </div>
                     </td>
                     {permissionKeys.map((perm) => {
                       const current = selectedActions[rest._id]?.[perm.key];
                       return (
-                        <td key={`${rest._id}-${perm.key}`} className="px-4 py-4 text-center">
-                          <div className="inline-flex rounded-md shadow-sm" role="group">
-                            <button
-                              onClick={() => handleAction(rest._id, perm.key, 'accept')}
-                              className={`flex items-center gap-1 px-3 py-1.5 border text-xs font-medium rounded-l-md ${
-                                current === 'accept'
-                                  ? 'bg-orange-500 text-white border-orange-500'
-                                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                              }`}
-                            >
-                              <Check className="w-4 h-4" />
-                              Allow
-                            </button>
-                            <button
-                              onClick={() => handleAction(rest._id, perm.key, 'reject')}
-                              className={`flex items-center gap-1 px-3 py-1.5 border text-xs font-medium rounded-r-md ${
-                                current === 'reject'
-                                  ? 'bg-red-500 text-white border-red-500'
-                                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                              }`}
-                            >
-                              <X className="w-4 h-4" />
-                              Deny
-                            </button>
+                        <td key={`${rest._id}-${perm.key}`} className="px-6 py-6 text-center">
+                          <div className="flex justify-center">
+                            <div className="bg-gray-100 rounded-2xl p-1 shadow-inner">
+                              <div className="flex" role="group">
+                                <button
+                                  onClick={() => handleAction(rest._id, perm.key, 'accept')}
+                                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-300 transform hover:scale-105 ${current === 'accept'
+                                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-200'
+                                    : 'bg-white text-gray-600 hover:bg-gray-50 shadow-sm'
+                                    }`}
+                                >
+                                  <Check className="w-4 h-4" />
+                                  <span>Allow</span>
+                                </button>
+                                <button
+                                  onClick={() => handleAction(rest._id, perm.key, 'reject')}
+                                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-300 transform hover:scale-105 ml-1 ${current === 'reject'
+                                    ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg shadow-red-200'
+                                    : 'bg-white text-gray-600 hover:bg-gray-50 shadow-sm'
+                                    }`}
+                                >
+                                  <X className="w-4 h-4" />
+                                  <span>Deny</span>
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         </td>
                       );
@@ -199,22 +260,29 @@ const AdminPermission = () => {
           </div>
 
           {restaurants.length === 0 && (
-            <div className="text-center py-16">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400 mb-4"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <h3 className="text-lg font-medium text-gray-800">No restaurants found</h3>
-              <p className="text-gray-500">There are no restaurants available to manage permissions for.</p>
+            <div className="text-center py-20">
+              <div className="w-24 h-24 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Users className="w-12 h-12 text-orange-500" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">No restaurants found</h3>
+              <p className="text-gray-500 text-lg">There are no restaurants available to manage permissions for.</p>
             </div>
           )}
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };
