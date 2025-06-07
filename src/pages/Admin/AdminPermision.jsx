@@ -60,6 +60,7 @@ const AdminPermission = () => {
 
   const sendUpdatedPermissions = (restaurantId, updatedPermissionsMap) => {
     const permissionsToSend = {};
+    console.log("Sending ID type:", typeof restaurantId, "value:", restaurantId);
     Object.entries(updatedPermissionsMap).forEach(([key, val]) => {
       permissionsToSend[key] = val === 'accept';
     });
@@ -71,7 +72,7 @@ const AdminPermission = () => {
 
     axios
       .put(
-        'http://localhost:5000/admin/permissions/restuarants',
+        'http://localhost:5000/admin/permissions/restaurants',
         {
           restaurantId,
           permissions: permissionsToSend,

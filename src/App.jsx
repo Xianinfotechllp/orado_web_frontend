@@ -28,6 +28,8 @@ import RestaurantCategories from "./pages/Admin/RestaurantCategories";
 import CategoryItems from "./pages/Admin/CategoryItems";
 import AdminPermission from "./pages/Admin/AdminPermision";
 import Dashboard from "./pages/Admin/Dashboard";
+import AddAdmin from "./pages/Admin/AddAdmin";
+import AdminManage from "./pages/Admin/AdminManage";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -56,11 +58,18 @@ function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />}>
 
           <Route index element={<Dashboard />} />
+          {/* restaurant-section */}
           <Route path="restaurant-approvals" element={<RestaurantApprovalsPage />} />
           <Route path="restaurant-add" element={<AddRestaurantPage />} />
           <Route path="restaurant-edit" element={<RestaurantList />} />
           <Route path="restaurant-createmenu" element={<CreateMenu />} />
           <Route path="restaurant-permission" element={<AdminPermission />} />
+
+          
+          {/* admin-section */}
+          <Route path="admin-add" element={<AddAdmin />} />
+          <Route path="admin-manage" element={<AdminManage />} />
+
 
           {/* Add more nested routes as needed */}
         </Route>

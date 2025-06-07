@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { FaUserSecret } from 'react-icons/fa';
 import {
   FiMenu, FiLogOut, FiChevronDown, FiChevronUp,
   FiPieChart, FiClipboard, FiHome, FiUser, FiSettings
 } from 'react-icons/fi';
+import { GrUserAdmin } from 'react-icons/gr';
 import { Link, Outlet } from 'react-router-dom';
 
 const SidebarItem = ({ title, icon, children }) => {
@@ -97,7 +99,7 @@ function AdminDashboard() {
             </Link>
           </SidebarItem>
 
-          <SidebarItem title="Agents" icon={<FiUser size={18} />}>
+          <SidebarItem title="Agents" icon={<FaUserSecret size={18} />}>
             <Link to="#" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               View Agents
             </Link>
@@ -105,6 +107,18 @@ function AdminDashboard() {
               Assign Projects
             </Link>
           </SidebarItem>
+
+
+           <SidebarItem title="Admins" icon={<GrUserAdmin size={18}/>}>
+            <Link to="admin-add" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+              Add Admins
+            </Link>
+            <Link to="admin-manage" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            Manage Admins
+            </Link>
+          </SidebarItem>
+
+
 
           <SidebarItem title="Settings" icon={<FiSettings size={18} />}>
             <Link to="#" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
@@ -114,6 +128,7 @@ function AdminDashboard() {
               Change Password
             </Link>
           </SidebarItem>
+
         </nav>
 
         {/* Logout */}
@@ -130,7 +145,7 @@ function AdminDashboard() {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto bg-gray-50 pt-16 lg:pt-0">
         <div className="p-5">
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white rounded-xl shadow-sm ">
             <Outlet />
           </div>
         </div>

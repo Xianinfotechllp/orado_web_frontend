@@ -197,7 +197,7 @@ const CreateMenu = () => {
           <>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">
-                {filteredRestaurants.length} restaurants delivering to you
+               ( {filteredRestaurants.length}) Click restaurants To add catagorys and Items
               </h2>
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <span>Sort by:</span>

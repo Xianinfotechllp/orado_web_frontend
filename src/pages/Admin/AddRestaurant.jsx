@@ -11,34 +11,33 @@ import {
   Building,
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
-
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { createRestaurant } from "../../apis/restaurantApi";
+
 const AddRestaurant = () => {
   const [formData, setFormData] = useState({
     name: "",
     ownerName: "",
     phone: "",
     email: "",
+    password: "",
+    confirmPassword: "",
     fssaiNumber: "",
     gstNumber: "",
     aadharNumber: "",
-    password: "", // Add this
-    confirmPassword: "",
     address: {
       street: "",
       city: "",
       state: "",
-      zip: "",
+      pincode: "",
       latitude: "",
       longitude: "",
-      openingHours: [],
     },
     foodType: "veg",
     minOrderAmount: 100,
-    openingHours: JSON.stringify([]),
-    paymentMethods: "online",
+    openingHours: [],
+    paymentMethods: ["online"],
   });
 
   const [documents, setDocuments] = useState({
@@ -46,7 +45,8 @@ const AddRestaurant = () => {
     gstDoc: null,
     aadharDoc: null,
   });
-  console.log(formData);
+
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -59,6 +59,10 @@ const AddRestaurant = () => {
         ...prev,
         address: { ...prev.address, [key]: value },
       }));
+    } else if (name === "paymentMethods") {
+      // Handle payment methods as an array
+      const methods = value.split(",").map(m => m.trim());
+      setFormData((prev) => ({ ...prev, [name]: methods }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -97,27 +101,72 @@ const AddRestaurant = () => {
       ...prev,
       address: {
         ...prev.address,
-        street: locationDetails.street || "",
+        street: locationDetails.address || "",
         city: locationDetails.city || "",
         state: locationDetails.state || "",
-        zip: locationDetails.zip || "",
+        pincode: locationDetails.zip || "",
         latitude: locationDetails.latitude || "",
         longitude: locationDetails.longitude || "",
       },
     }));
   };
 
+  const validateStep = (step) => {
+    const newErrors = {};
+
+    if (step === 1) {
+      if (!formData.name.trim()) newErrors.name = "Restaurant name is required";
+      if (!formData.ownerName.trim()) newErrors.ownerName = "Owner name is required";
+      if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+      if (!formData.email.trim()) newErrors.email = "Email is required";
+      else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = "Invalid email format";
+      if (!formData.password) newErrors.password = "Password is required";
+      else if (formData.password.length < 8) newErrors.password = "Password must be at least 8 characters";
+      if (!formData.confirmPassword) newErrors.confirmPassword = "Please confirm password";
+      else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords don't match";
+    } else if (step === 2) {
+      if (!formData.address.street.trim()) newErrors.street = "Street address is required";
+      if (!formData.address.city.trim()) newErrors.city = "City is required";
+      if (!formData.address.state.trim()) newErrors.state = "State is required";
+      if (!formData.address.pincode.trim()) newErrors.pincode = "Pincode is required";
+      if (!formData.address.latitude || !formData.address.longitude) newErrors.location = "Please select a location on the map";
+    } else if (step === 3) {
+      if (!formData.fssaiNumber.trim()) newErrors.fssaiNumber = "FSSAI number is required";
+      if (!formData.gstNumber.trim()) newErrors.gstNumber = "GST number is required";
+      if (!formData.aadharNumber.trim()) newErrors.aadharNumber = "Aadhar number is required";
+      if (formData.openingHours.length === 0) newErrors.openingHours = "At least one opening hour entry is required";
+      else {
+        formData.openingHours.forEach((hour, index) => {
+          if (!hour.day) newErrors[`day-${index}`] = "Day is required";
+          if (!hour.open) newErrors[`open-${index}`] = "Opening time is required";
+          if (!hour.close) newErrors[`close-${index}`] = "Closing time is required";
+        });
+      }
+    } else if (step === 4) {
+      if (!documents.fssaiDoc) newErrors.fssaiDoc = "FSSAI document is required";
+      if (!documents.gstDoc) newErrors.gstDoc = "GST document is required";
+      if (!documents.aadharDoc) newErrors.aadharDoc = "Aadhar document is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep((prev) => Math.min(prev + 1, 4));
+    }
+  };
+
+  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-  if (formData.password !== formData.confirmPassword) {
-    alert('Passwords do not match');
-    return;
-  }
+    if (!validateStep(4)) return;
 
     setLoading(true);
 
-    // Create FormData object with a different name
     const formDataToSend = new FormData();
 
     // Basic information
@@ -125,6 +174,7 @@ const AddRestaurant = () => {
     formDataToSend.append("ownerName", formData.ownerName);
     formDataToSend.append("phone", formData.phone);
     formDataToSend.append("email", formData.email);
+    formDataToSend.append("password", formData.password);
 
     // Business details
     formDataToSend.append("fssaiNumber", formData.fssaiNumber);
@@ -132,47 +182,35 @@ const AddRestaurant = () => {
     formDataToSend.append("aadharNumber", formData.aadharNumber);
     formDataToSend.append("foodType", formData.foodType);
     formDataToSend.append("minOrderAmount", formData.minOrderAmount);
+    formDataToSend.append("paymentMethods", formData.paymentMethods.join(','));
 
-    // Opening hours
-    formDataToSend.append(
-      "openingHours",
-      JSON.stringify(formData.openingHours)
-    );
-
-    // Address details - need to append each field separately
+    // Address details
     formDataToSend.append("address[street]", formData.address.street);
     formDataToSend.append("address[city]", formData.address.city);
     formDataToSend.append("address[state]", formData.address.state);
-    formDataToSend.append("address[zip]", formData.address.zip);
+    formDataToSend.append("address[pincode]", formData.address.pincode);
     formDataToSend.append("address[latitude]", formData.address.latitude);
     formDataToSend.append("address[longitude]", formData.address.longitude);
 
-    // Payment methods
-    formDataToSend.append("paymentMethods", formData.paymentMethods);
+    // Opening hours
+    formDataToSend.append("openingHours", JSON.stringify(formData.openingHours));
 
     // File uploads
-    if (documents.fssaiDoc)
-      formDataToSend.append("fssaiDoc", documents.fssaiDoc);
+    if (documents.fssaiDoc) formDataToSend.append("fssaiDoc", documents.fssaiDoc);
     if (documents.gstDoc) formDataToSend.append("gstDoc", documents.gstDoc);
-    if (documents.aadharDoc)
-      formDataToSend.append("aadharDoc", documents.aadharDoc);
+    if (documents.aadharDoc) formDataToSend.append("aadharDoc", documents.aadharDoc);
 
     try {
-      // For testing - log what's being sent
-      for (let [key, value] of formDataToSend.entries()) {
-        console.log(key, value);
-      }
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      await createRestaurant(formData);
+      const response = await createRestaurant(formDataToSend);
       alert("Restaurant Created Successfully!");
+      // Optionally reset form or redirect
     } catch (err) {
       alert("Error: " + (err.response?.data?.message || "Unknown Error"));
     } finally {
       setLoading(false);
     }
   };
+
   const steps = [
     { id: 1, title: "Basic Information", icon: Building },
     { id: 2, title: "Address Details", icon: MapPin },
@@ -180,10 +218,6 @@ const AddRestaurant = () => {
     { id: 4, title: "Documents", icon: Upload },
   ];
 
-  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 4));
-  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
-
-  // Enhanced Location Picker Component
   const LocationPicker = ({ onSelectLocation }) => {
     const [position, setPosition] = useState([20.5937, 78.9629]); // Default to India
     const [currentAddress, setCurrentAddress] = useState("");
@@ -195,16 +229,26 @@ const AddRestaurant = () => {
     });
 
     const reverseGeocode = async (lat, lon) => {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
-      );
-      const data = await response.json();
-      setCurrentAddress(data.display_name);
-      onSelectLocation({
-        address: data.display_name,
-        latitude: lat,
-        longitude: lon,
-      });
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+        );
+        const data = await response.json();
+        setCurrentAddress(data.display_name);
+
+        const addressDetails = {
+          address: data.display_name,
+          city: data.address?.city || data.address?.town || data.address?.village || "",
+          state: data.address?.state || "",
+          zip: data.address?.postcode || "",
+          latitude: lat,
+          longitude: lon,
+        };
+
+        onSelectLocation(addressDetails);
+      } catch (error) {
+        console.error("Geocoding error:", error);
+      }
     };
 
     const MapClickHandler = () => {
@@ -233,9 +277,10 @@ const AddRestaurant = () => {
           <MapClickHandler />
         </MapContainer>
 
-        <p>
+        <p className="mt-2">
           <strong>Selected Address:</strong> {currentAddress}
         </p>
+        {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
       </div>
     );
   };
@@ -261,26 +306,23 @@ const AddRestaurant = () => {
           {steps.map((step, index) => (
             <div key={step.id} className="flex items-center">
               <div
-                className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ${
-                  currentStep >= step.id
-                    ? "bg-gradient-to-r from-orange-500 to-red-500 border-orange-500 text-white"
-                    : "bg-white border-gray-300 text-gray-400"
-                }`}
+                className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ${currentStep >= step.id
+                  ? "bg-gradient-to-r from-orange-500 to-red-500 border-orange-500 text-white"
+                  : "bg-white border-gray-300 text-gray-400"
+                  }`}
               >
                 <step.icon className="w-5 h-5" />
               </div>
               <div
-                className={`ml-3 ${
-                  currentStep >= step.id ? "text-orange-600" : "text-gray-400"
-                }`}
+                className={`ml-3 ${currentStep >= step.id ? "text-orange-600" : "text-gray-400"
+                  }`}
               >
                 <p className="text-sm font-medium">{step.title}</p>
               </div>
               {index < steps.length - 1 && (
                 <div
-                  className={`w-20 h-0.5 mx-4 ${
-                    currentStep > step.id ? "bg-orange-500" : "bg-gray-300"
-                  }`}
+                  className={`w-20 h-0.5 mx-4 ${currentStep > step.id ? "bg-orange-500" : "bg-gray-300"
+                    }`}
                 />
               )}
             </div>
@@ -369,41 +411,41 @@ const AddRestaurant = () => {
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
-      <div className="space-y-2">
-        <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-         
-          Password
-        </label>
-        <input 
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300" 
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="Create a password"
-          required
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-        
-          Confirm Password
-        </label>
-        <input 
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300" 
-          name="confirmPassword"
-          type="password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          placeholder="Confirm password"
-          required
-        />
-        {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
-          <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
-        )}
-      </div>
-    </div>
+                  <div className="space-y-2">
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+
+                      Password
+                    </label>
+                    <input
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300"
+                      name="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Create a password"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+
+                      Confirm Password
+                    </label>
+                    <input
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300"
+                      name="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="Confirm password"
+                      required
+                    />
+                    {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                      <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
