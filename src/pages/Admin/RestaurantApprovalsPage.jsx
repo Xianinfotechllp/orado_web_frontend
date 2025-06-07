@@ -351,7 +351,7 @@ const RestaurantApprovalsPage = () => {
                           <div className="text-sm text-gray-500">{r.email}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {r.address}
+                          {r.address.slice(0,10)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {statusBadge(r.status)}
