@@ -33,6 +33,18 @@ export const getCustomerOrders = async () => {
   }
 };
 
+// get single order
+export const getOrderById = async (orderId) => {
+  try {
+    const response = await apiClient.get(`/order/${orderId}`);
+    console.log("Fetched order:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching order by ID:", error);
+    throw error;
+  }
+};
+
 export const reorderOrder = async (orderId) => {
   try {
     const response = await apiClient.post(`/order/reorder/${orderId}`);

@@ -2,13 +2,21 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { reorderOrder } from '../../../apis/orderApi'; 
 import ReviewModal from './OrderReview';
-import RestaurantReviewPopup from './RestruantReviewPopup'; // Import the restaurant review component
+import RestaurantReviewPopup from './RestruantReviewPopup';
+import HelpModal from '../helpSection/HelpModal';
+import ChatPage from '../helpSection/ChatPage';
+import { useSelector } from 'react-redux';
 
 const OrderCard = ({ order, onViewDetails }) => {
   const navigate = useNavigate();
   const [isReordering, setIsReordering] = React.useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = React.useState(false);
   const [isRestaurantReviewOpen, setIsRestaurantReviewOpen] = React.useState(false);
+  const [helpModalOpen, setHelpModalOpen] = React.useState(false);
+  const [showChat, setShowChat] = React.useState(false);
+  const [chatType, setChatType] = React.useState('admin')
+  const user = useSelector((state) => state.auth.user); 
+  
 
   const handleReorder = async () => {
     try {
@@ -37,6 +45,25 @@ const OrderCard = ({ order, onViewDetails }) => {
 
   const handleCloseRestaurantReview = () => {
     setIsRestaurantReviewOpen(false);
+  };
+
+  const handleOpenHelp = () => {
+      console.log('user', user);
+    setHelpModalOpen(true);
+  };
+
+  const handleCloseHelp = () => {
+    setHelpModalOpen(false);
+  };
+
+  const handleChatStart = (type) => {
+    setHelpModalOpen(false);
+    setShowChat(true);
+    setChatType(type); 
+  };
+
+  const handleBackFromChat = () => {
+    setShowChat(false);
   };
 
   const formatDateTime = (isoDate) => {
@@ -74,6 +101,10 @@ const OrderCard = ({ order, onViewDetails }) => {
   const itemSummary = order.orderItems?.map(item => `${item.name} × ${item.quantity}`).join(', ') || "No items";
   const displayImage = order.orderItems?.[0]?.image;
   const isDelivered = order.orderStatus?.toLowerCase() === 'completed';
+
+  if (showChat) {
+    return <ChatPage orderId={order._id} onBack={handleBackFromChat} chatType={chatType} user={user} restaurantId={order.restaurantId} />;
+  }
 
   return (
     <>
@@ -178,7 +209,7 @@ const OrderCard = ({ order, onViewDetails }) => {
             <button
               type="button"
               className="flex-1 min-w-[120px] border border-orange-500 text-orange-500 hover:bg-orange-50 px-4 py-2 rounded text-xs font-semibold uppercase"
-              onClick={() => alert("Help support coming soon.")}
+              onClick={handleOpenHelp}
             >
               HELP
             </button>
@@ -287,7 +318,7 @@ const OrderCard = ({ order, onViewDetails }) => {
             <button
               type="button"
               className="w-full sm:w-auto border border-orange-500 text-orange-500 hover:bg-orange-50 px-6 py-2.5 rounded text-sm font-semibold uppercase"
-              onClick={() => alert("Help support coming soon.")}
+              onClick={handleOpenHelp}
             >
               HELP
             </button>
@@ -309,6 +340,15 @@ const OrderCard = ({ order, onViewDetails }) => {
           onClose={handleCloseRestaurantReview}
         />
       )}
+
+      {/* Help Modal */}
+      <HelpModal
+        isOpen={helpModalOpen}
+        onClose={handleCloseHelp}
+        orderId={order._id}
+        onChatStart={handleChatStart}
+        restaurantName={order.restaurantId?.name}
+      />
     </>
   );
 };

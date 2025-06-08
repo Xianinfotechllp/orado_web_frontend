@@ -4,25 +4,27 @@ import { getAddress, updateAddress, addAddress } from "../../apis/userApi";
 import { placeOrder } from "../../apis/orderApi";
 import EditAddressForm from "../address/EditAddressForm";
 import NewAddressForm from "../address/NewAddressForm";
+import OrderSuccessModal from "./OrderSuccessfullModal";
+import { useNavigate } from "react-router-dom";
 import { setSelectedAddress } from "../../slices/addressSlice";
 import { clearCart } from "../../slices/cartSlice";
 
 export default function DeliveryPaymentForm() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
   const [addresses, setAddresses] = useState([]);
   const [localSelectedAddress, setLocalSelectedAddress] = useState(null);
   const [editingAddress, setEditingAddress] = useState(null);
-
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [orderId, setOrderId] = useState(null);
+  const [estimatedDelivery, setEstimatedDelivery] = useState("60-70 mins"); // You can fetch actual ETA if available
+
   const user = useSelector((state) => state.auth.user);
-  const cartId = useSelector((state) => state.cart.cartId)
-
-
-  const location = useSelector((state) => state.location.location);
-
-
+  const cartId = useSelector((state) => state.cart.cartId);
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -41,7 +43,7 @@ export default function DeliveryPaymentForm() {
   }, [user?._id, dispatch]);
 
   const handleAddressUpdate = (updatedAddress) => {
-    updateAddress( updatedAddress.addressId, updatedAddress)
+    updateAddress(updatedAddress.addressId, updatedAddress)
       .then(() => {
         setAddresses((prev) =>
           prev.map((addr) =>
@@ -61,36 +63,55 @@ export default function DeliveryPaymentForm() {
       alert("Please select a delivery address first.");
       return;
     }
+
     try {
-     const orderPayload = {
+      const orderPayload = {
         cartId: cartId,
         userId: user._id,
         paymentMethod,
         longitude: localSelectedAddress.location.longitude,
         latitude: localSelectedAddress.location.latitude,
         street: localSelectedAddress.street,
-        area: localSelectedAddress.area,       // if exists
-        landmark: localSelectedAddress.landmark, // if exists
+        area: localSelectedAddress.area,
+        landmark: localSelectedAddress.landmark,
         city: localSelectedAddress.city,
         state: localSelectedAddress.state,
-        pincode: localSelectedAddress.zip,     // assuming zip = pincode
-        country: localSelectedAddress.country, // if exists
+        pincode: localSelectedAddress.zip,
+        country: localSelectedAddress.country,
       };
+      console.log("Placing order with payload:", orderPayload);
+      
       const res = await placeOrder(orderPayload);
-      if (res.status === 201) {
-      dispatch(clearCart()); // 🔥 this clears Redux cart
-      // navigate("/order-success"); // or go to order page
-    }
-      alert("Order placed successfully!");
-      // Redirect or clear cart here
+      console.log("Place order response:", res);
+
+      if (res && res.orderId) {
+        dispatch(clearCart());
+        setOrderId(res.orderId);
+        setOrderSuccess(true);
+        console.log("Order placed successfully");
+      }
     } catch (error) {
       console.error("Failed to place order:", error);
       alert("Failed to place order. Please try again.");
     }
   };
 
+  const handleOrderModalClose = () => {
+    setOrderSuccess(false);
+    navigate(`/orders/${orderId}`); // Adjust the route if necessary
+  };
+
   return (
     <div className="w-full space-y-4">
+      {/* Show order success modal */}
+      {orderSuccess && (
+        <OrderSuccessModal
+          orderId={orderId}
+          estimatedDelivery={estimatedDelivery}
+          onClose={handleOrderModalClose}
+        />
+      )}
+
       {/* Delivery Address Section */}
       <div className="bg-white border border-gray-300 rounded-lg p-4">
         <div className="flex justify-between items-start mb-3">
@@ -116,7 +137,7 @@ export default function DeliveryPaymentForm() {
         </div>
       </div>
 
-      {/* Addresses List */}
+      {/* Address List */}
       <div>
         {addresses?.map((address) => (
           <div

@@ -54,3 +54,19 @@ export const getRestaurantById = async (restaurantId) => {
     throw error;
   }
 };
+
+
+// fetch retruants by category and location
+export const getRestaurantsByLocationAndCategory = async (latitude, longitude, categoryName, distance = 5000) => {
+  try {
+    const response = await apiClient.get(`/location/nearby-restaurants/category/${categoryName}`, {
+      params: { latitude, longitude, distance },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching restaurants by location and category:", error);
+    throw error;
+  }
+};
+
+

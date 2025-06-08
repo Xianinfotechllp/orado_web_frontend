@@ -54,3 +54,17 @@ export const deleteAddress = async (addressId) => {
     throw error;
   }
 };
+
+// update user profile
+export const updateUserProfile = async (updatedFields) => {
+  try {
+    const response = await apiClient.put('/user/update-profile', updatedFields);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating user profile:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+

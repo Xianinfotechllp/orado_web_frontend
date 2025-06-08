@@ -42,7 +42,7 @@ const ManageAddresses = ({ userId }) => {
 
   const handleAddNewAddress = async (newAddress) => {
     try {
-      const res = await addAddress(userId, newAddress);
+      const res = await addAddress(newAddress);
       setAddresses(prev => [...prev, res.data]);
       setShowAddForm(false);
     } catch (error) {

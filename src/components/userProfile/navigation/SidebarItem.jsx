@@ -6,7 +6,8 @@ import {
   Heart, 
   CreditCard, 
   MapPin, 
-  Settings 
+  Settings,
+  LogOut 
 } from 'lucide-react';
 
 const SidebarItem = ({ name, path }) => {
@@ -27,7 +28,7 @@ const SidebarItem = ({ name, path }) => {
       case 'settings':
         return <Settings className={iconClass} />;
       default:
-        return <ShoppingBag className={iconClass} />;
+        return <LogOut className={iconClass} />;
     }
   };
 

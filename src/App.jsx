@@ -19,6 +19,9 @@ import NotificationPage from "./pages/Notification/NotificationPage";
 import AddressPage from "./pages/UserProfile/AddressPage";
 import PremiumPage from "./pages/UserProfile/PremiumPage";
 import FavouriteRestaurantsPage from "./pages/UserProfile/FavouriteRestaurantsPage";
+import LogoutPage from "./pages/UserProfile/LogoutPage";
+import OrderStatusPage from "./components/addToCart/OrderStatus";
+import CategoryRestaurants from "./components/home/CategoryRestruants";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -35,6 +38,8 @@ function App() {
         <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils/>}  />
         <Route path="/faq" element={<Faq/>}  />
         <Route path="/notifications" element={<NotificationPage />} />
+        <Route path="/order/status/:orderId" element={<OrderStatusPage />} />
+        <Route path="/category/:categoryName" element={<CategoryRestaurants />} />
 
         {/* User Profile */}
         <Route path="/my-account" element={<OrdersPage />} />
@@ -43,6 +48,7 @@ function App() {
         <Route path="/my-account/address" element={<AddressPage />} />
         <Route path="/my-account/favourites" element={<FavouriteRestaurantsPage />} />
         <Route path="/my-account/premium" element={<PremiumPage />} />
+        <Route path="/my-account/logout" element={<LogoutPage />} />
       </Routes>
     </>
   );
