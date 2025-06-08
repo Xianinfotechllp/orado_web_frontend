@@ -1,5 +1,8 @@
 import apiClient from "./apiClient/apiClient";
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+
 // Fetch restaurant menu
 export const getRestaurantMenu = async (restaurantId, options = {}) => {
   try {
@@ -72,4 +75,62 @@ export const createRestaurant = async (formData) => {
     console.error("Error creating restaurant:", error.response?.data || error.message);
     throw error;
   }
+};
+
+
+// create api
+export const createRestaurantByAdmin = async (restaurantData, documents = {}, images = []) => {
+  const formData = new FormData();
+
+  // Basic info
+  formData.append("name", restaurantData.name);
+  formData.append("ownerName", restaurantData.ownerName);
+  formData.append("phone", restaurantData.phone);
+  formData.append("email", restaurantData.email);
+  formData.append("password", restaurantData.password);
+
+  // Business details
+  formData.append("fssaiNumber", restaurantData.fssaiNumber);
+  formData.append("gstNumber", restaurantData.gstNumber);
+  formData.append("aadharNumber", restaurantData.aadharNumber);
+  formData.append("foodType", restaurantData.foodType);
+  formData.append("minOrderAmount", restaurantData.minOrderAmount);
+  formData.append("paymentMethods", restaurantData.paymentMethods.join(','));
+
+  // Address fields (flattened like in your form)
+  const { address } = restaurantData;
+  if (address) {
+    formData.append("address[street]", address.street);
+    formData.append("address[city]", address.city);
+    formData.append("address[state]", address.state);
+    formData.append("address[pincode]", address.pincode);
+    formData.append("address[latitude]", address.latitude);
+    formData.append("address[longitude]", address.longitude);
+  }
+
+  // Opening hours (JSON string)
+  formData.append("openingHours", JSON.stringify(restaurantData.openingHours));
+
+  // Documents (individual file fields)
+  if (documents.fssaiDoc) formData.append("fssaiDoc", documents.fssaiDoc);
+  if (documents.gstDoc) formData.append("gstDoc", documents.gstDoc);
+  if (documents.aadharDoc) formData.append("aadharDoc", documents.aadharDoc);
+
+  // Images (multiple files)
+  images.forEach((image) => {
+    formData.append("images", image);
+  });
+
+  try {
+    const response = await axios.post(`${BASE_URL}/admin/create-restaurant`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${sessionStorage.getItem('adminToken')}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
 };

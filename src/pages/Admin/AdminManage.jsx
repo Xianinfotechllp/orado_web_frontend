@@ -1,6 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Shield, Search, ChevronDown, ChevronUp, MoreVertical, Edit, Trash2, Users, Calendar, Settings } from 'lucide-react';
+import { 
+  User, Mail, Phone, Shield, Search, ChevronDown, ChevronUp, 
+  MoreVertical, Edit, Trash2, Users, Calendar, Settings, X 
+} from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
@@ -10,11 +12,25 @@ const AdminManage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
     const [expandedAdmin, setExpandedAdmin] = useState(null);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [currentAdmin, setCurrentAdmin] = useState(null);
+    const [permissions, setPermissions] = useState([]);
 
-    const token = sessionStorage.getItem('adminToken')
+    const token = sessionStorage.getItem('adminToken');
+
+    // Available permissions options in the format you specified
+    const availablePermissions = [
+        "agents.manage",          // Manage agents
+        "users.manage",           // Create, update, delete users
+        "merchants.manage",       // Manage restaurant or business accounts
+        "orders.manage",          // View, update, and handle orders
+        "disputes.manage",        // Handle disputes, refunds, etc.
+        "support.manage"          // Customer care - resolve tickets, chat, etc.
+    ];
 
     useEffect(() => {
         const fetchAdmins = async () => {
+            setLoading(true);
             try {
                 const response = await axios.get('http://localhost:5000/admin/admins', {
                     headers: {
@@ -22,7 +38,6 @@ const AdminManage = () => {
                     }
                 });
                 setAdmins(response.data.admins);
-                console.log(response)
             } catch (error) {
                 console.error('Error fetching admins:', error);
                 toast.error('Failed to load admins');
@@ -32,7 +47,7 @@ const AdminManage = () => {
         };
 
         fetchAdmins();
-    }, []);
+    }, [token]);
 
     const handleSort = (key) => {
         let direction = 'ascending';
@@ -58,40 +73,77 @@ const AdminManage = () => {
         admin.phone.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-const handleDelete = async (adminId) => {
-  if (window.confirm('Are you sure you want to delete this admin?')) {
-    try {
-      await axios.delete(`http://localhost:5000/admin/delete-admin/${adminId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+    const handleDelete = async (adminId) => {
+        if (window.confirm('Are you sure you want to delete this admin?')) {
+            try {
+                await axios.delete(`http://localhost:5000/admin/delete-admin/${adminId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                setAdmins(admins.filter(admin => admin._id !== adminId));
+                toast.success('Admin deleted successfully');
+            } catch (error) {
+                console.error('Error deleting admin:', error);
+                toast.error(error.response?.data?.message || 'Failed to delete admin');
+                if (error.response?.status === 403) {
+                    toast.error('You do not have permission to delete admins');
+                } else if (error.response?.status === 404) {
+                    toast.error('Admin not found');
+                }
+            }
         }
-      });
-      
-      // Update the UI by removing the deleted admin
-      setAdmins(admins.filter(admin => admin._id !== adminId));
-      
-      // Show success notification
-      toast.success('Admin deleted successfully');
-      
-      // Log the action (optional)
-      await logAdminDeletion(adminId);
-      
-    } catch (error) {
-      console.error('Error deleting admin:', error);
-      
-      // Show error notification with more details
-      toast.error(error.response?.data?.message || 'Failed to delete admin');
-      
-      // Handle specific error cases
-      if (error.response?.status === 403) {
-        toast.error('You do not have permission to delete admins');
-      } else if (error.response?.status === 404) {
-        toast.error('Admin not found');
-      }
-    }
-  }
-};
+    };
 
+    const openEditModal = (admin) => {
+        setCurrentAdmin(admin);
+        setPermissions(admin.adminPermissions || []);
+        setEditModalOpen(true);
+    };
+
+    const closeEditModal = () => {
+        setEditModalOpen(false);
+        setCurrentAdmin(null);
+        setPermissions([]);
+    };
+
+    const togglePermission = (permission) => {
+        setPermissions(prev => {
+            if (prev.includes(permission)) {
+                return prev.filter(p => p !== permission);
+            } else {
+                return [...prev, permission];
+            }
+        });
+    };
+
+    const handleSavePermissions = async () => {
+        if (!currentAdmin) return;
+
+        try {
+            const response = await axios.put(
+                `http://localhost:5000/admin/update-admin/${currentAdmin._id}`,
+                { permissions },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            setAdmins(admins.map(admin => 
+                admin._id === currentAdmin._id 
+                    ? { ...admin, adminPermissions: permissions } 
+                    : admin
+            ));
+
+            toast.success('Admin permissions updated successfully');
+            closeEditModal();
+        } catch (error) {
+            console.error('Error updating admin permissions:', error);
+            toast.error(error.response?.data?.message || 'Failed to update permissions');
+        }
+    };
 
     const toggleExpand = (adminId) => {
         setExpandedAdmin(expandedAdmin === adminId ? null : adminId);
@@ -116,10 +168,97 @@ const handleDelete = async (adminId) => {
         'disputes': 'bg-red-100 text-red-700',
         'support': 'bg-indigo-100 text-indigo-700'
     };
-    
+
+    const getPermissionLabel = (permission) => {
+        const [module] = permission.split('.');
+        return module.charAt(0).toUpperCase() + module.slice(1) + ' Management';
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
+            {/* Edit Admin Modal */}
+            {editModalOpen && currentAdmin && (
+                <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center border-b border-gray-200 pb-4">
+                                <h3 className="text-xl font-bold text-gray-900">Edit Admin Permissions</h3>
+                                <button 
+                                    onClick={closeEditModal}
+                                    className="text-gray-400 hover:text-gray-500"
+                                >
+                                    <X className="h-6 w-6" />
+                                </button>
+                            </div>
+
+                            <div className="mt-6">
+                                <div className="flex items-center space-x-4 mb-6">
+                                    <div className="flex-shrink-0 h-12 w-12 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center shadow-md">
+                                        <span className="text-white font-semibold text-sm">{getInitials(currentAdmin.name)}</span>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-semibold">{currentAdmin.name}</h4>
+                                        <p className="text-gray-600">{currentAdmin.email}</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <h4 className="text-lg font-semibold text-gray-900">Permissions</h4>
+                                    <p className="text-sm text-gray-500 mb-4">
+                                        Select the modules this admin can manage
+                                    </p>
+                                    
+                                    <div className="space-y-3">
+                                        {availablePermissions.map((permission) => {
+                                            const [module] = permission.split('.');
+                                            return (
+                                                <div 
+                                                    key={permission}
+                                                    className={`p-4 border rounded-lg ${permissionColors[module] || 'bg-gray-50 border-gray-200'}`}
+                                                >
+                                                    <div className="flex items-center">
+                                                        <input
+                                                            id={permission}
+                                                            type="checkbox"
+                                                            checked={permissions.includes(permission)}
+                                                            onChange={() => togglePermission(permission)}
+                                                            className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                                        />
+                                                        <label 
+                                                            htmlFor={permission}
+                                                            className="ml-3 block text-sm font-medium text-gray-700"
+                                                        >
+                                                            {getPermissionLabel(permission)}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 flex justify-end space-x-3 border-t border-gray-200 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={closeEditModal}
+                                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSavePermissions}
+                                    className="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header Section */}
             <div className="bg-white shadow-sm border-b border-orange-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -254,18 +393,18 @@ const handleDelete = async (adminId) => {
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="flex flex-wrap gap-2">
-                                                            {admin.adminPermissions.slice(0, 2).map((perm, idx) => {
-                                                                const permType = perm.split('.')[0];
+                                                            {admin.adminPermissions?.slice(0, 2).map((perm, idx) => {
+                                                                const [module] = perm.split('.');
                                                                 return (
                                                                     <span
                                                                         key={idx}
-                                                                        className={`px-3 py-1 text-xs font-medium rounded-full ${permissionColors[permType] || 'bg-gray-100 text-gray-700'}`}
+                                                                        className={`px-3 py-1 text-xs font-medium rounded-full ${permissionColors[module] || 'bg-gray-100 text-gray-700'}`}
                                                                     >
-                                                                        {permType}
+                                                                        {module}
                                                                     </span>
                                                                 );
                                                             })}
-                                                            {admin.adminPermissions.length > 2 && (
+                                                            {admin.adminPermissions?.length > 2 && (
                                                                 <span className="px-3 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-700">
                                                                     +{admin.adminPermissions.length - 2}
                                                                 </span>
@@ -284,6 +423,7 @@ const handleDelete = async (adminId) => {
                                                                 className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all duration-200"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
+                                                                    openEditModal(admin);
                                                                 }}
                                                                 title="Edit Admin"
                                                             >
@@ -359,16 +499,14 @@ const handleDelete = async (adminId) => {
                                                                             <h3 className="text-lg font-semibold text-gray-900">Permissions</h3>
                                                                         </div>
                                                                         <div className="flex flex-wrap gap-2">
-                                                                            {admin.adminPermissions.map((perm, idx) => {
-                                                                                const permType = perm.split('.')[0];
-                                                                                const permAction = perm.split('.')[1];
+                                                                            {admin.adminPermissions?.map((perm, idx) => {
+                                                                                const [module] = perm.split('.');
                                                                                 return (
                                                                                     <div
                                                                                         key={idx}
-                                                                                        className={`px-3 py-2 text-xs font-medium rounded-lg border ${permissionColors[permType] || 'bg-gray-100 text-gray-700 border-gray-200'}`}
+                                                                                        className={`px-3 py-2 text-xs font-medium rounded-lg border ${permissionColors[module] || 'bg-gray-100 text-gray-700 border-gray-200'}`}
                                                                                     >
-                                                                                        <div className="font-semibold">{permType}</div>
-                                                                                        <div className="text-xs opacity-75">{permAction}</div>
+                                                                                        <div className="font-semibold">{getPermissionLabel(perm)}</div>
                                                                                     </div>
                                                                                 );
                                                                             })}

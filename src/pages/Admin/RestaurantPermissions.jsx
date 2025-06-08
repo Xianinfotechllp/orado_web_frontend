@@ -3,7 +3,7 @@ import { Check, X, ChevronRight, Shield, Settings, Users, AlertCircle } from 'lu
 import axios from 'axios';
 
 
-const AdminPermission = () => {
+const RestaurantPermissions = () => {
   const token = sessionStorage.getItem('adminToken');
   const [restaurants, setRestaurants] = useState([]);
   const [selectedActions, setSelectedActions] = useState({});
@@ -72,7 +72,7 @@ const AdminPermission = () => {
 
     axios
       .put(
-        'http://localhost:5000/admin/permissions/restaurants',
+        'http://localhost:5000/admin/restuarants/permissions',
         {
           restaurantId,
           permissions: permissionsToSend,
@@ -288,4 +288,4 @@ const AdminPermission = () => {
   );
 };
 
-export default AdminPermission;
+export default RestaurantPermissions;

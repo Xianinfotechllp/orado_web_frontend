@@ -1,11 +1,36 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  AreaChart, Area
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
 } from "recharts";
 import {
-  FiUsers, FiHome, FiDollarSign, FiActivity, FiShoppingBag
+  FiUsers,
+  FiHome,
+  FiDollarSign,
+  FiActivity,
+  FiShoppingBag,
 } from "react-icons/fi";
+
+import axios from "axios";
+
+export const fetchOrderStats = async () => {
+  try {
+    const response = await axios.get(
+      "http://localhost:5000/admin/order/order-stats"
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching order stats:", error);
+    return null;
+  }
+};
 
 // Mock Data
 const statData = [
@@ -74,13 +99,21 @@ const topRestaurants = [
 
 const StatCard = ({ icon, title, value, change, isPositive }) => (
   <div className="bg-white hover:shadow-xl transition duration-300 shadow rounded-2xl p-6 border border-gray-100 flex items-start gap-4">
-    <div className={`p-3 rounded-xl ${isPositive ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>
+    <div
+      className={`p-3 rounded-xl ${
+        isPositive ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+      }`}
+    >
       {icon}
     </div>
     <div>
       <p className="text-sm text-gray-500 tracking-wide">{title}</p>
       <p className="text-2xl font-semibold text-gray-800">{value}</p>
-      <p className={`text-xs mt-1 font-medium ${isPositive ? "text-green-600" : "text-red-600"}`}>
+      <p
+        className={`text-xs mt-1 font-medium ${
+          isPositive ? "text-green-600" : "text-red-600"
+        }`}
+      >
         {change} {isPositive ? "↑" : "↓"} this week
       </p>
     </div>
@@ -88,9 +121,112 @@ const StatCard = ({ icon, title, value, change, isPositive }) => (
 );
 
 const Dashboard = () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [statData, setStatData] = useState([
+    {
+      title: "Total Users",
+      value: "Loading...",
+      change: "0%",
+      isPositive: false,
+      icon: <FiUsers size={22} />,
+    },
+    {
+      title: "Total Restaurants",
+      value: "Loading...",
+      change: "0%",
+      isPositive: false,
+      icon: <FiHome size={22} />,
+    },
+    {
+      title: "Total Revenue",
+      value: "₹0",
+      change: "0%",
+      isPositive: false,
+      icon: <FiDollarSign size={22} />,
+    },
+    {
+      title: "Active Orders",
+      value: "0",
+      change: "0%",
+      isPositive: false,
+      icon: <FiActivity size={22} />,
+    },
+  ]);
+
+  const fetchAllStats = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch all statistics in parallel
+      const [usersResponse, restaurantsResponse, ordersResponse] =
+        await Promise.all([
+          fetch("http://localhost:5000/admin/user/user-stats"),
+          fetch("http://localhost:5000/admin/restauranteee/restaurant-stats"),
+          fetch("http://localhost:5000/admin/order/order-stats"),
+        ]);
+
+      if (!usersResponse.ok || !restaurantsResponse.ok || !ordersResponse.ok) {
+        throw new Error("One or more network responses were not ok");
+      }
+
+      const usersData = await usersResponse.json();
+      const restaurantsData = await restaurantsResponse.json();
+      const ordersData = await ordersResponse.json();
+
+      setStatData((prevStats) =>
+        prevStats.map((stat) => {
+          if (stat.title === "Total Users") {
+            return {
+              ...stat,
+              value: usersData.data.totalUsers,
+              change: `${parseFloat(usersData.data.growthPercentage).toFixed(
+                1
+              )}%`,
+              isPositive: usersData.data.trend === "↑",
+            };
+          } else if (stat.title === "Total Restaurants") {
+            return {
+              ...stat,
+              value: restaurantsData.data.totalRestaurants,
+              change: `${parseFloat(
+                restaurantsData.data.growthPercentage
+              ).toFixed(1)}%`,
+              isPositive: restaurantsData.data.trend === "↑",
+            };
+          } else if (stat.title === "Active Orders") {
+            return {
+              ...stat,
+              value: ordersData.activeOrders.toString(),
+              change: `${parseFloat(ordersData.percentageChange).toFixed(1)}%`,
+              isPositive: ordersData.trend === "↑",
+            };
+          }
+          return stat;
+        })
+      );
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+      setError("Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // useEffect usage (example):
+  useEffect(() => {
+    fetchAllStats();
+  }, []);
+
+  // In your JSX:
+  if (loading) return <div>Loading dashboard...</div>;
+  if (error) return <div>Error: {error}</div>;
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 space-y-8 max-w-[1500px] mx-auto">
-      <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Admin Dashboard</h1>
+      <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
+        Admin Dashboard
+      </h1>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -104,7 +240,9 @@ const Dashboard = () => {
         {/* Sales Overview */}
         <div className="bg-white p-6 rounded-2xl shadow border border-gray-100 lg:col-span-2">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Sales Overview</h2>
+            <h2 className="text-xl font-semibold text-gray-800">
+              Sales Overview
+            </h2>
             <select className="text-sm border border-gray-300 rounded px-3 py-1 bg-white">
               <option>This Week</option>
               <option>Last Month</option>
@@ -116,14 +254,21 @@ const Dashboard = () => {
               <XAxis dataKey="day" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="sales" stroke="#FC8019" strokeWidth={2} />
+              <Line
+                type="monotone"
+                dataKey="sales"
+                stroke="#FC8019"
+                strokeWidth={2}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
         {/* Top Restaurants */}
         <div className="bg-white p-6 rounded-2xl shadow border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Top Restaurants</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">
+            Top Restaurants
+          </h2>
           <div className="space-y-5">
             {topRestaurants.map((rest, i) => (
               <div key={i}>
@@ -132,7 +277,10 @@ const Dashboard = () => {
                   <span className="text-sm text-gray-500">₹{rest.revenue}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                  <div className="bg-orange-500 h-2 rounded-full" style={{ width: `${(rest.revenue / 4500) * 100}%` }} />
+                  <div
+                    className="bg-orange-500 h-2 rounded-full"
+                    style={{ width: `${(rest.revenue / 4500) * 100}%` }}
+                  />
                 </div>
               </div>
             ))}
@@ -144,10 +292,15 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Orders */}
         <div className="bg-white p-6 rounded-2xl shadow border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Recent Orders</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">
+            Recent Orders
+          </h2>
           <div className="divide-y divide-gray-100">
             {recentOrders.map((order) => (
-              <div key={order.id} className="py-3 flex justify-between items-center">
+              <div
+                key={order.id}
+                className="py-3 flex justify-between items-center"
+              >
                 <div className="flex items-center gap-3">
                   <div className="bg-orange-100 p-2 rounded-lg">
                     <FiShoppingBag className="text-orange-500" />
@@ -159,7 +312,13 @@ const Dashboard = () => {
                 </div>
                 <div className="text-right">
                   <p className="font-medium text-gray-800">₹{order.amount}</p>
-                  <p className={`text-xs font-semibold ${order.status === "Completed" ? "text-green-600" : "text-red-500"}`}>
+                  <p
+                    className={`text-xs font-semibold ${
+                      order.status === "Completed"
+                        ? "text-green-600"
+                        : "text-red-500"
+                    }`}
+                  >
                     {order.status}
                   </p>
                 </div>
@@ -170,7 +329,9 @@ const Dashboard = () => {
 
         {/* User Activity */}
         <div className="bg-white p-6 rounded-2xl shadow border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">User Activity</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">
+            User Activity
+          </h2>
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={activityData}>
               <defs>

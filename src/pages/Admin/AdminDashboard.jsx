@@ -1,3 +1,4 @@
+import { TicketCheck } from 'lucide-react';
 import React, { useState } from 'react';
 import { FaUserSecret } from 'react-icons/fa';
 import {
@@ -115,6 +116,12 @@ function AdminDashboard() {
             </Link>
             <Link to="admin-manage" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
             Manage Admins
+            </Link>
+          </SidebarItem>
+
+           <SidebarItem title="Ticket" icon={<TicketCheck size={18}/>}>
+            <Link to="admin-ticket" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            Ticket Manager
             </Link>
           </SidebarItem>
 

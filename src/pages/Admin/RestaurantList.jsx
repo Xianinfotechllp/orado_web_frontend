@@ -130,7 +130,7 @@ const RestaurantList = () => {
 
       // 🔗 Real API call to update the restaurant
       const res = await axios.put(
-        `http://localhost:5000/a/edit/restaurant/${editingRestaurant._id}`,
+        `http://localhost:5000/admin/edit/restaurant/${editingRestaurant._id}`,
         updatedData,
         {
           headers: {
