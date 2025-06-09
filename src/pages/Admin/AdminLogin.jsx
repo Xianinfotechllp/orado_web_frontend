@@ -39,6 +39,7 @@ const AdminLogin = () => {
       
       const { token, user } = response.data;
       sessionStorage.setItem('userRole',user.userType)
+      sessionStorage.setItem('permissions',JSON.stringify(user.adminPermissions))
       // Save token in localStorage/sessionStorage if rememberMe is true
       if (rememberMe) {
         localStorage.setItem("adminToken", token);

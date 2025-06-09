@@ -8,8 +8,10 @@ import {
 import { GrUserAdmin } from 'react-icons/gr';
 import { Link, Outlet } from 'react-router-dom';
 
-const SidebarItem = ({ title, icon, children }) => {
+const SidebarItem = ({ title, icon, children, hasPermission }) => {
   const [open, setOpen] = useState(false);
+  
+  if (!hasPermission) return null;
 
   return (
     <div className="text-sm w-full">
@@ -31,6 +33,12 @@ const SidebarItem = ({ title, icon, children }) => {
 
 function AdminDashboard() {
   const [showSidebar, setShowSidebar] = useState(false);
+  const permissions = JSON.parse(sessionStorage.getItem('permissions')) || [];
+
+  // Check if user has specific permission
+  const hasPermission = (permission) => {
+    return permissions.includes(permission);
+  };
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans">
@@ -70,22 +78,38 @@ function AdminDashboard() {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto space-y-1 py-4 px-2 z-200">
-          <SidebarItem title="Dashboard" icon={<FiPieChart size={18} />}>
+          <SidebarItem 
+            title="Dashboard" 
+            icon={<FiPieChart size={18} />}
+            hasPermission={true} // Always show dashboard
+          >
             <Link to="" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               Overview
             </Link>
           </SidebarItem>
 
-          <SidebarItem title="Approvals" icon={<FiClipboard size={18} />}>
-            <Link to="restaurant-approvals" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
-              Restaurant Approvals
-            </Link>
-            <Link to="#" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
-              Agent Approvals
-            </Link>
+          <SidebarItem 
+            title="Approvals" 
+            icon={<FiClipboard size={18} />}
+            hasPermission={hasPermission('merchants.manage') || hasPermission('agents.manage')}
+          >
+            {hasPermission('merchants.manage') && (
+              <Link to="restaurant-approvals" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+                Restaurant Approvals
+              </Link>
+            )}
+            {hasPermission('agents.manage') && (
+              <Link to="#" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+                Agent Approvals
+              </Link>
+            )}
           </SidebarItem>
 
-          <SidebarItem title="Restaurants" icon={<FiHome size={18} />}>
+          <SidebarItem 
+            title="Restaurants" 
+            icon={<FiHome size={18} />}
+            hasPermission={hasPermission('merchants.manage')}
+          >
             <Link to="restaurant-add" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               Add Restaurants
             </Link>
@@ -100,7 +124,11 @@ function AdminDashboard() {
             </Link>
           </SidebarItem>
 
-          <SidebarItem title="Agents" icon={<FaUserSecret size={18} />}>
+          <SidebarItem 
+            title="Agents" 
+            icon={<FaUserSecret size={18} />}
+            hasPermission={hasPermission('agents.manage')}
+          >
             <Link to="#" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               View Agents
             </Link>
@@ -109,25 +137,34 @@ function AdminDashboard() {
             </Link>
           </SidebarItem>
 
-
-           <SidebarItem title="Admins" icon={<GrUserAdmin size={18}/>}>
+          <SidebarItem 
+            title="Admins" 
+            icon={<GrUserAdmin size={18}/>}
+            hasPermission={hasPermission('users.manage')}
+          >
             <Link to="admin-add" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               Add Admins
             </Link>
             <Link to="admin-manage" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
-            Manage Admins
+              Manage Admins
             </Link>
           </SidebarItem>
 
-           <SidebarItem title="Ticket" icon={<TicketCheck size={18}/>}>
+          <SidebarItem 
+            title="Ticket" 
+            icon={<TicketCheck size={18}/>}
+            hasPermission={hasPermission('support.manage')}
+          >
             <Link to="admin-ticket" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
-            Ticket Manager
+              Ticket Manager
             </Link>
           </SidebarItem>
 
-
-
-          <SidebarItem title="Settings" icon={<FiSettings size={18} />}>
+          <SidebarItem 
+            title="Settings" 
+            icon={<FiSettings size={18} />}
+            hasPermission={true} // Always show settings
+          >
             <Link to="#" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               Edit Profile
             </Link>
@@ -135,7 +172,6 @@ function AdminDashboard() {
               Change Password
             </Link>
           </SidebarItem>
-
         </nav>
 
         {/* Logout */}
