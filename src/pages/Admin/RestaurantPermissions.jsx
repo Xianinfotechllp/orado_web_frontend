@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Check, X, ChevronRight, Shield, Settings, Users, AlertCircle } from 'lucide-react';
 import axios from 'axios';
+import LoadingForAdmins from './AdminUtils/LoadingForAdmins';
 
 
 const RestaurantPermissions = () => {
@@ -101,18 +102,7 @@ const RestaurantPermissions = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center">
-        <div className="text-center space-y-6">
-          <div className="relative">
-            <div className="w-20 h-20 border-4 border-orange-200 rounded-full animate-spin"></div>
-            <div className="w-20 h-20 border-4 border-orange-500 rounded-full animate-spin absolute top-0 left-0" style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }}></div>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-xl font-semibold text-gray-700">Loading Restaurant Permissions</h3>
-            <p className="text-gray-500">Please wait while we fetch the data...</p>
-          </div>
-        </div>
-      </div>
+      <LoadingForAdmins/>
     );
   }
 

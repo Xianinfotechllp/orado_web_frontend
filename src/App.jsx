@@ -31,6 +31,7 @@ import Dashboard from "./pages/Admin/Dashboard";
 import AddAdmin from "./pages/Admin/AddAdmin";
 import AdminManage from "./pages/Admin/AdminManage";
 import Ticket from "./pages/Admin/ticketSystem/Ticket";
+import RestaurantCommission from "./pages/Admin/RestaurantCommission";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -66,6 +67,7 @@ function App() {
           <Route path="restaurant-edit" element={<RestaurantList />} />
           <Route path="restaurant-createmenu" element={<CreateMenu />} />
           <Route path="restaurant-permission" element={<RestaurantPermissions />} />
+          <Route path="restaurant-commission" element={<RestaurantCommission />} />
 
           
           {/* admin-section */}

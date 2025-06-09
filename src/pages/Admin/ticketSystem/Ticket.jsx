@@ -22,6 +22,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import axios from "axios";
+import LoadingForAdmins from "../AdminUtils/LoadingForAdmins";
 
 const Ticket = () => {
   const [tickets, setTickets] = useState([]);
@@ -201,12 +202,7 @@ const handleStatusUpdate = async (ticketId, newStatus) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <RefreshCw className="h-8 w-8 text-orange-500 animate-spin" />
-          <p className="text-gray-600 font-medium">Loading tickets...</p>
-        </div>
-      </div>
+      <LoadingForAdmins/>
     );
   }
 

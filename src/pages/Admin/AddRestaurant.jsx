@@ -14,6 +14,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { createRestaurant } from "../../apis/restaurantApi";
+import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
 
 const AddRestaurant = () => {
   const [formData, setFormData] = useState({
@@ -822,10 +823,7 @@ const AddRestaurant = () => {
                   className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {loading ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Creating Restaurant...
-                    </div>
+                    <LoadingForAdmins/>
                   ) : (
                     "Create Restaurant"
                   )}

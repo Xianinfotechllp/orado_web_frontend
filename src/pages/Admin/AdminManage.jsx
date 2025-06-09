@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import LoadingForAdmins from './AdminUtils/LoadingForAdmins';
 
 const AdminManage = () => {
     const [admins, setAdmins] = useState([]);
@@ -314,12 +315,7 @@ const AdminManage = () => {
                 </div>
 
                 {loading ? (
-                    <div className="bg-white rounded-xl shadow-sm border border-orange-100 p-12">
-                        <div className="flex flex-col items-center justify-center space-y-4">
-                            <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-200 border-t-orange-500"></div>
-                            <p className="text-gray-600 font-medium">Loading administrators...</p>
-                        </div>
-                    </div>
+                   <LoadingForAdmins/>
                 ) : (
                     <div className="bg-white shadow-sm rounded-xl border border-orange-100 overflow-hidden">
                         <div className="overflow-x-auto">

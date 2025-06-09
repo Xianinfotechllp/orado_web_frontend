@@ -23,7 +23,7 @@ const SidebarItem = ({ title, icon, children, hasPermission }) => {
         {children && (open ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />)}
       </button>
       <div
-        className={`ml-6 bg-white text-gray-800 overflow-hidden transition-all duration-300 rounded-lg mt-1 ${open ? 'max-h-40 py-2' : 'max-h-0'}`}
+        className={`ml-6 bg-white text-gray-800 overflow-hidden transition-all duration-300 rounded-lg mt-1 ${open ? 'max-h-60 py-2' : 'max-h-0'}`}
       >
         {children}
       </div>
@@ -122,6 +122,11 @@ function AdminDashboard() {
             <Link to="restaurant-permission" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               Restaurant Permission
             </Link>
+            <Link to="restaurant-commission" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+              Restaurant Commission
+            </Link>
+            
+            
           </SidebarItem>
 
           <SidebarItem 

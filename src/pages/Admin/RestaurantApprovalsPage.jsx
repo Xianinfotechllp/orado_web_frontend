@@ -37,6 +37,7 @@ import {
   Cell,
 } from "recharts";
 import { FaEnvelope, FaPhoneAlt } from "react-icons/fa";
+import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
 
 const RestaurantApprovalsPage = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -92,38 +93,53 @@ const RestaurantApprovalsPage = () => {
             },
           }
         );
+        // console.log(response.data)
 
-        const formatted = response.data.restaurants.map((restaurant) => ({
-          id: restaurant._id,
-          name: restaurant.name || "N/A",
-          merchantSearchName: restaurant.merchantSearchName || "N/A",
-          ownerId: restaurant.ownerId,
-          email: restaurant.email,
-          phone: restaurant.phone,
-          address: restaurant.address
-            ? `${restaurant.address.street}, ${restaurant.address.city}, ${restaurant.address.state}`
-            : "Address not provided",
-          status: restaurant.approvalStatus || "pending",
-          kycStatus: restaurant.kycStatus || "pending",
-          kycRejectionReason: restaurant.kycRejectionReason || "",
-          foodType: restaurant.foodType || "Not specified",
-          kycDocuments: restaurant.kycDocuments,
-          minOrderAmount: restaurant.minOrderAmount || 0,
-          openingHours: restaurant.openingHours
-            ? Object.entries(restaurant.openingHours)
-                .map(([day, hours]) => `${day}: ${hours}`)
-                .join(", ")
-            : "Not specified",
-          paymentMethods: restaurant.paymentMethods
-            ? restaurant.paymentMethods.join(", ")
-            : "Not specified",
-          rating: restaurant.rating || "No ratings",
-          createdAt: new Date(restaurant.createdAt).toLocaleDateString(),
-          active: restaurant.active ? "Yes" : "No",
-          images: restaurant.images || [],
-          banners: restaurant.banners || [],
-        }));
+        const formatted = response.data.restaurants.map((restaurant) => {
+          // Format opening hours properly
+          const formattedOpeningHours = restaurant.openingHours
+            ? restaurant.openingHours.map((hour) => ({
+                day: hour.day.toLowerCase(),
+                openingTime: hour.openingTime || "--:--",
+                closingTime: hour.closingTime || "--:--",
+                isClosed: hour.isClosed || false,
+              }))
+            : [];
 
+          return {
+            id: restaurant._id,
+            name: restaurant.name || "N/A",
+            merchantSearchName: restaurant.merchantSearchName || "N/A",
+            ownerId: restaurant.ownerId,
+            email: restaurant.email,
+            phone: restaurant.phone,
+            address: restaurant.address
+              ? `${restaurant.address.street}, ${restaurant.address.city}, ${restaurant.address.state}`
+              : "Address not provided",
+            status: restaurant.approvalStatus || "pending",
+            kycStatus: restaurant.kycStatus || "pending",
+            kycRejectionReason: restaurant.kycRejectionReason || "",
+            foodType: restaurant.foodType || "Not specified",
+            kycDocuments: restaurant.kycDocuments || {},
+            minOrderAmount: restaurant.minOrderAmount || 0,
+            openingHours: formattedOpeningHours, // Now properly structured array
+            paymentMethods: restaurant.paymentMethods
+              ? Array.isArray(restaurant.paymentMethods)
+                ? restaurant.paymentMethods.join(", ")
+                : restaurant.paymentMethods
+              : "Not specified",
+            rating: restaurant.rating || "No ratings",
+            createdAt: restaurant.createdAt
+              ? new Date(restaurant.createdAt).toLocaleDateString()
+              : "Unknown",
+            active: restaurant.active ? "Yes" : "No",
+            images: Array.isArray(restaurant.images) ? restaurant.images : [],
+            banners: Array.isArray(restaurant.banners)
+              ? restaurant.banners
+              : [],
+          };
+        });
+        console.log(formatted);
         setRestaurants(formatted);
         setLoading(false);
       } catch (err) {
@@ -167,7 +183,7 @@ const RestaurantApprovalsPage = () => {
     try {
       const token = sessionStorage.getItem("adminToken");
       await axios.post(
-        `http://localhost:5000/admin/restaurant-application/${id}/approve-status`,
+        `http://localhost:5000/admin/restaurant-application/${id}/update`,
         {
           action: "rejected",
           reason: "Documents incomplete",
@@ -377,12 +393,7 @@ const RestaurantApprovalsPage = () => {
           {/* Table */}
           <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mx-auto"></div>
-                <p className="mt-4 text-gray-600">
-                  Loading restaurant applications...
-                </p>
-              </div>
+              <LoadingForAdmins/>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -751,13 +762,36 @@ const RestaurantApprovalsPage = () => {
                                 {selectedRestaurant.paymentMethods}
                               </span>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="space-y-1">
                               <span className="text-sm font-medium text-gray-500">
                                 Opening Hours:
                               </span>
-                              <span className="text-sm text-gray-900">
-                                {selectedRestaurant.openingHours}
-                              </span>
+                              {selectedRestaurant.openingHours &&
+                              Array.isArray(selectedRestaurant.openingHours) ? (
+                                selectedRestaurant.openingHours.map((item) => (
+                                  <div
+                                    key={item.day}
+                                    className="flex justify-between text-sm text-gray-900"
+                                  >
+                                    <span className="capitalize">
+                                      {item.day}
+                                    </span>
+                                    <span>
+                                      {item.isClosed ? (
+                                        <span className="text-red-500">
+                                          Closed
+                                        </span>
+                                      ) : (
+                                        `${item.openingTime} - ${item.closingTime}`
+                                      )}
+                                    </span>
+                                  </div>
+                                ))
+                              ) : (
+                                <span className="text-sm text-gray-400">
+                                  Not specified
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -925,7 +959,7 @@ const RestaurantApprovalsPage = () => {
                           <FiMessageSquare className="mr-2 text-orange-500" />
                           Quick Contact Options
                         </h4>
-                        <div className="flex flex-wrap gap-3">
+                        <div className="flex flex-wrap gap-5">
                           <a
                             href={`https://mail.google.com/mail/?view=cm&fs=1&to=${selectedRestaurant.email}&su=Welcome&body=Hello%20,%20welcome%20to%20Orado!`}
                           >
@@ -934,13 +968,6 @@ const RestaurantApprovalsPage = () => {
                           <a href={`tel:${selectedRestaurant.phone}`}>
                             <FaPhoneAlt size={20} />
                           </a>
-                          <button
-                            onClick={() => setContactMethod("sms")}
-                            className="flex items-center justify-center px-6 py-3 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-                          >
-                            <FiMessageSquare className="mr-2 h-4 w-4" /> Send
-                            SMS
-                          </button>
                         </div>
                       </div>
                     )}

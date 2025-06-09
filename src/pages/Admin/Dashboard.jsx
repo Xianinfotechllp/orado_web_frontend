@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 
 import axios from "axios";
+import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
 
 export const fetchOrderStats = async () => {
   try {
@@ -33,36 +34,7 @@ export const fetchOrderStats = async () => {
 };
 
 // Mock Data
-const statData = [
-  {
-    title: "Total Users",
-    value: "2,453",
-    change: "12.5%",
-    isPositive: true,
-    icon: <FiUsers size={22} />,
-  },
-  {
-    title: "Total Restaurants",
-    value: "324",
-    change: "8.2%",
-    isPositive: true,
-    icon: <FiHome size={22} />,
-  },
-  {
-    title: "Total Revenue",
-    value: "₹1,24,500",
-    change: "5.7%",
-    isPositive: true,
-    icon: <FiDollarSign size={22} />,
-  },
-  {
-    title: "Active Orders",
-    value: "56",
-    change: "3.1%",
-    isPositive: false,
-    icon: <FiActivity size={22} />,
-  },
-];
+
 
 const salesData = [
   { day: "Mon", sales: 500 },
@@ -83,12 +55,14 @@ const activityData = [
   { date: "06", activity: 1000 },
 ];
 
-const recentOrders = [
-  { id: 1001, restaurant: "Burger Haven", amount: 450, status: "Completed" },
-  { id: 1002, restaurant: "Spice Villa", amount: 320, status: "Pending" },
-  { id: 1003, restaurant: "Ocean Grill", amount: 650, status: "Completed" },
-  { id: 1004, restaurant: "Pizza Planet", amount: 280, status: "Pending" },
-];
+// const recentOrders = [
+//   { id: 1001, restaurant: "Burger Haven", amount: 450, status: "Completed" },
+//   { id: 1002, restaurant: "Spice Villa", amount: 320, status: "Pending" },
+//   { id: 1003, restaurant: "Ocean Grill", amount: 650, status: "Completed" },
+//   { id: 1004, restaurant: "Pizza Planet", amount: 280, status: "Pending" },
+// ];
+
+
 
 const topRestaurants = [
   { name: "Grill House", revenue: 4500 },
@@ -123,6 +97,7 @@ const StatCard = ({ icon, title, value, change, isPositive }) => (
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
   const [statData, setStatData] = useState([
     {
       title: "Total Users",
@@ -154,6 +129,49 @@ const Dashboard = () => {
     },
   ]);
 
+  const fetchRecentOrders = async () => {
+  try {
+    setLoading(true); // Set loading state
+    
+    const token = sessionStorage.getItem('adminToken'); // Get auth token
+    
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+
+    // Fetch only recent orders
+    const response = await fetch(
+      "http://localhost:5000/admin/order/order-stats/recent",
+      { headers }
+    );
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Session expired. Please login again.");
+      }
+      throw new Error("Failed to fetch recent orders");
+    }
+
+    const recentOrdersData = await response.json();
+    setRecentOrders(recentOrdersData); // Update state with real data
+
+  } catch (error) {
+    console.error("Error fetching recent orders:", error);
+    setError(error.message || "Failed to load recent orders");
+    
+    if (error.message.includes("Session expired")) {
+      // Handle logout or redirect to login
+    }
+  } finally {
+    setLoading(false); // Reset loading state
+  }
+};
+
   const fetchAllStats = async () => {
     try {
       setLoading(true);
@@ -162,7 +180,7 @@ const Dashboard = () => {
       const [usersResponse, restaurantsResponse, ordersResponse] =
         await Promise.all([
           fetch("http://localhost:5000/admin/user/user-stats"),
-          fetch("http://localhost:5000/admin/restauranteee/restaurant-stats"),
+          fetch("http://localhost:5000/admin/restaurant/stats/restaurant-stats"),
           fetch("http://localhost:5000/admin/order/order-stats"),
         ]);
 
@@ -216,10 +234,11 @@ const Dashboard = () => {
   // useEffect usage (example):
   useEffect(() => {
     fetchAllStats();
+    fetchRecentOrders()
   }, []);
 
   // In your JSX:
-  if (loading) return <div>Loading dashboard...</div>;
+  if (loading) return <LoadingForAdmins/>;
   if (error) return <div>Error: {error}</div>;
 
   return (

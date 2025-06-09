@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronLeft, Edit2, Trash2, Plus, X, ChevronRight, ChevronLeft as ChevronLeftIcon } from 'lucide-react';
+import LoadingForAdmins from './AdminUtils/LoadingForAdmins';
 
 const CategoryItems = () => {
     const { restaurantId, categoryId } = useParams();
@@ -67,7 +68,7 @@ const CategoryItems = () => {
         setShowModal(false);
     };
 
-    if (loading) return <LoadingSpinner />;
+    if (loading) return <LoadingForAdmins />;
     if (error) return <ErrorScreen error={error} />;
 
     return (
@@ -489,15 +490,6 @@ const ProductModal = ({ show, onClose, onSubmit, item, restaurantId, categoryId,
     );
 };
 
-// Sub-components
-const LoadingSpinner = () => (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
-            <p>Loading items...</p>
-        </div>
-    </div>
-);
 
 const ErrorScreen = ({ error }) => (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
