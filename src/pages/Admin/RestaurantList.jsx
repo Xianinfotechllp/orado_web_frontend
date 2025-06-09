@@ -212,7 +212,7 @@ const RestaurantList = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b  top-0 z-50">
+      <header className="bg-white  shadow-sm border-b  top-0 sticky z-50">
         <div className="max-w-6xl mx-auto px-4 py-4">
           {/* Search Bar */}
           <div className="relative">
@@ -445,7 +445,7 @@ const RestaurantList = () => {
       {editingRestaurant && (
         <div className="fixed inset-0  bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-6 flex justify-between items-center rounded-t-3xl">
+            <div className="sticky z-100 top-0 bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-6 flex justify-between items-center rounded-t-3xl">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">

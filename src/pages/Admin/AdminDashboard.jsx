@@ -69,7 +69,7 @@ function AdminDashboard() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto space-y-1 py-4 px-2">
+        <nav className="flex-1 overflow-y-auto space-y-1 py-4 px-2 z-200">
           <SidebarItem title="Dashboard" icon={<FiPieChart size={18} />}>
             <Link to="" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               Overview
