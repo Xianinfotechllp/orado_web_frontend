@@ -3,12 +3,19 @@ import { createSlice } from '@reduxjs/toolkit';
 const cartSlice = createSlice({
   name: 'cart',
   initialState: {
-    cartId: null, // this will hold the cartId from backend or generated
-    items: [],    // [{ product: {...}, quantity: number }]
+    cartId: null,
+    items: [],
+    loading: false,
+    error: null
   },
   reducers: {
     setCartId: (state, action) => {
-      state.cartId = action.payload;
+      state.cartId = action.payload; // ONLY cartId here!
+    },
+
+    setCart: (state, action) => {
+      state.cartId = action.payload._id;
+      state.items = action.payload.products || [];
     },
 
     addItem: (state, action) => {
@@ -36,10 +43,15 @@ const cartSlice = createSlice({
     clearCart: (state) => {
       state.cartId = null;
       state.items = [];
+      state._persistCleared = true;
     },
   },
+
 });
 
 // Export actions and reducer
-export const { setCartId, addItem, updateQuantity, removeItem, clearCart } = cartSlice.actions;
+export const { setCartId, setCart, addItem, updateQuantity, removeItem, clearCart } = cartSlice.actions;
+export const selectCartId = (state) => state.cart.cartId;
+export const selectCartItems = (state) => state.cart.items;
+export const selectCart = (state) => state.cart;
 export default cartSlice.reducer;

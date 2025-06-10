@@ -69,4 +69,33 @@ export const getRestaurantsByLocationAndCategory = async (latitude, longitude, c
   }
 };
 
+// search bar api method
+
+export const getRestaurantsBySearchQuery = async ({
+  query,
+  latitude,
+  longitude,
+  radius = 5000,
+  page = 1,
+  limit = 10
+}) => {
+  try {
+    const response = await apiClient.get("/location/nearby/restaurants/search", {
+      params: {
+        query,
+        latitude,
+        longitude,
+        radius,
+        page,
+        limit
+      }
+    });
+    console.log("Search response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error searching restaurants:", error);
+    throw error;
+  }
+};
+
 

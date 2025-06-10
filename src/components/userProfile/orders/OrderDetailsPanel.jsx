@@ -189,7 +189,7 @@ const OrderDetailsPanel = ({ order, onClose }) => {
                   </div>
                   {order.assignedAgent && (
                     <p className="text-sm text-gray-500 mt-1">
-                      by {typeof order.assignedAgent === 'string' ? order.assignedAgent : order.assignedAgent.name}
+                      by {typeof order.assignedAgent === 'string' ? order.assignedAgent : order.assignedAgent.fullName}
                     </p>
                   )}
                 </motion.div>

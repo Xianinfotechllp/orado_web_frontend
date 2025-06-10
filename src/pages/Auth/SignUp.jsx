@@ -212,7 +212,7 @@ function Signup() {
                 {/* You can add navigation on Login button if needed */}
                 <button
                   type="button"
-                  onClick={() => (window.location.href = "/")}
+                  onClick={() => (window.location.href = "/login")}
                   className="px-8 py-2 border-[#EA4424] border text-[#EA4424]"
                 >
                   Login

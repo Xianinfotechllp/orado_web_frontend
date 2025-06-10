@@ -3,6 +3,7 @@ import apiClient from "./apiClient/apiClient";
 export const getBillSummary = async (data) => {
   try {
     const response = await apiClient.post(`/order/pricesummary`, data);
+    console.log("Fetched bill summary:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching bill summary:", error.response?.data || error.message);

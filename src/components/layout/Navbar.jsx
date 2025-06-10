@@ -14,6 +14,7 @@ import { setLocation } from "../../slices/locationSlice";
 import { Link } from "react-router-dom";
 import { VscAccount } from "react-icons/vsc";
 import { useNavigate } from "react-router-dom";
+import {getRestaurantsBySearchQuery} from "../../apis/restaurantApi";
 
 function Navbar() {
   const dispatch = useDispatch();
@@ -24,10 +25,19 @@ function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mobileLocationOpen, setMobileLocationOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  // New state for food search
+  const [isFoodSearchOpen, setIsFoodSearchOpen] = useState(false);
+  const [foodSearchQuery, setFoodSearchQuery] = useState("");
+  // Get current location from Redux store or use default
+  const location = useSelector((state) => state.location.location);
+  console.log("Navbar location:", location);
+  
+  
   const user = useSelector((state) => state.auth.user);
   const cartItems = useSelector((state) => state.cart.items);
   const cartItemsCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const locationRef = useRef(null);
+  const foodSearchRef = useRef(null);
   const navigate = useNavigate()
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
@@ -71,6 +81,45 @@ function Navbar() {
     setMobileLocationOpen(false);
   };
 
+  // Handle food search
+  const handleFoodSearch = () => {
+    setIsFoodSearchOpen(!isFoodSearchOpen);
+    if (!isFoodSearchOpen) {
+      setFoodSearchQuery("");
+    }
+  };
+
+  const handleFoodSearchSubmit = async (e) => {
+    e.preventDefault();
+    if (foodSearchQuery.trim()) {
+      try {
+        const restaurants = await getRestaurantsBySearchQuery({
+          query: foodSearchQuery.trim(),
+          latitude: location?.lat || 0,
+          longitude: location?.lon || 0,
+          radius: 5000,
+          page: 1,
+          limit: 10
+        });
+        console.log("Search results:", restaurants);
+        
+
+        navigate(`/search`, { 
+          state: { 
+            searchResults: restaurants,
+            searchQuery: foodSearchQuery.trim()
+          }
+        });
+        
+        setIsFoodSearchOpen(false);
+        setFoodSearchQuery("");
+      } catch (error) {
+        console.error("Error searching restaurants:", error);
+        // Optionally show error to user
+      }
+    }
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -88,6 +137,12 @@ function Navbar() {
           setIsSearchOpen(false);
           setMobileLocationOpen(false);
         }
+      }
+      
+      // Handle food search click outside
+      if (foodSearchRef.current && !foodSearchRef.current.contains(event.target)) {
+        setIsFoodSearchOpen(false);
+        setFoodSearchQuery("");
       }
     };
 
@@ -114,7 +169,7 @@ function Navbar() {
           {/* Logo & Name */}
           <div
             className="flex items-center gap-3 cursor-pointer"
-            onClick={() => navigate("/home")}
+            onClick={() => navigate("/")}
           >
             <img
               src={logo}
@@ -177,9 +232,50 @@ function Navbar() {
           </div>
         </div>
 
-        {/* Desktop Navigation - EXACT SAME LINKS */}
-        <ul className="hidden md:flex items-center gap-8 text-gray-700 font-medium">
-          <Link to="/home">
+        {/* Center Section: Food Search Bar (Desktop) */}
+        <div className="hidden md:flex items-center flex-1 max-w-lg mx-8" ref={foodSearchRef}>
+          {!isFoodSearchOpen ? (
+            <button
+              onClick={handleFoodSearch}
+              className="flex items-center gap-3 w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl transition-all duration-300 group shadow-sm hover:shadow-md"
+            >
+              <FiSearch size={18} className="text-gray-500 group-hover:text-orange-600" />
+              <span className="text-gray-500 group-hover:text-gray-700 font-medium">
+                Search for food, restaurants....
+              </span>
+            </button>
+          ) : (
+            <form onSubmit={handleFoodSearchSubmit} className="w-full">
+              <div className="flex items-center gap-3 bg-white border-2 border-orange-500 px-4 py-3 rounded-xl shadow-lg">
+                <FiSearch size={18} className="text-orange-600" />
+                <input
+                  type="text"
+                  value={foodSearchQuery}
+                  onChange={(e) => setFoodSearchQuery(e.target.value)}
+                  placeholder="Search for food, restaurants, categories..."
+                  className="outline-none bg-transparent w-full text-gray-800 placeholder-gray-400 font-medium"
+                  autoFocus
+                />
+                {foodSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFoodSearchQuery("");
+                      setIsFoodSearchOpen(false);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  >
+                    <FiX size={16} />
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+        </div>
+
+        {/* Desktop Navigation - Updated */}
+        <ul className="hidden md:flex items-center gap-6 text-gray-700 font-medium">
+          <Link to="/">
             <li className="hover:text-orange-600 cursor-pointer transition-all duration-300 hover:scale-105 relative group">
               Home
               <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-orange-600 group-hover:w-full transition-all duration-300"></div>
@@ -189,11 +285,6 @@ function Navbar() {
             <li className="hover:text-orange-600 cursor-pointer transition-all duration-300 hover:scale-105 relative group">
               Notifications
               <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-orange-600 group-hover:w-full transition-all duration-300"></div>
-            </li>
-          </Link>
-          <Link to="/search">
-            <li className="cursor-pointer hover:text-orange-600 transition-all duration-300 hover:scale-110 p-2 hover:bg-orange-50 rounded-lg">
-              <FiSearch size={20} />
             </li>
           </Link>
           <Link to="/add-to-cart">
@@ -216,27 +307,63 @@ function Navbar() {
           </Link>
         </ul>
 
-        {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center gap-4">
-          {/* Mobile Cart Icon */}
-          <Link to="/add-to-cart" className="relative">
-            <FiShoppingBag size={20} className="text-gray-700 hover:text-orange-600 transition-colors duration-300" />
-            {cartItemsCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
-                {cartItemsCount}
-              </span>
-            )}
-          </Link>
-          <button 
-            onClick={toggleMenu} 
-            className="text-gray-700 p-2 hover:bg-orange-50 rounded-lg transition-all duration-300 hover:text-orange-600"
-          >
-            {menuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-          </button>
-        </div>
+        {/* Mobile Search Bar - Full Width When Open */}
+        {isFoodSearchOpen ? (
+          <div className="md:hidden flex items-center gap-3 flex-1" ref={foodSearchRef}>
+            <form onSubmit={handleFoodSearchSubmit} className="flex-1">
+              <div className="flex items-center gap-3 ml-7 bg-gray-50 border-2 border-orange-500 px-4 py-2.5 rounded-xl shadow-lg">
+                <FiSearch size={18} className="text-orange-600" />
+                <input
+                  type="text"
+                  value={foodSearchQuery}
+                  onChange={(e) => setFoodSearchQuery(e.target.value)}
+                  placeholder="Search for food, restaurants, categories..."
+                  className="outline-none bg-transparent flex-1 text-gray-800 placeholder-gray-400 font-medium"
+                  autoFocus
+                />
+              </div>
+            </form>
+            <button
+              onClick={() => {
+                setFoodSearchQuery("");
+                setIsFoodSearchOpen(false);
+              }}
+              className="p-2 hover:bg-orange-50 rounded-lg transition-all duration-300 hover:text-orange-600"
+            >
+              <FiX size={20} className="text-gray-700" />
+            </button>
+          </div>
+        ) : (
+          /* Normal Mobile Menu Button and Icons */
+          <div className="md:hidden flex items-center gap-3">
+            {/* Mobile Food Search */}
+            <button
+              onClick={handleFoodSearch}
+              className="p-2 hover:bg-orange-50 rounded-lg transition-all duration-300 hover:text-orange-600"
+            >
+              <FiSearch size={20} className="text-gray-700" />
+            </button>
+            
+            {/* Mobile Cart Icon */}
+            <Link to="/add-to-cart" className="relative">
+              <FiShoppingBag size={20} className="text-gray-700 hover:text-orange-600 transition-colors duration-300" />
+              {cartItemsCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
+                  {cartItemsCount}
+                </span>
+              )}
+            </Link>
+            <button 
+              onClick={toggleMenu} 
+              className="text-gray-700 p-2 hover:bg-orange-50 rounded-lg transition-all duration-300 hover:text-orange-600"
+            >
+              {menuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Mobile Menu - EXACT SAME LINKS */}
+      {/* Mobile Menu - Updated (removed search from menu) */}
       {menuOpen && (
         <div className="md:hidden bg-white border-t border-orange-100 shadow-inner">
           {/* Mobile Location Search */}
@@ -290,16 +417,11 @@ function Navbar() {
 
           <div className="px-4 pb-4">
             <ul className="flex flex-col gap-1 text-gray-700 font-medium">
-              <Link to="/home" onClick={() => setMenuOpen(false)}>
+              <Link to="/" onClick={() => setMenuOpen(false)}>
                 <li className="hover:text-orange-600 cursor-pointer p-3 rounded-xl hover:bg-orange-50 transition-all duration-200">Home</li>
               </Link>
               <Link to="/notifications" onClick={() => setMenuOpen(false)}>
                 <li className="hover:text-orange-600 cursor-pointer p-3 rounded-xl hover:bg-orange-50 transition-all duration-200">Notifications</li>
-              </Link>
-              <Link to="/search" onClick={() => setMenuOpen(false)}>
-                <li className="hover:text-orange-600 cursor-pointer p-3 rounded-xl hover:bg-orange-50 transition-all duration-200 flex items-center gap-2">
-                  <FiSearch size={18} /> Search
-                </li>
               </Link>
             </ul>
             

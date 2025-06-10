@@ -19,7 +19,7 @@ function Login() {
       const res = await loginUser(email,password)
            console.log(res);
            dispatch(setUser({ token: res.token, user: res.user}))
-          navigate("/home");
+          navigate("/");
     } catch (error) {
          console.error("Login error", error);
            setMessage(error.message || "Login failed");  // error message from backend

@@ -7,7 +7,10 @@ import NewAddressForm from "../address/NewAddressForm";
 import OrderSuccessModal from "./OrderSuccessfullModal";
 import { useNavigate } from "react-router-dom";
 import { setSelectedAddress } from "../../slices/addressSlice";
-import { clearCart } from "../../slices/cartSlice";
+import { clearCart, setCartId } from "../../slices/cartSlice";
+import { clearCartApi, getCart } from "../../apis/cartApi";
+import { persistor } from "../../store/store"; // Import persistor to clear persisted state
+import store from "../../store/store"; // Import store to check state after clearing cart
 
 export default function DeliveryPaymentForm() {
   const dispatch = useDispatch();
@@ -64,6 +67,11 @@ export default function DeliveryPaymentForm() {
       return;
     }
 
+    if (!cartId) {
+      alert("No cart items found. Please add items to cart first.");
+      return;
+    }
+
     try {
       const orderPayload = {
         cartId: cartId,
@@ -79,20 +87,41 @@ export default function DeliveryPaymentForm() {
         pincode: localSelectedAddress.zip,
         country: localSelectedAddress.country,
       };
+      
       console.log("Placing order with payload:", orderPayload);
       
       const res = await placeOrder(orderPayload);
       console.log("Place order response:", res);
 
-      if (res && res.orderId) {
+      if (res?.orderId) {
+        // Clear Redux first
         dispatch(clearCart());
-        setOrderId(res.orderId);
+         console.log("Redux cart state after clearing:", store.getState().cart);
+        
+        // Then clear backend
+        const response = await clearCartApi(user._id);
+        console.log("Clear cart API response:", response);
+        
+        // Force refresh
+        const freshCart = await getCart();
+        if (freshCart?.products?.length) {
+          // Should be empty, but handle just in case
+          dispatch(clearCart());
+          console.log("Cart after clearing:", freshCart);
+        }
+        
         setOrderSuccess(true);
-        console.log("Order placed successfully");
+        setOrderId(res.orderId);
       }
     } catch (error) {
       console.error("Failed to place order:", error);
-      alert("Failed to place order. Please try again.");
+      
+      // More specific error messages
+      if (error.response?.status === 400) {
+        alert("Invalid order data. Please check your cart and try again.");
+      } else {
+        alert("Failed to place order. Please try again.");
+      }
     }
   };
 

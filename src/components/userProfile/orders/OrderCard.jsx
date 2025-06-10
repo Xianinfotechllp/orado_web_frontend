@@ -5,7 +5,10 @@ import ReviewModal from './OrderReview';
 import RestaurantReviewPopup from './RestruantReviewPopup';
 import HelpModal from '../helpSection/HelpModal';
 import ChatPage from '../helpSection/ChatPage';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { clearCart, addItem, setCartId } from "../../../slices/cartSlice";
+
+
 
 const OrderCard = ({ order, onViewDetails }) => {
   const navigate = useNavigate();
@@ -16,16 +19,40 @@ const OrderCard = ({ order, onViewDetails }) => {
   const [showChat, setShowChat] = React.useState(false);
   const [chatType, setChatType] = React.useState('admin')
   const user = useSelector((state) => state.auth.user); 
+  const dispatch = useDispatch();
   
 
   const handleReorder = async () => {
-    try {
-      setIsReordering(true);
-      await reorderOrder(order._id);
+  try {
+    setIsReordering(true);
+    
+    // Call your reorder API
+    const response = await reorderOrder(order._id);
+    
+      // Clear existing cart state in Redux
+      dispatch(clearCart());
+      
+      // Update Redux with the new cart from reorder
+      dispatch(setCartId(response.cart._id));
+      
+      // Add each product to the Redux cart
+      response.cart.products.forEach(item => {
+        dispatch(addItem({
+          product: {
+            _id: item.productId,
+            name: item.name,
+            price: item.price
+          },
+          quantity: item.quantity
+        }));
+      });
+      
+      // Navigate to cart page
       navigate("/add-to-cart");
+      
     } catch (error) {
       console.error("Reorder failed:", error);
-      alert("Failed to reorder. Please try again.");
+      toast.error("Failed to reorder. Please try again.");
     } finally {
       setIsReordering(false);
     }
