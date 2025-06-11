@@ -125,6 +125,9 @@ function AdminDashboard() {
             <Link to="restaurant-commission" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               Restaurant Commission
             </Link>
+            <Link to="admin-restaurant-chat" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+              Restaurant Chats
+            </Link>
             
             
           </SidebarItem>
@@ -152,6 +155,19 @@ function AdminDashboard() {
             </Link>
             <Link to="admin-manage" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               Manage Admins
+            </Link>
+          </SidebarItem>
+
+          <SidebarItem 
+            title="Customers" 
+            icon={<GrUserAdmin size={18}/>}
+            hasPermission={hasPermission('users.manage')}
+          >
+            <Link to="admin-add" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+              Customer Management
+            </Link>
+            <Link to="admin-customer-chat" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+              Customer Chats
             </Link>
           </SidebarItem>
 
