@@ -1,29 +1,44 @@
-import { TicketCheck } from 'lucide-react';
-import React, { useState } from 'react';
-import { FaUserSecret } from 'react-icons/fa';
+import { TicketCheck } from "lucide-react";
+import React, { useState } from "react";
+import { FaUserSecret } from "react-icons/fa";
 import {
-  FiMenu, FiLogOut, FiChevronDown, FiChevronUp,
-  FiPieChart, FiClipboard, FiHome, FiUser, FiSettings
-} from 'react-icons/fi';
-import { GrUserAdmin } from 'react-icons/gr';
-import { Link, Outlet } from 'react-router-dom';
+  FiMenu,
+  FiLogOut,
+  FiChevronDown,
+  FiChevronUp,
+  FiPieChart,
+  FiClipboard,
+  FiHome,
+  FiUser,
+  FiSettings,
+} from "react-icons/fi";
+import { GrUserAdmin } from "react-icons/gr";
+import { Link, Outlet } from "react-router-dom";
 
 const SidebarItem = ({ title, icon, children, hasPermission }) => {
   const [open, setOpen] = useState(false);
-  
+
   if (!hasPermission) return null;
 
   return (
     <div className="text-sm w-full">
       <button
         onClick={() => setOpen(!open)}
-        className={`flex items-center justify-between w-full px-4 py-3 hover:bg-[#f16a4e] transition-all duration-200 text-white font-medium rounded-lg mx-2 ${open ? 'bg-[#f16a4e]' : ''}`}
+        className={`flex items-center justify-between w-full px-4 py-3 hover:bg-[#f16a4e] transition-all duration-200 text-white font-medium rounded-lg mx-2 ${
+          open ? "bg-[#f16a4e]" : ""
+        }`}
       >
-        <span className="flex items-center gap-3">{icon}{title}</span>
-        {children && (open ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />)}
+        <span className="flex items-center gap-3">
+          {icon}
+          {title}
+        </span>
+        {children &&
+          (open ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />)}
       </button>
       <div
-        className={`ml-6 bg-white text-gray-800 overflow-hidden transition-all duration-300 rounded-lg mt-1 ${open ? 'max-h-60 py-2' : 'max-h-0'}`}
+        className={`ml-6 bg-white text-gray-800 overflow-hidden transition-all duration-300 rounded-lg mt-1 ${
+          open ? "max-h-100 py-2" : "max-h-0"
+        }`}
       >
         {children}
       </div>
@@ -33,7 +48,7 @@ const SidebarItem = ({ title, icon, children, hasPermission }) => {
 
 function AdminDashboard() {
   const [showSidebar, setShowSidebar] = useState(false);
-  const permissions = JSON.parse(sessionStorage.getItem('permissions')) || [];
+  const permissions = JSON.parse(sessionStorage.getItem("permissions")) || [];
 
   // Check if user has specific permission
   const hasPermission = (permission) => {
@@ -51,14 +66,23 @@ function AdminDashboard() {
       </div>
 
       {/* Sidebar */}
-      <div className={`
+      <div
+        className={`
         fixed lg:static z-40 top-0 left-0 h-full w-[20rem] bg-[#FC8019] text-white flex flex-col border-r border-orange-200
-        transform ${showSidebar ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0
+        transform ${
+          showSidebar ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0
         transition-transform duration-300 ease-in-out
-      `}>
+      `}
+      >
         {/* Close Sidebar Button (Mobile) */}
         <div className="flex lg:hidden justify-end p-4">
-          <button onClick={() => setShowSidebar(false)} className="text-white text-2xl">×</button>
+          <button
+            onClick={() => setShowSidebar(false)}
+            className="text-white text-2xl"
+          >
+            ×
+          </button>
         </div>
 
         {/* Logo */}
@@ -78,102 +102,160 @@ function AdminDashboard() {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto space-y-1 py-4 px-2 z-200">
-          <SidebarItem 
-            title="Dashboard" 
+          <SidebarItem
+            title="Dashboard"
             icon={<FiPieChart size={18} />}
             hasPermission={true} // Always show dashboard
           >
-            <Link to="" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to=""
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Overview
             </Link>
           </SidebarItem>
 
-          <SidebarItem 
-            title="Approvals" 
+          <SidebarItem
+            title="Approvals"
             icon={<FiClipboard size={18} />}
-            hasPermission={hasPermission('merchants.manage') || hasPermission('agents.manage')}
+            hasPermission={
+              hasPermission("merchants.manage") ||
+              hasPermission("agents.manage")
+            }
           >
-            {hasPermission('merchants.manage') && (
-              <Link to="restaurant-approvals" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            {hasPermission("merchants.manage") && (
+              <Link
+                to="restaurant-approvals"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
                 Restaurant Approvals
               </Link>
             )}
-            {hasPermission('agents.manage') && (
-              <Link to="#" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            {hasPermission("agents.manage") && (
+              <Link
+                to="#"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
                 Agent Approvals
               </Link>
             )}
           </SidebarItem>
 
-          <SidebarItem 
-            title="Restaurants" 
+          <SidebarItem
+            title="Restaurants"
             icon={<FiHome size={18} />}
-            hasPermission={hasPermission('merchants.manage')}
+            hasPermission={hasPermission("merchants.manage")}
           >
-            <Link to="restaurant-add" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="restaurant-add"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Add Restaurants
             </Link>
-            <Link to="restaurant-edit" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="restaurant-edit"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               All Restaurants
             </Link>
-            <Link to="restaurant-createmenu" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="restaurant-createmenu"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Create Menu
             </Link>
-            <Link to="restaurant-permission" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="restaurant-permission"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Restaurant Permission
             </Link>
-            <Link to="restaurant-commission" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="restaurant-commission"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Restaurant Commission
             </Link>
-            
-            
+            <Link
+              to="restaurant-order"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Order Lists
+            </Link>
+            <Link
+              to="restaurant-feedback"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Reviews
+            </Link>
           </SidebarItem>
 
-          <SidebarItem 
-            title="Agents" 
+          <SidebarItem
+            title="Agents"
             icon={<FaUserSecret size={18} />}
-            hasPermission={hasPermission('agents.manage')}
+            hasPermission={hasPermission("agents.manage")}
           >
-            <Link to="#" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="#"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               View Agents
             </Link>
-            <Link to="#" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="#"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Assign Projects
             </Link>
           </SidebarItem>
 
-          <SidebarItem 
-            title="Admins" 
-            icon={<GrUserAdmin size={18}/>}
-            hasPermission={hasPermission('users.manage')}
+          <SidebarItem
+            title="Admins"
+            icon={<GrUserAdmin size={18} />}
+            hasPermission={hasPermission("users.manage")}
           >
-            <Link to="admin-add" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="admin-add"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Add Admins
             </Link>
-            <Link to="admin-manage" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="admin-manage"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Manage Admins
             </Link>
           </SidebarItem>
 
-          <SidebarItem 
-            title="Ticket" 
-            icon={<TicketCheck size={18}/>}
-            hasPermission={hasPermission('support.manage')}
+          <SidebarItem
+            title="Ticket"
+            icon={<TicketCheck size={18} />}
+            hasPermission={hasPermission("support.manage")}
           >
-            <Link to="admin-ticket" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="admin-ticket"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Ticket Manager
             </Link>
           </SidebarItem>
 
-          <SidebarItem 
-            title="Settings" 
+          <SidebarItem
+            title="Settings"
             icon={<FiSettings size={18} />}
             hasPermission={true} // Always show settings
           >
-            <Link to="#" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="#"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Edit Profile
             </Link>
-            <Link to="#" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="#"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Change Password
             </Link>
           </SidebarItem>

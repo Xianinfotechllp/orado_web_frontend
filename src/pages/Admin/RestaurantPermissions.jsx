@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Check, X, ChevronRight, Shield, Settings, Users, AlertCircle } from 'lucide-react';
+import { Check, X, ChevronRight, Shield, Settings, Users, AlertCircle, Search } from 'lucide-react';
 import axios from 'axios';
 import LoadingForAdmins from './AdminUtils/LoadingForAdmins';
-
 
 const RestaurantPermissions = () => {
   const token = sessionStorage.getItem('adminToken');
   const [restaurants, setRestaurants] = useState([]);
+  const [filteredRestaurants, setFilteredRestaurants] = useState([]);
   const [selectedActions, setSelectedActions] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     axios
@@ -19,12 +20,9 @@ const RestaurantPermissions = () => {
         },
       })
       .then((res) => {
-        const data = res.data?.data || []; // array of restaurants with permissions
-
-
+        const data = res.data?.data || [];
         setRestaurants(data);
-
-        console.log(res.data?.data);
+        setFilteredRestaurants(data); // Initialize filtered restaurants with all data
 
         const initSelections = {};
         data.forEach((rest) => {
@@ -44,6 +42,18 @@ const RestaurantPermissions = () => {
       });
   }, []);
 
+  // Filter restaurants based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredRestaurants(restaurants);
+    } else {
+      const filtered = restaurants.filter(restaurant =>
+        restaurant.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredRestaurants(filtered);
+    }
+  }, [searchTerm, restaurants]);
+
   const handleAction = (restaurantId, permissionKey, actionType) => {
     setSelectedActions((prev) => {
       const updatedForOne = {
@@ -61,14 +71,8 @@ const RestaurantPermissions = () => {
 
   const sendUpdatedPermissions = (restaurantId, updatedPermissionsMap) => {
     const permissionsToSend = {};
-    console.log("Sending ID type:", typeof restaurantId, "value:", restaurantId);
     Object.entries(updatedPermissionsMap).forEach(([key, val]) => {
       permissionsToSend[key] = val === 'accept';
-    });
-
-    console.log('Sending permissions update:', {
-      restaurantId,
-      permissions: permissionsToSend,
     });
 
     axios
@@ -101,38 +105,12 @@ const RestaurantPermissions = () => {
   ];
 
   if (loading) {
-    return (
-      <LoadingForAdmins/>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center">
-        <div className="max-w-md w-full mx-4">
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center space-y-6 border border-red-100">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-              <X className="w-8 h-8 text-red-500" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-gray-800">Oops! Something went wrong</h2>
-              <p className="text-gray-600">{error}</p>
-            </div>
-            <button
-              onClick={() => window.location.reload()}
-              className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold py-3 px-6 rounded-xl hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingForAdmins />;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
-      <div className="max-w-7xl mx-auto px- py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center text-sm text-orange-600 mb-4">
@@ -158,6 +136,30 @@ const RestaurantPermissions = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Search Filter */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-2xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-lg"
+              placeholder="Search restaurants..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -187,7 +189,7 @@ const RestaurantPermissions = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {restaurants.map((rest, index) => (
+                {filteredRestaurants.map((rest, index) => (
                   <tr
                     key={rest._id}
                     className="hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 transition-all duration-300 transform hover:scale-[1.01]"
@@ -250,13 +252,19 @@ const RestaurantPermissions = () => {
             </table>
           </div>
 
-          {restaurants.length === 0 && (
+          {filteredRestaurants.length === 0 && (
             <div className="text-center py-20">
               <div className="w-24 h-24 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Users className="w-12 h-12 text-orange-500" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">No restaurants found</h3>
-              <p className="text-gray-500 text-lg">There are no restaurants available to manage permissions for.</p>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                {searchTerm ? 'No matching restaurants found' : 'No restaurants found'}
+              </h3>
+              <p className="text-gray-500 text-lg">
+                {searchTerm
+                  ? 'Try adjusting your search query'
+                  : 'There are no restaurants available to manage permissions for.'}
+              </p>
             </div>
           )}
         </div>

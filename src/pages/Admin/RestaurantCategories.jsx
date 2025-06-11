@@ -34,8 +34,8 @@ const RestaurantCategories = () => {
   const [existingImages, setExistingImages] = useState([]);
   const token = sessionStorage.getItem("adminToken");
 
-  useEffect(() => {
-    const fetchRestaurantAndCategories = async () => {
+
+  const fetchRestaurantAndCategories = async () => {
       try {
         setLoading(true);
 
@@ -68,6 +68,7 @@ const RestaurantCategories = () => {
       }
     };
 
+  useEffect(() => {
     fetchRestaurantAndCategories();
   }, [restaurantId]);
 
@@ -165,9 +166,10 @@ const RestaurantCategories = () => {
 
         setCategories([...categories, response.data.category]);
       }
-
+      fetchRestaurantAndCategories()
       handleCancelEdit();
       setShowCreateForm(false);
+      
     } catch (err) {
       console.error("Error saving category:", err);
       alert(

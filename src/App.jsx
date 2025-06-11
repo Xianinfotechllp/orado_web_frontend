@@ -21,7 +21,6 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import { ToastContainer } from "react-toastify";
 import RestaurantApprovalsPage from "./pages/Admin/RestaurantApprovalsPage";
 import AddRestaurantPage from "./pages/Admin/AddRestaurant";
-import AddMenu from "./pages/Admin/RestaurantList";
 import RestaurantList from "./pages/Admin/RestaurantList";
 import CreateMenu from "./pages/Admin/CreateMenu";
 import RestaurantCategories from "./pages/Admin/RestaurantCategories";
@@ -32,6 +31,10 @@ import AddAdmin from "./pages/Admin/AddAdmin";
 import AdminManage from "./pages/Admin/AdminManage";
 import Ticket from "./pages/Admin/ticketSystem/Ticket";
 import RestaurantCommission from "./pages/Admin/RestaurantCommission";
+import RestaurantListForOrder from "./pages/Admin/RestaurantListForOrders";
+import RestaurantOrderList from "./pages/Admin/RestaurantOrderList";
+import RestaurantListforReviews from "./pages/Admin/reviews/RestaurantListforReviews";
+import RestaurantReviewPage from "./pages/Admin/reviews/RestaurantReviewPage";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -68,6 +71,8 @@ function App() {
           <Route path="restaurant-createmenu" element={<CreateMenu />} />
           <Route path="restaurant-permission" element={<RestaurantPermissions />} />
           <Route path="restaurant-commission" element={<RestaurantCommission />} />
+          <Route path="restaurant-order" element={<RestaurantListForOrder />} />
+          <Route path="restaurant-feedback" element={<RestaurantListforReviews />} />
 
           
           {/* admin-section */}
@@ -79,6 +84,8 @@ function App() {
           {/* Add more nested routes as needed */}
         </Route>
         <Route path="/restaurants/:restaurantId/categories" element={<RestaurantCategories />} />
+        <Route path="/restaurants/:restaurantId/orders" element={<RestaurantOrderList />} />
+        <Route path="/feedback/restaurants/:restaurantId" element={<RestaurantReviewPage />} />
         <Route
           path="/restaurants/:restaurantId/categories/:categoryId/items"
           element={<CategoryItems />}
