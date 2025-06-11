@@ -34,6 +34,7 @@ import Ticket from "./pages/Admin/ticketSystem/Ticket";
 import RestaurantCommission from "./pages/Admin/RestaurantCommission";
 import AdminCustomerChatDashboard from "./pages/Admin/CustomerChats/AdminCustomerChatDashboard";
 import AdminRestaurantChatDashboard from "./pages/Admin/RestaurantChats/AdminRestaurantChatDashboard";
+import UserManagement from "./pages/Admin/UserManagement";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -80,6 +81,7 @@ function App() {
 
           {/* admin-customer section */}
           <Route path="admin-customer-chat" element={<AdminCustomerChatDashboard />} />
+          <Route path="user-managemnet" element={<UserManagement />} />
 
 
           {/* Add more nested routes as needed */}

@@ -163,7 +163,7 @@ function AdminDashboard() {
             icon={<GrUserAdmin size={18}/>}
             hasPermission={hasPermission('users.manage')}
           >
-            <Link to="admin-add" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link to="user-managemnet" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               Customer Management
             </Link>
             <Link to="admin-customer-chat" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
