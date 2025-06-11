@@ -31,10 +31,6 @@ import AddAdmin from "./pages/Admin/AddAdmin";
 import AdminManage from "./pages/Admin/AdminManage";
 import Ticket from "./pages/Admin/ticketSystem/Ticket";
 import RestaurantCommission from "./pages/Admin/RestaurantCommission";
-import RestaurantListForOrder from "./pages/Admin/RestaurantListForOrders";
-import RestaurantOrderList from "./pages/Admin/RestaurantOrderList";
-import RestaurantListforReviews from "./pages/Admin/reviews/RestaurantListforReviews";
-import RestaurantReviewPage from "./pages/Admin/reviews/RestaurantReviewPage";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -71,14 +67,16 @@ function App() {
           <Route path="restaurant-createmenu" element={<CreateMenu />} />
           <Route path="restaurant-permission" element={<RestaurantPermissions />} />
           <Route path="restaurant-commission" element={<RestaurantCommission />} />
-          <Route path="restaurant-order" element={<RestaurantListForOrder />} />
-          <Route path="restaurant-feedback" element={<RestaurantListforReviews />} />
 
           
           {/* admin-section */}
           <Route path="admin-add" element={<AddAdmin />} />
           <Route path="admin-manage" element={<AdminManage />} />
           <Route path="admin-ticket" element={<Ticket />} />
+
+          {/* admin-customer section */}
+          <Route path="admin-customer-chat" element={<AdminCustomerChatDashboard />} />
+          <Route path="user-managemnet" element={<UserManagement />} />
 
 
           {/* Add more nested routes as needed */}
