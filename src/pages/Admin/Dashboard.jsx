@@ -147,7 +147,7 @@ const Dashboard = () => {
 
     // Fetch only recent orders
     const response = await fetch(
-      "http://13.60.170.28:5000/admin/order/order-stats/recent",
+      "https://orado.work.gd/api/admin/order/order-stats/recent",
       { headers }
     );
 
@@ -180,9 +180,9 @@ const Dashboard = () => {
       // Fetch all statistics in parallel
       const [usersResponse, restaurantsResponse, ordersResponse] =
         await Promise.all([
-          fetch("http://13.60.170.28:5000/admin/user/user-stats"),
-          fetch("http://13.60.170.28:5000/admin/restaurant/stats/restaurant-stats"),
-          fetch("http://13.60.170.28:5000/admin/order/order-stats"),
+          fetch("https://orado.work.gd/api/admin/user/user-stats"),
+          fetch("https://orado.work.gd/api/admin/restaurant/stats/restaurant-stats"),
+          fetch("https://orado.work.gd/api/admin/order/order-stats"),
         ])
 
       if (!usersResponse.ok || !restaurantsResponse.ok || !ordersResponse.ok) {

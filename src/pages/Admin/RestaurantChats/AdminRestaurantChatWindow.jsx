@@ -35,7 +35,7 @@ const AdminRestaurantChatWindow = ({ restaurantId, chatId }) => {
     const fetchChat = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://13.60.170.28:5000/chat/admin/restaurants/${restaurantId}`, {
+        const response = await fetch(`https://orado.work.gd/api/chat/admin/restaurants/${restaurantId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -59,7 +59,7 @@ const AdminRestaurantChatWindow = ({ restaurantId, chatId }) => {
         setChat(processedChat);
 
         if (data.data._id) {
-          await fetch(`http://13.60.170.28:5000/chat/mark-read/${data.data._id}`, {
+          await fetch(`https://orado.work.gd/api/chat/mark-read/${data.data._id}`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -169,7 +169,7 @@ const AdminRestaurantChatWindow = ({ restaurantId, chatId }) => {
 
     try {
       const token = sessionStorage.getItem('adminToken');
-      const res = await fetch(`http://13.60.170.28:5000/chat/admin/restaurants/${restaurantId}/message`, {
+      const res = await fetch(`https://orado.work.gd/api/chat/admin/restaurants/${restaurantId}/message`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

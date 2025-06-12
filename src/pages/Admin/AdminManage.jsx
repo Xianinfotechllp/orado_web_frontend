@@ -123,8 +123,8 @@ const AdminManage = () => {
         if (!currentAdmin) return;
 
         try {
-            const response = await axios.put(
-                `http://13.60.170.28:5000/admin/update-admin/${currentAdmin._id}`,
+            const response = await apiClient.put(
+                `/admin/update-admin/${currentAdmin._id}`,
                 { permissions },
                 {
                     headers: {
