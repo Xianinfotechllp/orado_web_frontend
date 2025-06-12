@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Upload,
   MapPin,
@@ -9,16 +9,21 @@ import {
   CreditCard,
   User,
   Building,
+  ChevronDown,
+  Info,
+  AlertCircle,
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { createRestaurant } from "../../apis/restaurantApi";
+import axios from "axios";
 import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
 
 const AddRestaurant = () => {
   const [formData, setFormData] = useState({
     name: "",
+    ownerId: "",
     ownerName: "",
     phone: "",
     email: "",
@@ -47,9 +52,45 @@ const AddRestaurant = () => {
     aadharDoc: null,
   });
 
+  const [merchants, setMerchants] = useState([]);
+  const [selectedMerchant, setSelectedMerchant] = useState(null);
+  const [merchantLoading, setMerchantLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0); // Start with merchant selection
+
+  // Fetch merchants on component mount
+  useEffect(() => {
+    const fetchMerchants = async () => {
+      setMerchantLoading(true);
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/admin/merchant/getallmerchants"
+        );
+        setMerchants(response.data.data || []);
+      } catch (error) {
+        console.error("Error fetching merchants:", error);
+      } finally {
+        setMerchantLoading(false);
+      }
+    };
+
+    fetchMerchants();
+  }, []);
+
+  const handleMerchantSelect = (merchantId) => {
+    const merchant = merchants.find((m) => m._id === merchantId);
+    if (merchant) {
+      setSelectedMerchant(merchant);
+      setFormData((prev) => ({
+        ...prev,
+        ownerId: merchant._id,
+        ownerName: merchant.name,
+        phone: merchant.phone || "",
+        email: merchant.email || "",
+      }));
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -61,8 +102,7 @@ const AddRestaurant = () => {
         address: { ...prev.address, [key]: value },
       }));
     } else if (name === "paymentMethods") {
-      // Handle payment methods as an array
-      const methods = value.split(",").map(m => m.trim());
+      const methods = value.split(",").map((m) => m.trim());
       setFormData((prev) => ({ ...prev, [name]: methods }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
@@ -80,7 +120,15 @@ const AddRestaurant = () => {
   const addOpeningHour = () => {
     setFormData((prev) => ({
       ...prev,
-      openingHours: [...prev.openingHours, { day: "", open: "", close: "" }],
+      openingHours: [
+        ...prev.openingHours,
+        {
+          day: "monday",
+          openingTime: "09:00",
+          closingTime: "18:00",
+          isClosed: false,
+        },
+      ],
     }));
   };
 
@@ -93,7 +141,13 @@ const AddRestaurant = () => {
 
   const handleOpeningHoursChange = (index, field, value) => {
     const updated = [...formData.openingHours];
-    updated[index][field] = value;
+
+    if (field === "isClosed") {
+      updated[index][field] = !updated[index][field];
+    } else {
+      updated[index][field] = value;
+    }
+
     setFormData((prev) => ({ ...prev, openingHours: updated }));
   };
 
@@ -114,39 +168,71 @@ const AddRestaurant = () => {
 
   const validateStep = (step) => {
     const newErrors = {};
+    const requiredFields = [
+      "name",
+      "ownerName",
+      "phone",
+      "email",
+      "password",
+      "fssaiNumber",
+      "ownerId",
+      "gstNumber",
+      "aadharNumber",
+      "address.street",
+      "address.city",
+      "address.state",
+      "foodType",
+      "openingHours",
+    ];
 
-    if (step === 1) {
+    if (step === 0) {
+      if (!formData.ownerId) newErrors.ownerId = "Please select a merchant";
+    } else if (step === 1) {
       if (!formData.name.trim()) newErrors.name = "Restaurant name is required";
-      if (!formData.ownerName.trim()) newErrors.ownerName = "Owner name is required";
       if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
       if (!formData.email.trim()) newErrors.email = "Email is required";
-      else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = "Invalid email format";
+      else if (!/^\S+@\S+\.\S+$/.test(formData.email))
+        newErrors.email = "Invalid email format";
       if (!formData.password) newErrors.password = "Password is required";
-      else if (formData.password.length < 8) newErrors.password = "Password must be at least 8 characters";
-      if (!formData.confirmPassword) newErrors.confirmPassword = "Please confirm password";
-      else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords don't match";
+      else if (formData.password.length < 8)
+        newErrors.password = "Password must be at least 8 characters";
+      if (!formData.confirmPassword)
+        newErrors.confirmPassword = "Please confirm password";
+      else if (formData.password !== formData.confirmPassword)
+        newErrors.confirmPassword = "Passwords don't match";
     } else if (step === 2) {
-      if (!formData.address.street.trim()) newErrors.street = "Street address is required";
+      if (!formData.address.street.trim())
+        newErrors.street = "Street address is required";
       if (!formData.address.city.trim()) newErrors.city = "City is required";
       if (!formData.address.state.trim()) newErrors.state = "State is required";
-      if (!formData.address.pincode.trim()) newErrors.pincode = "Pincode is required";
-      if (!formData.address.latitude || !formData.address.longitude) newErrors.location = "Please select a location on the map";
+      if (!formData.address.pincode.trim())
+        newErrors.pincode = "Pincode is required";
+      if (!formData.address.latitude || !formData.address.longitude)
+        newErrors.location = "Please select a location on the map";
     } else if (step === 3) {
-      if (!formData.fssaiNumber.trim()) newErrors.fssaiNumber = "FSSAI number is required";
-      if (!formData.gstNumber.trim()) newErrors.gstNumber = "GST number is required";
-      if (!formData.aadharNumber.trim()) newErrors.aadharNumber = "Aadhar number is required";
-      if (formData.openingHours.length === 0) newErrors.openingHours = "At least one opening hour entry is required";
+      if (!formData.fssaiNumber.trim())
+        newErrors.fssaiNumber = "FSSAI number is required";
+      if (!formData.gstNumber.trim())
+        newErrors.gstNumber = "GST number is required";
+      if (!formData.aadharNumber.trim())
+        newErrors.aadharNumber = "Aadhar number is required";
+      if (formData.openingHours.length === 0)
+        newErrors.openingHours = "At least one opening hour entry is required";
       else {
         formData.openingHours.forEach((hour, index) => {
           if (!hour.day) newErrors[`day-${index}`] = "Day is required";
-          if (!hour.open) newErrors[`open-${index}`] = "Opening time is required";
-          if (!hour.close) newErrors[`close-${index}`] = "Closing time is required";
+          if (!hour.openingTime && !hour.isClosed)
+            newErrors[`open-${index}`] = "Opening time is required";
+          if (!hour.closingTime && !hour.isClosed)
+            newErrors[`close-${index}`] = "Closing time is required";
         });
       }
     } else if (step === 4) {
-      if (!documents.fssaiDoc) newErrors.fssaiDoc = "FSSAI document is required";
+      if (!documents.fssaiDoc)
+        newErrors.fssaiDoc = "FSSAI document is required";
       if (!documents.gstDoc) newErrors.gstDoc = "GST document is required";
-      if (!documents.aadharDoc) newErrors.aadharDoc = "Aadhar document is required";
+      if (!documents.aadharDoc)
+        newErrors.aadharDoc = "Aadhar document is required";
     }
 
     setErrors(newErrors);
@@ -159,7 +245,7 @@ const AddRestaurant = () => {
     }
   };
 
-  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
+  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -172,6 +258,7 @@ const AddRestaurant = () => {
 
     // Basic information
     formDataToSend.append("name", formData.name);
+    formDataToSend.append("ownerId", formData.ownerId);
     formDataToSend.append("ownerName", formData.ownerName);
     formDataToSend.append("phone", formData.phone);
     formDataToSend.append("email", formData.email);
@@ -183,7 +270,7 @@ const AddRestaurant = () => {
     formDataToSend.append("aadharNumber", formData.aadharNumber);
     formDataToSend.append("foodType", formData.foodType);
     formDataToSend.append("minOrderAmount", formData.minOrderAmount);
-    formDataToSend.append("paymentMethods", formData.paymentMethods.join(','));
+    formDataToSend.append("paymentMethods", formData.paymentMethods.join(","));
 
     // Address details
     formDataToSend.append("address[street]", formData.address.street);
@@ -194,12 +281,17 @@ const AddRestaurant = () => {
     formDataToSend.append("address[longitude]", formData.address.longitude);
 
     // Opening hours
-    formDataToSend.append("openingHours", JSON.stringify(formData.openingHours));
+    formDataToSend.append(
+      "openingHours",
+      JSON.stringify(formData.openingHours)
+    );
 
     // File uploads
-    if (documents.fssaiDoc) formDataToSend.append("fssaiDoc", documents.fssaiDoc);
+    if (documents.fssaiDoc)
+      formDataToSend.append("fssaiDoc", documents.fssaiDoc);
     if (documents.gstDoc) formDataToSend.append("gstDoc", documents.gstDoc);
-    if (documents.aadharDoc) formDataToSend.append("aadharDoc", documents.aadharDoc);
+    if (documents.aadharDoc)
+      formDataToSend.append("aadharDoc", documents.aadharDoc);
 
     try {
       const response = await createRestaurant(formDataToSend);
@@ -213,6 +305,7 @@ const AddRestaurant = () => {
   };
 
   const steps = [
+    { id: 0, title: "Merchant Selection", icon: User },
     { id: 1, title: "Basic Information", icon: Building },
     { id: 2, title: "Address Details", icon: MapPin },
     { id: 3, title: "Business Details", icon: FileText },
@@ -239,7 +332,11 @@ const AddRestaurant = () => {
 
         const addressDetails = {
           address: data.display_name,
-          city: data.address?.city || data.address?.town || data.address?.village || "",
+          city:
+            data.address?.city ||
+            data.address?.town ||
+            data.address?.village ||
+            "",
           state: data.address?.state || "",
           zip: data.address?.postcode || "",
           latitude: lat,
@@ -281,10 +378,22 @@ const AddRestaurant = () => {
         <p className="mt-2">
           <strong>Selected Address:</strong> {currentAddress}
         </p>
-        {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
+        {errors.location && (
+          <p className="text-red-500 text-sm mt-1">{errors.location}</p>
+        )}
       </div>
     );
   };
+
+  const daysOfWeek = [
+    { value: "monday", label: "Monday" },
+    { value: "tuesday", label: "Tuesday" },
+    { value: "wednesday", label: "Wednesday" },
+    { value: "thursday", label: "Thursday" },
+    { value: "friday", label: "Friday" },
+    { value: "saturday", label: "Saturday" },
+    { value: "sunday", label: "Sunday" },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white py-8 px-4">
@@ -307,23 +416,26 @@ const AddRestaurant = () => {
           {steps.map((step, index) => (
             <div key={step.id} className="flex items-center">
               <div
-                className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ${currentStep >= step.id
-                  ? "bg-gradient-to-r from-orange-500 to-red-500 border-orange-500 text-white"
-                  : "bg-white border-gray-300 text-gray-400"
-                  }`}
+                className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ${
+                  currentStep >= step.id
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 border-orange-500 text-white"
+                    : "bg-white border-gray-300 text-gray-400"
+                }`}
               >
                 <step.icon className="w-5 h-5" />
               </div>
               <div
-                className={`ml-3 ${currentStep >= step.id ? "text-orange-600" : "text-gray-400"
-                  }`}
+                className={`ml-3 ${
+                  currentStep >= step.id ? "text-orange-600" : "text-gray-400"
+                }`}
               >
                 <p className="text-sm font-medium">{step.title}</p>
               </div>
               {index < steps.length - 1 && (
                 <div
-                  className={`w-20 h-0.5 mx-4 ${currentStep > step.id ? "bg-orange-500" : "bg-gray-300"
-                    }`}
+                  className={`w-20 h-0.5 mx-4 ${
+                    currentStep > step.id ? "bg-orange-500" : "bg-gray-300"
+                  }`}
                 />
               )}
             </div>
@@ -333,6 +445,86 @@ const AddRestaurant = () => {
         {/* Form Container */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           <div className="p-8">
+            {/* Step 0: Merchant Selection */}
+            {currentStep === 0 && (
+              <div className="space-y-6">
+                <div className="border-l-4 border-orange-500 pl-4 mb-6">
+                  <h3 className="text-xl font-semibold text-gray-800">
+                    Select Merchant
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    Choose the merchant who owns this restaurant
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <User className="w-4 h-4 mr-2 text-orange-500" />
+                    Merchant
+                  </label>
+                  <div className="relative">
+                    <select
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300 appearance-none"
+                      name="ownerId"
+                      value={formData.ownerId}
+                      onChange={(e) => handleMerchantSelect(e.target.value)}
+                      required
+                    >
+                      <option value="">Select a merchant</option>
+                      {merchants.map((merchant) => (
+                        <option key={merchant._id} value={merchant._id}>
+                          {merchant.name} ({merchant.email})
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-3.5 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
+                  {errors.ownerId && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.ownerId}
+                    </p>
+                  )}
+                </div>
+
+                {selectedMerchant && (
+                  <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <h4 className="font-medium text-gray-800 mb-3 flex items-center">
+                      <Info className="w-5 h-5 text-blue-500 mr-2" />
+                      Merchant Details
+                    </h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Name</p>
+                        <p className="font-medium">{selectedMerchant.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Email</p>
+                        <p className="font-medium">{selectedMerchant.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Phone</p>
+                        <p className="font-medium">
+                          {selectedMerchant.phone || "Not provided"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Status</p>
+                        <p className="font-medium">
+                          {selectedMerchant.isActive ? "Active" : "Inactive"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-sm text-gray-600">Merchant ID</p>
+                      <p className="text-xs font-mono bg-gray-100 p-2 rounded">
+                        {selectedMerchant._id}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Step 1: Basic Information */}
             {currentStep === 1 && (
               <div className="space-y-6">
@@ -345,36 +537,22 @@ const AddRestaurant = () => {
                   </p>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      <Building className="w-4 h-4 mr-2 text-orange-500" />
-                      Restaurant Name
-                    </label>
-                    <input
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Enter restaurant name"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      <User className="w-4 h-4 mr-2 text-orange-500" />
-                      Owner Name
-                    </label>
-                    <input
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300"
-                      name="ownerName"
-                      value={formData.ownerName}
-                      onChange={handleChange}
-                      placeholder="Enter owner name"
-                      required
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Building className="w-4 h-4 mr-2 text-orange-500" />
+                    Restaurant Name
+                  </label>
+                  <input
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter restaurant name"
+                    required
+                  />
+                  {errors.name && (
+                    <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                  )}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
@@ -391,6 +569,11 @@ const AddRestaurant = () => {
                       placeholder="Enter phone number"
                       required
                     />
+                    {errors.phone && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.phone}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -407,14 +590,17 @@ const AddRestaurant = () => {
                       placeholder="Enter email address"
                       required
                     />
+                    {errors.email && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
-
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-
                       Password
                     </label>
                     <input
@@ -426,11 +612,15 @@ const AddRestaurant = () => {
                       placeholder="Create a password"
                       required
                     />
+                    {errors.password && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.password}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
                     <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-
                       Confirm Password
                     </label>
                     <input
@@ -442,9 +632,26 @@ const AddRestaurant = () => {
                       placeholder="Confirm password"
                       required
                     />
-                    {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                      <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
+                    {errors.confirmPassword && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.confirmPassword}
+                      </p>
                     )}
+                  </div>
+                </div>
+
+                <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <div className="flex items-start">
+                    <AlertCircle className="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-blue-800">
+                        <strong>Associated Merchant:</strong>{" "}
+                        {formData.ownerName}
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Merchant ID: {formData.ownerId}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -483,6 +690,9 @@ const AddRestaurant = () => {
                     onChange={handleChange}
                     placeholder="Enter street address"
                   />
+                  {errors.street && (
+                    <p className="text-red-500 text-sm mt-1">{errors.street}</p>
+                  )}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
@@ -497,6 +707,9 @@ const AddRestaurant = () => {
                       onChange={handleChange}
                       placeholder="Enter city"
                     />
+                    {errors.city && (
+                      <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -510,6 +723,11 @@ const AddRestaurant = () => {
                       onChange={handleChange}
                       placeholder="Enter state"
                     />
+                    {errors.state && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.state}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -520,11 +738,16 @@ const AddRestaurant = () => {
                     </label>
                     <input
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300"
-                      name="address.zip"
-                      value={formData.address.zip}
+                      name="address.pincode"
+                      value={formData.address.pincode}
                       onChange={handleChange}
                       placeholder="Enter zip code"
                     />
+                    {errors.pincode && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.pincode}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -584,6 +807,11 @@ const AddRestaurant = () => {
                       placeholder="Enter FSSAI number"
                       required
                     />
+                    {errors.fssaiNumber && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.fssaiNumber}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -599,6 +827,11 @@ const AddRestaurant = () => {
                       placeholder="Enter GST number"
                       required
                     />
+                    {errors.gstNumber && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.gstNumber}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -615,6 +848,11 @@ const AddRestaurant = () => {
                     placeholder="Enter Aadhar number"
                     required
                   />
+                  {errors.aadharNumber && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.aadharNumber}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
@@ -670,63 +908,131 @@ const AddRestaurant = () => {
                       Opening Hours
                     </label>
 
-                    {Array.isArray(formData.openingHours) &&
-                      formData.openingHours.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            placeholder="Day"
-                            value={item.day}
-                            onChange={(e) =>
-                              handleOpeningHoursChange(
-                                idx,
-                                "day",
-                                e.target.value
-                              )
-                            }
-                            className="w-1/3 px-3 py-2 border rounded-lg"
-                          />
-                          <input
-                            type="time"
-                            value={item.open}
-                            onChange={(e) =>
-                              handleOpeningHoursChange(
-                                idx,
-                                "open",
-                                e.target.value
-                              )
-                            }
-                            className="w-1/4 px-3 py-2 border rounded-lg"
-                          />
-                          <input
-                            type="time"
-                            value={item.close}
-                            onChange={(e) =>
-                              handleOpeningHoursChange(
-                                idx,
-                                "close",
-                                e.target.value
-                              )
-                            }
-                            className="w-1/4 px-3 py-2 border rounded-lg"
-                          />
+                    {formData.openingHours.length === 0 && (
+                      <p className="text-sm text-gray-500">
+                        No opening hours added yet
+                      </p>
+                    )}
+
+                    {formData.openingHours.map((item, idx) => (
+                      <div key={idx} className="mb-4 p-4 bg-gray-50 rounded-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Day
+                            </label>
+                            <select
+                              value={item.day}
+                              onChange={(e) =>
+                                handleOpeningHoursChange(
+                                  idx,
+                                  "day",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full px-3 py-2 border rounded-lg"
+                            >
+                              {daysOfWeek.map((day) => (
+                                <option key={day.value} value={day.value}>
+                                  {day.label}
+                                </option>
+                              ))}
+                            </select>
+                            {errors[`day-${idx}`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors[`day-${idx}`]}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Opening Time
+                            </label>
+                            <input
+                              type="time"
+                              value={item.openingTime}
+                              onChange={(e) =>
+                                handleOpeningHoursChange(
+                                  idx,
+                                  "openingTime",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full px-3 py-2 border rounded-lg"
+                              disabled={item.isClosed}
+                            />
+                            {errors[`open-${idx}`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors[`open-${idx}`]}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Closing Time
+                            </label>
+                            <input
+                              type="time"
+                              value={item.closingTime}
+                              onChange={(e) =>
+                                handleOpeningHoursChange(
+                                  idx,
+                                  "closingTime",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full px-3 py-2 border rounded-lg"
+                              disabled={item.isClosed}
+                            />
+                            {errors[`close-${idx}`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors[`close-${idx}`]}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <label className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={item.isClosed}
+                              onChange={() =>
+                                handleOpeningHoursChange(idx, "isClosed")
+                              }
+                              className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                            />
+                            <span className="text-sm text-gray-700">
+                              Closed on this day
+                            </span>
+                          </label>
+
                           <button
                             type="button"
                             onClick={() => removeOpeningHour(idx)}
-                            className="text-red-500 hover:text-red-700"
+                            className="text-red-500 hover:text-red-700 text-sm"
                           >
-                            ✖
+                            Remove
                           </button>
                         </div>
-                      ))}
+                      </div>
+                    ))}
 
                     <button
                       type="button"
                       onClick={addOpeningHour}
-                      className="flex items-center gap-1 text-orange-600 hover:text-orange-800 mt-2"
+                      className="flex items-center gap-2 text-orange-600 hover:text-orange-800 mt-2"
                     >
-                      ➕ Add Day
+                      <span>+</span>
+                      <span>Add Opening Hours</span>
                     </button>
+                    {errors.openingHours && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.openingHours}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -822,11 +1128,7 @@ const AddRestaurant = () => {
                   disabled={loading}
                   className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  {loading ? (
-                    <LoadingForAdmins/>
-                  ) : (
-                    "Create Restaurant"
-                  )}
+                  {loading ? <LoadingForAdmins /> : "Create Restaurant"}
                 </button>
               )}
             </div>

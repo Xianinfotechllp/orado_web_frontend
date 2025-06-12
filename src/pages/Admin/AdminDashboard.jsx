@@ -9,10 +9,10 @@ import {
   FiPieChart,
   FiClipboard,
   FiHome,
-  FiUser,
   FiSettings,
 } from "react-icons/fi";
 import { GrUserAdmin } from "react-icons/gr";
+import { MdOutlineLocalOffer } from "react-icons/md";
 import { Link, Outlet } from "react-router-dom";
 
 const SidebarItem = ({ title, icon, children, hasPermission }) => {
@@ -176,10 +176,32 @@ function AdminDashboard() {
             >
               Restaurant Commission
             </Link>
-            
-            
           </SidebarItem>
 
+          <SidebarItem
+            title="Offers"
+            icon={<MdOutlineLocalOffer size={18} />}
+            hasPermission={hasPermission("agents.manage")}
+          >
+            <Link
+              to="create-offer"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Create Offers
+            </Link>
+            <Link
+              to="assign-offer"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Assign Offer
+            </Link>
+            <Link
+              to="manage-offer"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Offer Management
+            </Link>
+          </SidebarItem>
           <SidebarItem
             title="Agents"
             icon={<FaUserSecret size={18} />}
@@ -218,15 +240,21 @@ function AdminDashboard() {
             </Link>
           </SidebarItem>
 
-          <SidebarItem 
-            title="Customers" 
-            icon={<GrUserAdmin size={18}/>}
-            hasPermission={hasPermission('users.manage')}
+          <SidebarItem
+            title="Customers"
+            icon={<GrUserAdmin size={18} />}
+            hasPermission={hasPermission("users.manage")}
           >
-            <Link to="user-managemnet" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="user-managemnet"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Customer Management
             </Link>
-            <Link to="admin-customer-chat" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="admin-customer-chat"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Customer Chats
             </Link>
           </SidebarItem>

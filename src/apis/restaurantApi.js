@@ -63,7 +63,7 @@ export const getRestaurantById = async (restaurantId) => {
 
 export const createRestaurant = async (formData) => {
   try {
-    const response = await apiClient.post('/restaurants/register', formData, {
+    const response = await apiClient.post('/admin/creat-restaurant', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

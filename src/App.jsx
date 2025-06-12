@@ -31,6 +31,14 @@ import AddAdmin from "./pages/Admin/AddAdmin";
 import AdminManage from "./pages/Admin/AdminManage";
 import Ticket from "./pages/Admin/ticketSystem/Ticket";
 import RestaurantCommission from "./pages/Admin/RestaurantCommission";
+import AdminCustomerChatDashboard from "./pages/Admin/CustomerChats/AdminCustomerChatDashboard";
+import UserManagement from "./pages/Admin/UserManagement";
+import RestaurantOrderList from "./pages/Admin/RestaurantOrderList";
+import RestaurantReviewsPage from "./pages/Admin/reviews/RestaurantReviewPage";
+import RestaurantListforReviews from "./pages/Admin/reviews/RestaurantListforReviews";
+import OfferManagement from "./pages/Admin/Offer/OfferManagement";
+import CreateOffer from "./pages/Admin/Offer/CreateOffer";
+import AssignOffer from "./pages/Admin/Offer/AssignOffer";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -67,6 +75,12 @@ function App() {
           <Route path="restaurant-createmenu" element={<CreateMenu />} />
           <Route path="restaurant-permission" element={<RestaurantPermissions />} />
           <Route path="restaurant-commission" element={<RestaurantCommission />} />
+          <Route path="restaurant-feedback" element={<RestaurantListforReviews />} />
+
+          {/* offer section */}
+          <Route path="create-offer" element={<CreateOffer />} />
+          <Route path="assign-offer" element={<AssignOffer />} />
+          <Route path="manage-offer" element={<OfferManagement />} />
 
           
           {/* admin-section */}
@@ -83,7 +97,7 @@ function App() {
         </Route>
         <Route path="/restaurants/:restaurantId/categories" element={<RestaurantCategories />} />
         <Route path="/restaurants/:restaurantId/orders" element={<RestaurantOrderList />} />
-        <Route path="/feedback/restaurants/:restaurantId" element={<RestaurantReviewPage />} />
+        <Route path="/feedback/restaurants/:restaurantId" element={<RestaurantReviewsPage />} />
         <Route
           path="/restaurants/:restaurantId/categories/:categoryId/items"
           element={<CategoryItems />}
