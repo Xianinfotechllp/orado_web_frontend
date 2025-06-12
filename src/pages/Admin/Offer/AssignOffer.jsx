@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { CheckCircle2, AlertCircle, Search, Tag } from "lucide-react";
 import axios from "axios";
+import apiClient from "../../../apis/apiClient/apiClient";
 
 function AssignOffer({ offers, restaurants, onAssignmentSuccess }) {
   const [selectedRestaurant, setSelectedRestaurant] = useState("");
@@ -19,7 +20,7 @@ function AssignOffer({ offers, restaurants, onAssignmentSuccess }) {
     }
 
     try {
-      await axios.post("http://localhost:5000/admin/offers/assign", {
+      await apiClient.post("/admin/offers/assign", {
         restaurantId: selectedRestaurant,
         offerId: selectedOffer,
       });

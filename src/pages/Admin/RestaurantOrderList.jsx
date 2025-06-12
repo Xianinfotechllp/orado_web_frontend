@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
+import apiClient from "../../apis/apiClient/apiClient";
 
 const RestaurantOrderList = () => {
   const { restaurantId } = useParams();
@@ -31,8 +32,8 @@ const RestaurantOrderList = () => {
       setLoading(true);
       const token = sessionStorage.getItem("adminToken");
 
-      const res = await axios.get(
-        `http://localhost:5000/order/restaurant/${restaurantId}?page=${page}`,
+      const res = await apiClient.get(
+        `/order/restaurant/${restaurantId}?page=${page}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

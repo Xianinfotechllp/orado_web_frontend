@@ -15,6 +15,7 @@ import axios from "axios";
 import LoadingForAdmins from "../AdminUtils/LoadingForAdmins";
 import CreateOffer from "./CreateOffer";
 import AssignOffer from "./AssignOffer";
+import apiClient from "../../../apis/apiClient/apiClient";
 
 function OfferManagement() {
   const [offers, setOffers] = useState([]);
@@ -27,7 +28,7 @@ function OfferManagement() {
 
   const fetchOffers = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/admin/offer");
+      const res = await apiClient.get("/admin/offer");
       setOffers(res.data || []); // The API returns the array directly
     } catch (err) {
       console.error("Error fetching offers:", err);
@@ -39,8 +40,8 @@ function OfferManagement() {
 
   const fetchRestaurants = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/restaurants/all-restaurants"
+      const res = await apiClient.get(
+        "/restaurants/all-restaurants"
       );
       setRestaurants(res.data.restaurants || []);
     } catch (err) {
@@ -56,7 +57,7 @@ function OfferManagement() {
   const handleDelete = async (offerId) => {
     if (window.confirm("Are you sure you want to delete this offer?")) {
       try {
-        await axios.delete(`http://localhost:5000/admin/offers/${offerId}`);
+        await apiClient.delete(`/admin/offers/${offerId}`);
         setError("");
         fetchOffers();
       } catch (err) {

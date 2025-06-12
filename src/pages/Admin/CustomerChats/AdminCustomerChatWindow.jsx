@@ -36,7 +36,7 @@ const AdminChatWindow = ({ userId, chatId }) => {
     const fetchChat = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/chat/admin/users/${userId}`, {
+        const response = await fetch(`http://13.60.170.28:5000/chat/admin/users/${userId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -62,7 +62,7 @@ const AdminChatWindow = ({ userId, chatId }) => {
         setChat(processedChat);
 
         if (data.data._id) {
-          await fetch(`http://localhost:5000/chat/mark-read/${data.data._id}`, {
+          await fetch(`http://13.60.170.28:5000/chat/mark-read/${data.data._id}`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -172,7 +172,7 @@ const AdminChatWindow = ({ userId, chatId }) => {
 
     try {
       const token = sessionStorage.getItem('adminToken');
-      const res = await fetch(`http://localhost:5000/chat/admin/users/${userId}/message`, {
+      const res = await fetch(`http://13.60.170.28:5000/chat/admin/users/${userId}/message`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

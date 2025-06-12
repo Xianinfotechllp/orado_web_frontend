@@ -13,7 +13,7 @@ const AdminChatList = ({ onSelectChat, selectedUserId }) => {
       try {
         setLoading(true);
         const token = sessionStorage.getItem('adminToken');
-        const response = await fetch('http://localhost:5000/chat/admin/users', {
+        const response = await fetch('http://13.60.170.28:5000/chat/admin/users', {
           headers: {
             'Authorization': `Bearer ${token}`
           }

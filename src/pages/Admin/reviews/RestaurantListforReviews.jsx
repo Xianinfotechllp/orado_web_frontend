@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Star, Clock, MapPin, Users, ChevronRight, Eye } from "lucide-react";
 import LoadingForAdmins from "../AdminUtils/LoadingForAdmins";
+import apiClient from "../../../apis/apiClient/apiClient";
 
 function RestaurantListforReviews() {
   const [restaurants, setRestaurants] = useState([]);
@@ -13,7 +14,7 @@ function RestaurantListforReviews() {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/restaurants/all-restaurants");
+        const res = await apiClient.get("/restaurants/all-restaurants");
         setRestaurants(res.data.restaurants || []);
         setLoading(false);
       } catch (err) {

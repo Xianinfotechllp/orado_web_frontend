@@ -12,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
+import apiClient from "../../apis/apiClient/apiClient";
 
 const RestaurantCategories = () => {
   const { restaurantId } = useParams();
@@ -47,15 +48,15 @@ const RestaurantCategories = () => {
         };
 
         // Fetch restaurant data
-        const restaurantRes = await axios.get(
-          `http://localhost:5000/restaurants/${restaurantId}`,
+        const restaurantRes = await apiClient.get(
+          `/restaurants/${restaurantId}`,
           config
         );
         setRestaurant(restaurantRes.data.data);
 
         // Fetch categories
-        const categoriesRes = await axios.get(
-          `http://localhost:5000/admin/restaurant/${restaurantId}/category`,
+        const categoriesRes = await apiClient.get(
+          `/admin/restaurant/${restaurantId}/category`,
           config
         );
         setCategories(categoriesRes.data.data || []);
@@ -135,8 +136,8 @@ const RestaurantCategories = () => {
           formData.append("images", file);
         });
 
-        const response = await axios.put(
-          `http://localhost:5000/admin/restaurant/${restaurantId}/category/${editingCategory}`,
+        const response = await apiClient.put(
+          `/admin/restaurant/${restaurantId}/category/${editingCategory}`,
           formData,
           {
             headers: {
@@ -153,8 +154,8 @@ const RestaurantCategories = () => {
         );
       } else {
         // Create new category
-        const response = await axios.post(
-          `http://localhost:5000/admin/restaurant/${restaurantId}/category`,
+        const response = await apiClient.post(
+          `/admin/restaurant/${restaurantId}/category`,
           formData,
           {
             headers: {
@@ -189,8 +190,8 @@ const RestaurantCategories = () => {
     }
 
     try {
-      await axios.delete(
-        `http://localhost:5000/admin/restaurant/${restaurantId}/category/${categoryId}`,
+      await apiClient.delete(
+        `/admin/restaurant/${restaurantId}/category/${categoryId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

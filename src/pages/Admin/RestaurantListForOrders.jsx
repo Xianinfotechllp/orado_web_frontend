@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Search, ChevronRight, ShoppingBag, Utensils, Star, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import apiClient from "../../apis/apiClient/apiClient";
 
 const RestaurantListForOrders = () => {
   const navigate = useNavigate();
@@ -14,8 +15,8 @@ const RestaurantListForOrders = () => {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:5000/admin/restaurant/approved/list"
+        const res = await apiClient.get(
+          "/admin/restaurant/approved/list"
         );
         const formattedRestaurants = res.data.data.map((restaurant) => ({
           id: restaurant._id,

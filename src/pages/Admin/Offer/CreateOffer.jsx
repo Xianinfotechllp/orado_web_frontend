@@ -13,6 +13,7 @@ import {
   ShoppingBag
 } from "lucide-react";
 import axios from "axios";
+import apiClient from "../../../apis/apiClient/apiClient";
 
 function CreateOffer({ onOfferCreated }) {
   const [type, setType] = useState("percentage");
@@ -46,7 +47,7 @@ function CreateOffer({ onOfferCreated }) {
         throw new Error("No authentication token found");
       }
 
-      await axios.post("http://localhost:5000/admin/offer", {
+      await apiClient.post("/admin/offer", {
         title,
         description,
         type,

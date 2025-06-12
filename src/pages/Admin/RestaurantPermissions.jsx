@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Check, X, ChevronRight, Shield, Settings, Users, AlertCircle, Search } from 'lucide-react';
 import axios from 'axios';
 import LoadingForAdmins from './AdminUtils/LoadingForAdmins';
+import apiClient from '../../apis/apiClient/apiClient';
 
 const RestaurantPermissions = () => {
   const token = sessionStorage.getItem('adminToken');
@@ -13,8 +14,8 @@ const RestaurantPermissions = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    axios
-      .get('http://localhost:5000/admin/getrestuarants/permissions', {
+    apiClient
+      .get('/admin/getrestuarants/permissions', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -75,9 +76,9 @@ const RestaurantPermissions = () => {
       permissionsToSend[key] = val === 'accept';
     });
 
-    axios
+    apiClient
       .put(
-        'http://localhost:5000/admin/restuarants/permissions',
+        '/admin/restuarants/permissions',
         {
           restaurantId,
           permissions: permissionsToSend,
