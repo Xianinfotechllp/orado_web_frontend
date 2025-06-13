@@ -214,6 +214,7 @@ function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {restaurants.map((restaurant) => (
                 <div key={restaurant._id} className="transform hover:scale-105 transition-all duration-300">
+                  {console.log(restaurant,"ohoho")}
                   <RestaurantCard restaurant={restaurant} />
                 </div>
               ))}

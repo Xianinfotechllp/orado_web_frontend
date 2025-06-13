@@ -1,10 +1,9 @@
 import apiClient from "./apiClient/apiClient"; 
 
-export const addToCart = async (restaurantId, userId, productId, quantity) => {
+export const addToCart = async (restaurantId, productId, quantity) => {
   try {
     const payload = {
       restaurantId,
-      userId,
       products: [
         {
           productId,
@@ -14,7 +13,7 @@ export const addToCart = async (restaurantId, userId, productId, quantity) => {
     };
 
     const res = await apiClient.post("/cart/add", payload);
-    console.log(res);
+  
     return res.data;
   } catch (error) {
     console.error("Error updating cart:", error);
@@ -22,14 +21,17 @@ export const addToCart = async (restaurantId, userId, productId, quantity) => {
   }
 };
 
+
+
 export const getCart = async () => {
   try {
     const res = await apiClient.get("/cart");
     console.log("getCart response:", res.data);
     
+    console.log("res",res.data)
     return res.data;
   } catch (error) {
-    console.error("Error fetching cart:", error);
+    // console.error("Error fetching cart:", error);
     throw error;
   }
 };

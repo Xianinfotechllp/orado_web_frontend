@@ -9,15 +9,15 @@ import {
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { getBillSummary } from "../../apis/orderApi";
-import { clearCartApi, getCart, removeFromCart, updateCart } from "../../apis/cartApi";
 import {
-  setCart,
-  clearCart,
-  selectCartItems,
-} from "../../slices/cartSlice";
+  clearCartApi,
+  getCart,
+  removeFromCart,
+  updateCart,
+} from "../../apis/cartApi";
+import { setCart, clearCart } from "../../slices/cartSlice";
 
 export default function MyBasket() {
-  const reduxItems = useSelector(selectCartItems);
   const [items, setItems] = useState([]);
   const [cartDetails, setCartDetails] = useState({});
   const [loading, setLoading] = useState(true);
@@ -28,6 +28,7 @@ export default function MyBasket() {
   const user = useSelector((state) => state.auth.user);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
 
+  // Fetch bill summary
   const fetchBill = async (cartId) => {
     if (!cartId || !selectedAddress) return;
     try {
@@ -35,7 +36,7 @@ export default function MyBasket() {
         userId: user._id,
         longitude: selectedAddress.location.longitude,
         latitude: selectedAddress.location.latitude,
-        cartId: cartId,
+        cartId,
       });
       setBill(billRes.data);
     } catch (err) {
@@ -43,26 +44,29 @@ export default function MyBasket() {
     }
   };
 
+  // Fetch cart data
   const fetchCartData = async () => {
     if (!user?._id) return;
     try {
       setLoading(true);
-      const order = await getCart();
-      console.log("Fetched cart:", order);
-      if (order?._id) {
-        dispatch(setCart(order));
-        setCartDetails(order);
-        setItems(order.products || []);
-        console.log("Fetched cart items:", order.products);
-        await fetchBill(order._id);
+      const cart = await getCart();
+      if (cart?._id) {
+        dispatch(setCart(cart));
+        setCartDetails(cart);
+        setItems(cart.products || []);
+        await fetchBill(cart._id);  // bill summary here
       } else {
         dispatch(clearCart());
         setItems([]);
+        setCartDetails({});
+        setBill({});
       }
     } catch (error) {
       console.error("Error fetching cart:", error);
       dispatch(clearCart());
       setItems([]);
+      setCartDetails({});
+      setBill({});
     } finally {
       setLoading(false);
     }
@@ -76,22 +80,21 @@ export default function MyBasket() {
     if (cartDetails._id && selectedAddress) {
       fetchBill(cartDetails._id);
     }
-  }, [cartDetails._id, selectedAddress]);
+  }, [selectedAddress]);
 
-  // FIX: Look inside productId._id when comparing
   const updateQuantity = async (productId, change) => {
     try {
       setButtonLoading(productId);
-      // Find item by productId._id
-      const selectedItem = items.find(
-        (item) => item.productId._id === productId
-      );
+      const selectedItem = items.find((item) => item.productId._id === productId);
       if (!selectedItem) return;
 
       const newQuantity = selectedItem.quantity + change;
-      if (newQuantity < 1) return;
+      if (newQuantity <= 0) {
+        await removeFromCart(productId);
+      } else {
+        await updateCart({ productId, quantity: newQuantity });
+      }
 
-      await updateCart({ productId, quantity: newQuantity });
       await fetchCartData();
     } catch (error) {
       console.error("Failed to update quantity", error);
@@ -100,11 +103,10 @@ export default function MyBasket() {
     }
   };
 
-  // FIX: removeFromCart expects productId string, so send productId._id
   const removeItem = async (productId) => {
     try {
-      setButtonLoading(productId._id);
-      await removeFromCart(productId._id);
+      setButtonLoading(productId);
+      await removeFromCart(productId);
       await fetchCartData();
     } catch (error) {
       console.error("Failed to remove item", error);
@@ -141,10 +143,7 @@ export default function MyBasket() {
   return (
     <div className="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden sm:max-w-md md:max-w-lg">
       {/* Header */}
-      <div
-        className="text-white p-4 flex items-center gap-3"
-        style={{ backgroundColor: "#ea4525" }}
-      >
+      <div className="text-white p-4 flex items-center gap-3" style={{ backgroundColor: "#ea4525" }}>
         <div className="relative">
           <ShoppingBasket size={24} />
           <div
@@ -166,7 +165,7 @@ export default function MyBasket() {
         )}
       </div>
 
-      {/* Items List */}
+      {/* Items */}
       <div className="bg-gray-50 p-3 space-y-3 sm:p-4 sm:space-y-4">
         {items.length === 0 ? (
           <div className="text-center text-gray-600 font-medium py-8 space-y-4">
@@ -180,7 +179,6 @@ export default function MyBasket() {
           </div>
         ) : (
           items.map((item) => (
-            // FIX: key must be unique string, so use productId._id
             <div key={item.productId._id} className="bg-white rounded-lg p-3 sm:p-4">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1 min-w-0">
@@ -188,23 +186,15 @@ export default function MyBasket() {
                     ₹{item.price?.toFixed(2) || 0}
                   </div>
                   <h3 className="font-medium text-sm sm:text-base text-gray-900 truncate">
-                    {/* FIX: use productId.name */}
                     {item.productId.name || "Unnamed Item"}
                   </h3>
                 </div>
-
                 <div className="flex items-center gap-2 ml-3 flex-shrink-0">
                   <div className="flex items-center border border-gray-300 rounded">
                     <button
                       onClick={() => updateQuantity(item.productId._id, -1)}
-                      disabled={
-                        item.quantity === 1 || buttonLoading === item.productId._id
-                      }
-                      className={`p-1 ${
-                        item.quantity === 1 || buttonLoading === item.productId._id
-                          ? "opacity-50 cursor-not-allowed"
-                          : "hover:bg-gray-100 text-gray-600"
-                      }`}
+                      disabled={buttonLoading === item.productId._id}
+                      className={`p-1 ${buttonLoading === item.productId._id ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100 text-gray-600"}`}
                     >
                       <Minus size={14} />
                     </button>
@@ -214,30 +204,20 @@ export default function MyBasket() {
                     <button
                       onClick={() => updateQuantity(item.productId._id, 1)}
                       disabled={buttonLoading === item.productId._id}
-                      className={`p-1 ${
-                        buttonLoading === item.productId._id
-                          ? "opacity-50 cursor-not-allowed"
-                          : "hover:bg-gray-100 text-gray-600"
-                      }`}
+                      className={`p-1 ${buttonLoading === item.productId._id ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100 text-gray-600"}`}
                     >
                       <Plus size={14} />
                     </button>
                   </div>
-
                   <button
-                    onClick={() => removeItem(item.productId)}
+                    onClick={() => removeItem(item.productId._id)}
                     disabled={buttonLoading === item.productId._id}
-                    className={`text-white w-5 h-5 rounded flex items-center justify-center bg-red-500 ${
-                      buttonLoading === item.productId._id
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:opacity-80"
-                    }`}
+                    className={`text-white w-5 h-5 rounded flex items-center justify-center bg-red-500 ${buttonLoading === item.productId._id ? "opacity-50 cursor-not-allowed" : "hover:opacity-80"}`}
                   >
                     <Delete size={16} />
                   </button>
                 </div>
               </div>
-
               <div className="text-right text-sm text-gray-600">
                 Total: ₹{(item.price * item.quantity).toFixed(2)}
               </div>
@@ -246,7 +226,7 @@ export default function MyBasket() {
         )}
       </div>
 
-      {/* Summary */}
+      {/* Bill Summary */}
       {items.length > 0 && (
         <>
           <div className="p-4 space-y-2 border-t">
@@ -256,9 +236,7 @@ export default function MyBasket() {
             </div>
             <div className="flex justify-between text-sm sm:text-base">
               <span className="font-medium">Discounts:</span>
-              <span className="font-medium" style={{ color: "#ea4525" }}>
-                ₹{(bill?.discount || 0).toFixed(2)}
-              </span>
+              <span className="font-medium" style={{ color: "#ea4525" }}>₹{(bill?.discount || 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm sm:text-base">
               <span className="font-medium">Tax:</span>
@@ -270,15 +248,10 @@ export default function MyBasket() {
             </div>
           </div>
 
-          {/* Total Button */}
           <div className="p-4 pt-0">
             <button
               disabled={items.length === 0}
-              className={`w-full text-white font-semibold py-3 px-4 rounded-lg text-base sm:text-lg transition-opacity flex justify-between items-center ${
-                items.length === 0
-                  ? "opacity-50 cursor-not-allowed"
-                  : "hover:opacity-90"
-              }`}
+              className={`w-full text-white font-semibold py-3 px-4 rounded-lg text-base sm:text-lg flex justify-between items-center ${items.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}`}
               style={{ backgroundColor: "#ea4525" }}
             >
               <span>{items.length === 0 ? "No items to pay" : "Total to pay"}</span>
