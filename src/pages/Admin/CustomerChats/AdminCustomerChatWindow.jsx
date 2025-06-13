@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { MessageCircle, Send } from 'lucide-react';
+import { MessageCircle, Send, ChevronLeft } from 'lucide-react';
 import { connectSocket } from '../AdminUtils/socket';
+import { useNavigate } from 'react-router-dom';
 
-const AdminChatWindow = ({ userId, chatId }) => {
+const AdminChatWindow = ({ userId, chatId, onBack }) => {
   const [chat, setChat] = useState(null);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -10,6 +11,7 @@ const AdminChatWindow = ({ userId, chatId }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [socket, setSocket] = useState(null);
   const [adminId, setAdminId] = useState(null);
+  const navigate = useNavigate()
 
   // Decode and store adminId on mount
   useEffect(() => {
@@ -36,7 +38,7 @@ const AdminChatWindow = ({ userId, chatId }) => {
     const fetchChat = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/chat/admin/users/${userId}`, {
+        const response = await fetch(`https://orado.work.gd/api/chat/admin/users/${userId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -62,7 +64,7 @@ const AdminChatWindow = ({ userId, chatId }) => {
         setChat(processedChat);
 
         if (data.data._id) {
-          await fetch(`http://localhost:5000/chat/mark-read/${data.data._id}`, {
+          await fetch(`https://orado.work.gd/api/chat/mark-read/${data.data._id}`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -172,7 +174,7 @@ const AdminChatWindow = ({ userId, chatId }) => {
 
     try {
       const token = sessionStorage.getItem('adminToken');
-      const res = await fetch(`http://localhost:5000/chat/admin/users/${userId}/message`, {
+      const res = await fetch(`https://orado.work.gd/api/chat/admin/users/${userId}/message`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -220,7 +222,6 @@ const AdminChatWindow = ({ userId, chatId }) => {
     return time ? new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
   };
 
-
   if (loading) {
     return <div className="flex-1 flex items-center justify-center bg-orange-50">Loading...</div>;
   }
@@ -232,13 +233,48 @@ const AdminChatWindow = ({ userId, chatId }) => {
   if (!chat) {
     return <div className="flex-1 flex items-center justify-center bg-orange-50">No chat found</div>;
   }
-
-  const user = chat.participants?.find(p => p.modelType === 'user')?.id;
+  const user = chat.participants?.find(p => p.modelType === 'user');
+  const userName = user?.id.name || 'Unknown User';
+  const userEmail = user?.id.email || 'No email provided';
+  console.log(userId)
+  // onClick handler
+  const goToUserOrders = () => {
+    if (userId) {
+      navigate(`/admin/dashboard/customer/${userId}/orders`);
+    } else {
+      console.warn("User ID not found, can’t navigate");
+    }
+  };
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
-      {/* Header remains the same */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-orange-50">
+    <div className="flex-1 flex flex-col bg-white h-full">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-10 bg-orange-500 text-white p-4 shadow-md">
+        <div className="flex items-center space-x-3">
+          {onBack && (
+            <button 
+              onClick={onBack}
+              className="mr-2 p-1 rounded-full hover:bg-orange-500"
+            >
+              <ChevronLeft size={20} />
+            </button>
+          )}
+          <div className="bg-orange-400 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold">
+            {userName.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 
+              onClick={goToUserOrders}
+              className="font-bold text-lg truncate cursor-pointer hover:underline">
+              {userName}
+            </h2>
+            <p className="text-orange-100 text-sm truncate">{userEmail}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Chat messages area with padding to account for sticky header */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-orange-50" style={{ paddingTop: '0.5rem' }}>
         {chat.messages?.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-500">No messages yet</p>
@@ -270,7 +306,9 @@ const AdminChatWindow = ({ userId, chatId }) => {
           </div>
         )}
       </div>
-      <div className="p-4 bg-white border-t border-orange-200">
+      
+      {/* Sticky Footer (message input) */}
+      <div className="sticky bottom-0 p-4 bg-white border-t border-orange-200">
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <input
             type="text"
@@ -292,4 +330,4 @@ const AdminChatWindow = ({ userId, chatId }) => {
   );
 };
 
-export default AdminChatWindow;
+export default AdminChatWindow

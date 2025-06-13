@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { CheckCircle2, AlertCircle, Search, Tag } from "lucide-react";
 import axios from "axios";
+import apiClient from "../../../apis/apiClient/apiClient";
 
 function AssignOffer({ onAssignmentSuccess }) {
   const [restaurants, setRestaurants] = useState([]);
@@ -58,6 +59,7 @@ function AssignOffer({ onAssignmentSuccess }) {
     setLoading(prev => ({ ...prev, assigning: true }));
 
     try {
+
       const token = sessionStorage.getItem('adminToken');
 
       const response = await axios.put(
@@ -72,6 +74,13 @@ function AssignOffer({ onAssignmentSuccess }) {
       );
 
       setSuccess(response.data.message || "Offer status updated successfully");
+
+      await apiClient.post("/admin/offers/assign", {
+        restaurantId: selectedRestaurant,
+        offerId: selectedOffer,
+      });
+      setSuccess("Offer assigned successfully");
+
       setSelectedRestaurant("");
       setSelectedOffer("");
       if (onAssignmentSuccess) onAssignmentSuccess(response.data.isAssigned);

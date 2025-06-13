@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
+import apiClient from "../../apis/apiClient/apiClient";
 
 const RestaurantList = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -41,8 +42,8 @@ const RestaurantList = () => {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:5000/restaurants/all-restaurants"
+        const res = await apiClient.get(
+          "/restaurants/all-restaurants"
         );
         setRestaurants(res.data.restaurants || []);
         setLoading(false);
@@ -143,8 +144,8 @@ const RestaurantList = () => {
       };
 
       // 🔗 Real API call to update the restaurant
-      const res = await axios.put(
-        `http://localhost:5000/admin/edit/restaurant/${editingRestaurant._id}`,
+      const res = await apiClient.put(
+        `/admin/edit/restaurant/${editingRestaurant._id}`,
         updatedData,
         {
           headers: {

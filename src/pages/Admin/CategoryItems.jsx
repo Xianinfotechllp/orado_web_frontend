@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronLeft, Edit2, Trash2, Plus, X, ChevronRight, ChevronLeft as ChevronLeftIcon } from 'lucide-react';
 import LoadingForAdmins from './AdminUtils/LoadingForAdmins';
+import apiClient from '../../apis/apiClient/apiClient';
 
 const CategoryItems = () => {
     const { restaurantId, categoryId } = useParams();
@@ -19,8 +20,8 @@ const CategoryItems = () => {
         const fetchItems = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(
-                    `http://localhost:5000/admin/restaurant/${restaurantId}/category/${categoryId}`,
+                const response = await apiClient.get(
+                    `/admin/restaurant/${restaurantId}/category/${categoryId}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 setItems(response.data.data || []);
@@ -37,8 +38,8 @@ const CategoryItems = () => {
         if (!window.confirm('Are you sure you want to delete this item?')) return;
         
         try {
-            await axios.delete(
-                `http://localhost:5000/restaurants/products/${itemId}`,
+            await apiClient.delete(
+                `/restaurants/products/${itemId}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setItems(items.filter(item => item._id !== itemId));
@@ -270,8 +271,8 @@ const ProductModal = ({ show, onClose, onSubmit, item, restaurantId, categoryId,
             let response;
             if (item) {
                 // Edit existing item
-                response = await axios.put(
-                    `http://localhost:5000/admin/restaurant/${restaurantId}/product/${item._id}`,
+                response = await apiClient.put(
+                    `/admin/restaurant/${restaurantId}/product/${item._id}`,
                     formDataToSend,
                     {
                         headers: {
@@ -282,8 +283,8 @@ const ProductModal = ({ show, onClose, onSubmit, item, restaurantId, categoryId,
                 );
             } else {
                 // Create new item
-                response = await axios.post(
-                    `http://localhost:5000/admin/restaurant/${restaurantId}/product`,
+                response = await apiClient.post(
+                    `/admin/restaurant/${restaurantId}/product`,
                     formDataToSend,
                     {
                         headers: {

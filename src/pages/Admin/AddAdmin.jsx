@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, Mail, Phone, Lock, Shield, CheckCircle, UserPlus, Key } from 'lucide-react';
 import axios from 'axios';
 import LoadingForAdmins from './AdminUtils/LoadingForAdmins';
+import apiClient from '../../apis/apiClient/apiClient';
 
 const permissionsList = [
     "agents.manage",
@@ -66,7 +67,7 @@ const AddAdmin = () => {
     setLoading(true);
 
     try {
-        const response = await axios.post('http://localhost:5000/admin/create-admin', {
+        const response = await apiClient.post('/admin/create-admin', {
             name: formData.name,
             email: formData.email,
             phone: formData.phone,

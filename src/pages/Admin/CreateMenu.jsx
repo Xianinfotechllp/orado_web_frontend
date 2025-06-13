@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import apiClient from '../../apis/apiClient/apiClient';
 
 const CreateMenu = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -34,7 +35,7 @@ const CreateMenu = () => {
   useEffect(() => {
      const fetchRestaurants = async () => {
        try {
-         const res = await axios.get('http://localhost:5000/restaurants/all-restaurants');
+         const res = await apiClient.get('/restaurants/all-restaurants');
          setRestaurants(res.data.restaurants || []);
          setLoading(false);
        } catch (err) {

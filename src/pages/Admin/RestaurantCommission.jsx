@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
+import apiClient from "../../apis/apiClient/apiClient";
 
 function RestaurantCommission() {
   const [restaurants, setRestaurants] = useState([]);
@@ -30,8 +31,8 @@ function RestaurantCommission() {
 
   const fetchRestaurants = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/restaurants/all-restaurants"
+      const res = await apiClient.get(
+        "/restaurants/all-restaurants"
       );
       setRestaurants(res.data.restaurants || []);
     } catch (err) {
@@ -56,8 +57,8 @@ function RestaurantCommission() {
     }
 
     try {
-      await axios.patch(
-        `http://localhost:5000/admin/restaurant/${selectedRestaurant}/commission`,
+      await apiClient.patch(
+        `/admin/restaurant/${selectedRestaurant}/commission`,
         {
           type: commissionType,
           value: parseFloat(commissionValue),

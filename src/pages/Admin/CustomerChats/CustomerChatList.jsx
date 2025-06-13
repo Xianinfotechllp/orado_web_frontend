@@ -13,7 +13,7 @@ const AdminChatList = ({ onSelectChat, selectedUserId }) => {
       try {
         setLoading(true);
         const token = sessionStorage.getItem('adminToken');
-        const response = await fetch('http://localhost:5000/chat/admin/users', {
+        const response = await fetch('https://orado.work.gd/api/chat/admin/users', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -21,6 +21,7 @@ const AdminChatList = ({ onSelectChat, selectedUserId }) => {
         if (!response.ok) throw new Error('Failed to fetch chats');
 
         const data = await response.json();
+        console.log('data', data)
         const uniqueChats = [];
         const seenUserIds = new Set();
 

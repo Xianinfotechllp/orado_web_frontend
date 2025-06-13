@@ -1,4 +1,4 @@
-import { TicketCheck } from "lucide-react";
+import { TicketCheck, Receipt } from "lucide-react";
 import React, { useState } from "react";
 import { FaUserSecret } from "react-icons/fa";
 import {
@@ -11,11 +11,14 @@ import {
   FiHome,
   FiSettings,
 } from "react-icons/fi";
-import { GrUserAdmin } from "react-icons/gr";
 import { CiDeliveryTruck } from "react-icons/ci";
 import { FcCustomerSupport } from "react-icons/fc";
 import { MdDeliveryDining, MdOutlineLocalOffer } from "react-icons/md";
-import { Link, Outlet } from "react-router-dom";
+import {FiMenu, FiLogOut, FiChevronDown, FiChevronUp,
+  FiPieChart, FiClipboard, FiHome, FiUser, FiSettings
+} from 'react-icons/fi';
+import { GrUserAdmin , GrUser} from 'react-icons/gr';
+import { Link, Outlet } from 'react-router-dom';
 
 const SidebarItem = ({ title, icon, children, hasPermission }) => {
   const [open, setOpen] = useState(false);
@@ -260,10 +263,13 @@ function AdminDashboard() {
             </Link>
           </SidebarItem>
 
-          <SidebarItem
-            title="Customers"
-            icon={<FcCustomerSupport  size={18} />}
-            hasPermission={hasPermission("users.manage")}
+
+         
+
+          <SidebarItem 
+            title="Customers" 
+            icon={<GrUser size={18}/>}
+            hasPermission={hasPermission('users.manage')}
           >
             <Link
               to="user-managemnet"
@@ -291,6 +297,15 @@ function AdminDashboard() {
               Ticket Manager
             </Link>
           </SidebarItem>
+          <SidebarItem 
+            title="Transactions" 
+            icon={<Receipt size={18}/>}
+            hasPermission={hasPermission('support.manage')}
+          >
+            <Link to="refund/transactions" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+              Refunds
+            </Link>
+          </SidebarItem>
 
           <SidebarItem
             title="Settings"
@@ -308,6 +323,9 @@ function AdminDashboard() {
               className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
             >
               Change Password
+            </Link>
+            <Link to="access-logs" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+              Access Logs
             </Link>
           </SidebarItem>
         </nav>

@@ -21,6 +21,7 @@ import "leaflet/dist/leaflet.css";
 import { createRestaurant } from "../../apis/restaurantApi";
 import axios from "axios";
 import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
+import apiClient from "../../apis/apiClient/apiClient";
 
 const AddRestaurant = () => {
   const [formData, setFormData] = useState({
@@ -67,8 +68,8 @@ const AddRestaurant = () => {
     const fetchMerchants = async () => {
       setMerchantLoading(true);
       try {
-        const response = await axios.get(
-          "http://localhost:5000/admin/merchant/getallmerchants"
+        const response = await apiClient.get(
+          "/admin/merchant/getallmerchants"
         );
         setMerchants(response.data.data || []);
       } catch (error) {

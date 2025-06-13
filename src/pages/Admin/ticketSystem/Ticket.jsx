@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import LoadingForAdmins from '../AdminUtils/LoadingForAdmins';
+import apiClient from '../../../apis/apiClient/apiClient';
 
 const Ticket = () => {
   const [tickets, setTickets] = useState([]);
@@ -47,8 +48,8 @@ const Ticket = () => {
       setLoading(true);
       const token = sessionStorage.getItem("adminToken");
 
-      const response = await axios.get(
-        "http://localhost:5000/tickets/admin/getall",
+      const response = await apiClient.get(
+        "/tickets/admin/getall",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -77,8 +78,8 @@ const Ticket = () => {
     try {
       const token = sessionStorage.getItem('adminToken');
 
-      const response = await axios.patch(
-        `http://localhost:5000/tickets/admin/ticket/${ticketId}/status`,
+      const response = await apiClient.patch(
+        `/tickets/admin/ticket/${ticketId}/status`,
         { status: newStatus },
         {
           headers: {
@@ -109,8 +110,8 @@ const Ticket = () => {
       // Update each selected ticket
       await Promise.all(
         selectedTickets.map(ticketId => 
-          axios.patch(
-            `http://localhost:5000/tickets/admin/ticket/${ticketId}/status`,
+          apiClient.patch(
+            `/tickets/admin/ticket/${ticketId}/status`,
             { status: newStatus },
             {
               headers: {

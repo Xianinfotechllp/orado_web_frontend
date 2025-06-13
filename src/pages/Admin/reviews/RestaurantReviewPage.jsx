@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import { Star, User } from "lucide-react";
 import LoadingForAdmins from "../AdminUtils/LoadingForAdmins";
+import apiClient from "../../../apis/apiClient/apiClient";
 
 function RestaurantReviewsPage() {
   const { restaurantId } = useParams();
@@ -13,8 +14,8 @@ function RestaurantReviewsPage() {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/feedback/restaurants/${restaurantId}`
+        const res = await apiClient.get(
+          `/feedback/restaurants/${restaurantId}`
         );
         setReviews(res.data.reviews || []);
         setLoading(false);

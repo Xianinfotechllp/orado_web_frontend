@@ -6,6 +6,7 @@ import {
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import LoadingForAdmins from './AdminUtils/LoadingForAdmins';
+import apiClient from '../../apis/apiClient/apiClient';
 
 const AdminManage = () => {
     const [admins, setAdmins] = useState([]);
@@ -33,7 +34,7 @@ const AdminManage = () => {
         const fetchAdmins = async () => {
             setLoading(true);
             try {
-                const response = await axios.get('http://localhost:5000/admin/admins', {
+                const response = await apiClient.get('/admin/admins', {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -77,7 +78,7 @@ const AdminManage = () => {
     const handleDelete = async (adminId) => {
         if (window.confirm('Are you sure you want to delete this admin?')) {
             try {
-                await axios.delete(`http://localhost:5000/admin/delete-admin/${adminId}`, {
+                await  apiClient.delete(`/admin/delete-admin/${adminId}`, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -122,8 +123,8 @@ const AdminManage = () => {
         if (!currentAdmin) return;
 
         try {
-            const response = await axios.put(
-                `http://localhost:5000/admin/update-admin/${currentAdmin._id}`,
+            const response = await apiClient.put(
+                `/admin/update-admin/${currentAdmin._id}`,
                 { permissions },
                 {
                     headers: {

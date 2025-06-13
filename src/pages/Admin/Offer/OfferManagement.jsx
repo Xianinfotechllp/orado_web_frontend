@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import apiClient from "../../../apis/apiClient/apiClient";
 import { Search } from "lucide-react";
+import LoadingForAdmins from "../AdminUtils/LoadingForAdmins";
+import CreateOffer from "./CreateOffer";
+import AssignOffer from "./AssignOffer";
 
 const OfferManagement = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -17,10 +20,23 @@ const OfferManagement = () => {
   const [success, setSuccess] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  useEffect(() => {
-    fetchRestaurants();
-  }, []);
+  const fetchOffers = async () => {
+    try {
+      const res = await apiClient.get("/admin/offer");
+      setOffers(res.data || []); // The API returns the array directly
+    } catch (err) {
+      console.error("Error fetching offers:", err);
+      setError("Failed to fetch offers");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+ 
 
   const fetchRestaurants = async () => {
     try {
@@ -32,7 +48,18 @@ const OfferManagement = () => {
     } catch (err) {
       setError("Failed to load restaurants");
     } finally {
-      setLoading((prev) => ({ ...prev, restaurants: false }));
+      setLoading((prev) => ({ ...prev, restaurants: false }));}}
+      
+  const handleDelete = async (offerId) => {
+    if (window.confirm("Are you sure you want to delete this offer?")) {
+      try {
+        await apiClient.delete(`/admin/offers/${offerId}`);
+        setError("");
+        fetchOffers();
+      } catch (err) {
+        console.error("Error deleting offer:", err);
+        setError("Failed to delete offer");
+      }
     }
   };
 

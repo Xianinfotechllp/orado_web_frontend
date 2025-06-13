@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react";
 import axios from "axios";
+import apiClient from "../../../apis/apiClient/apiClient";
 
 function CreateOffer({ onOfferCreated }) {
   const [type, setType] = useState("percentage");
@@ -63,7 +64,7 @@ function CreateOffer({ onOfferCreated }) {
         throw new Error("No authentication token found");
       }
 
-      const offerData = {
+      await axios.post("http://localhost:5000/admin/offer", {
         title,
         description: description || null,
         type,
@@ -74,7 +75,7 @@ function CreateOffer({ onOfferCreated }) {
         validTill: new Date(validTill),
         usageLimitPerUser: usageLimitPerUser ? parseInt(usageLimitPerUser) : null,
         totalUsageLimit: totalUsageLimit ? parseInt(totalUsageLimit) : null
-      };
+      })
 
       await axios.post("http://localhost:5000/admin/offer", offerData, {
         headers: {

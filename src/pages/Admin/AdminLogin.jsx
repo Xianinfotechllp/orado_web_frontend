@@ -3,6 +3,7 @@ import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import apiClient from "../../apis/apiClient/apiClient";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -32,7 +33,7 @@ const AdminLogin = () => {
     setError("");
 
     try {
-      const response = await axios.post("http://localhost:5000/admin/login", {
+      const response = await apiClient.post("/admin/login", {
         email,
         password,
       });

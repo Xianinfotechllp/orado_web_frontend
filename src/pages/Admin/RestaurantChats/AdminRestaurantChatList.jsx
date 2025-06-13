@@ -13,7 +13,7 @@ const AdminRestaurantChatList = ({ onSelectChat, selectedRestaurantId }) => {
       try {
         setLoading(true);
         const token = sessionStorage.getItem('adminToken');
-        const response = await fetch('http://localhost:5000/chat/admin/restaurants', {
+        const response = await fetch('https://orado.work.gd/api/chat/admin/restaurants', {
           headers: {
             'Authorization': `Bearer ${token}`
           }

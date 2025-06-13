@@ -38,6 +38,7 @@ import {
 } from "recharts";
 import { FaEnvelope, FaPhoneAlt } from "react-icons/fa";
 import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
+import apiClient from "../../apis/apiClient/apiClient";
 
 const RestaurantApprovalsPage = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -85,8 +86,8 @@ const RestaurantApprovalsPage = () => {
     const fetchMerchants = async () => {
       try {
         const token = sessionStorage.getItem("adminToken");
-        const response = await axios.get(
-          "http://localhost:5000/admin/restaurant-requests",
+        const response = await apiClient.get(
+          "/admin/restaurant-requests",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -155,8 +156,8 @@ const RestaurantApprovalsPage = () => {
   const handleApprove = async (id) => {
     try {
       const token = sessionStorage.getItem("adminToken");
-      const response = await axios.post(
-        `http://localhost:5000/admin/restaurant-application/${id}/update`,
+      const response = await apiClient.post(
+        `/admin/restaurant-application/${id}/update`,
         { action: "approved" },
         {
           headers: {
@@ -182,8 +183,8 @@ const RestaurantApprovalsPage = () => {
   const handleReject = async (id) => {
     try {
       const token = sessionStorage.getItem("adminToken");
-      await axios.post(
-        `http://localhost:5000/admin/restaurant-application/${id}/update`,
+      await apiClient.post(
+        `/admin/restaurant-application/${id}/update`,
         {
           action: "rejected",
           reason: "Documents incomplete",
