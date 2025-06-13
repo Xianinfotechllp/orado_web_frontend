@@ -24,6 +24,7 @@ import OrderStatusPage from "./components/addToCart/OrderStatus";
 import CategoryRestaurants from "./components/home/CategoryRestruants";
 import RestaurantSearchPage from "./pages/Search/RestaurantSearchPage";
 import ProtectedRoute from "./components/protectedRoutes/ProtectedRoutes";
+import WalletTopUpPage from "./pages/UserProfile/WalletTopUpPage";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -75,6 +76,9 @@ function App() {
         } />
         <Route path="/my-account/logout" element={
           <ProtectedRoute><LogoutPage /></ProtectedRoute>
+        } />
+        <Route path="/my-account/wallet" element={
+          <ProtectedRoute><WalletTopUpPage /></ProtectedRoute>
         } />
       </Routes>
     </>

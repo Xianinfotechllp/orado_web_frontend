@@ -10,19 +10,22 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { getBillSummary } from "../../apis/orderApi";
 import { clearCartApi, getCart, removeFromCart, updateCart } from "../../apis/cartApi";
+import { getWalletBalance } from "../../apis/walletApi";
 import {
   setCart,
   clearCart,
   selectCartItems,
 } from "../../slices/cartSlice";
 
-export default function MyBasket() {
+export default function MyBasket({useWallet, setUseWallet}) {
   const reduxItems = useSelector(selectCartItems);
   const [items, setItems] = useState([]);
   const [cartDetails, setCartDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [bill, setBill] = useState({});
   const [buttonLoading, setButtonLoading] = useState(null);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [walletLoading, setWalletLoading] = useState(false);
 
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
@@ -31,17 +34,21 @@ export default function MyBasket() {
   const fetchBill = async (cartId) => {
     if (!cartId || !selectedAddress) return;
     try {
+      console.log("Fetching bill with useWallet:", useWallet); // Debug log
       const billRes = await getBillSummary({
         userId: user._id,
         longitude: selectedAddress.location.longitude,
         latitude: selectedAddress.location.latitude,
         cartId: cartId,
+        useWallet: useWallet
       });
+      console.log("Bill response:", billRes.data);
       setBill(billRes.data);
     } catch (err) {
       console.error("Error fetching bill summary", err);
     }
   };
+  console.log('billlll', bill)
 
   const fetchCartData = async () => {
     if (!user?._id) return;
@@ -53,7 +60,6 @@ export default function MyBasket() {
         dispatch(setCart(order));
         setCartDetails(order);
         setItems(order.products || []);
-        console.log("Fetched cart items:", order.products);
         await fetchBill(order._id);
       } else {
         dispatch(clearCart());
@@ -68,6 +74,23 @@ export default function MyBasket() {
     }
   };
 
+  const fetchWalletBalance = async () => {
+    try {
+      const res = await getWalletBalance();
+      setWalletBalance(res.walletBalance);
+      // Auto-disable wallet if balance is zero
+      if (res.walletBalance <= 0) {
+        setUseWallet(false);
+      }
+    } catch (err) {
+      console.error("Failed to load wallet balance:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchWalletBalance();
+  }, []);
+
   useEffect(() => {
     fetchCartData();
   }, [user?._id]);
@@ -76,13 +99,11 @@ export default function MyBasket() {
     if (cartDetails._id && selectedAddress) {
       fetchBill(cartDetails._id);
     }
-  }, [cartDetails._id, selectedAddress]);
+  }, [cartDetails._id, selectedAddress, useWallet]);
 
-  // FIX: Look inside productId._id when comparing
   const updateQuantity = async (productId, change) => {
     try {
       setButtonLoading(productId);
-      // Find item by productId._id
       const selectedItem = items.find(
         (item) => item.productId._id === productId
       );
@@ -100,7 +121,6 @@ export default function MyBasket() {
     }
   };
 
-  // FIX: removeFromCart expects productId string, so send productId._id
   const removeItem = async (productId) => {
     try {
       setButtonLoading(productId._id);
@@ -122,12 +142,19 @@ export default function MyBasket() {
         setItems([]);
         setCartDetails({});
         setBill({});
+        setUseWallet(false); // Reset wallet usage when cart is cleared
       }
     } catch (error) {
       console.error("Failed to clear cart", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleWalletToggle = (e) => {
+    if (walletBalance <= 0) return;
+    const newUseWallet = e.target.checked;
+    setUseWallet(newUseWallet); 
   };
 
   if (loading) {
@@ -141,16 +168,10 @@ export default function MyBasket() {
   return (
     <div className="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden sm:max-w-md md:max-w-lg">
       {/* Header */}
-      <div
-        className="text-white p-4 flex items-center gap-3"
-        style={{ backgroundColor: "#ea4525" }}
-      >
+      <div className="text-white p-4 flex items-center gap-3 bg-[#ea4525]">
         <div className="relative">
           <ShoppingBasket size={24} />
-          <div
-            className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold"
-            style={{ color: "#ea4525" }}
-          >
+          <div className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-[#ea4525]">
             {items.length > 0 ? items.length : "✓"}
           </div>
         </div>
@@ -180,7 +201,6 @@ export default function MyBasket() {
           </div>
         ) : (
           items.map((item) => (
-            // FIX: key must be unique string, so use productId._id
             <div key={item.productId._id} className="bg-white rounded-lg p-3 sm:p-4">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1 min-w-0">
@@ -188,7 +208,6 @@ export default function MyBasket() {
                     ₹{item.price?.toFixed(2) || 0}
                   </div>
                   <h3 className="font-medium text-sm sm:text-base text-gray-900 truncate">
-                    {/* FIX: use productId.name */}
                     {item.productId.name || "Unnamed Item"}
                   </h3>
                 </div>
@@ -256,8 +275,8 @@ export default function MyBasket() {
             </div>
             <div className="flex justify-between text-sm sm:text-base">
               <span className="font-medium">Discounts:</span>
-              <span className="font-medium" style={{ color: "#ea4525" }}>
-                ₹{(bill?.discount || 0).toFixed(2)}
+              <span className="font-medium text-[#ea4525]">
+                - ₹{(bill?.discount || 0).toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between text-sm sm:text-base">
@@ -268,22 +287,40 @@ export default function MyBasket() {
               <span className="font-medium">Delivery Fee:</span>
               <span className="font-medium">₹{(bill?.deliveryFee || 0).toFixed(2)}</span>
             </div>
+            
+            {/* Wallet Section */}
+            <div className="flex items-center justify-between text-sm sm:text-base pt-2">
+              <label className="font-medium flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  disabled={walletBalance <= 0 || walletLoading}
+                  checked={walletBalance > 0 && useWallet}
+                  onChange={handleWalletToggle}
+                  className="mr-2"
+                />
+                Use Wallet (₹{walletBalance.toFixed(2)} available)
+                {walletBalance <= 0 && (
+                  <span className="text-xs text-gray-500">(Insufficient balance)</span>
+                )}
+              </label>
+            </div>
           </div>
 
-          {/* Total Button */}
+          {/* Total Section */}
           <div className="p-4 pt-0">
-            <button
-              disabled={items.length === 0}
-              className={`w-full text-white font-semibold py-3 px-4 rounded-lg text-base sm:text-lg transition-opacity flex justify-between items-center ${
-                items.length === 0
-                  ? "opacity-50 cursor-not-allowed"
-                  : "hover:opacity-90"
-              }`}
-              style={{ backgroundColor: "#ea4525" }}
-            >
-              <span>{items.length === 0 ? "No items to pay" : "Total to pay"}</span>
-              <span>₹{(bill?.total || 0).toFixed(2)}</span>
-            </button>
+            {bill?.walletUsed > 0 && (
+              <div className="flex justify-between text-sm sm:text-base mb-2">
+                <span className="font-medium text-green-600">Wallet Used:</span>
+                <span className="font-medium text-green-600">
+                  - ₹{bill.walletUsed.toFixed(2)}
+                </span>
+              </div>
+            )}
+
+            <div className="flex justify-between text-sm sm:text-base font-semibold border-t pt-2">
+              <span>Payable Now:</span>
+              <span>₹{(bill?.payable ?? bill?.total ?? 0).toFixed(2)}</span>
+            </div>
           </div>
         </>
       )}
