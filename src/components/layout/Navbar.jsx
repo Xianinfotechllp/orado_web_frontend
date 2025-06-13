@@ -59,6 +59,7 @@ function Navbar() {
       const res = await axios.get(
         `https://nominatim.openstreetmap.org/search?q=${searchText}&format=json&addressdetails=1`
       );
+      console.log(res.data)
       setSuggestions(res.data);
     } catch (error) {
       console.error("Error fetching location suggestions:", error);

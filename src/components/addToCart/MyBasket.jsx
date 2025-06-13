@@ -234,10 +234,22 @@ export default function MyBasket() {
               <span className="font-medium">Sub Total:</span>
               <span className="font-medium">₹{(bill?.subtotal || 0).toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm sm:text-base">
-              <span className="font-medium">Discounts:</span>
-              <span className="font-medium" style={{ color: "#ea4525" }}>₹{(bill?.discount || 0).toFixed(2)}</span>
-            </div>
+
+  <div className="flex justify-between text-sm sm:text-base">
+  <span className="font-medium">Discounts:</span>
+  <div className="flex flex-col items-end">
+    <span className="font-medium" style={{ color: "#ea4525" }}>
+      ₹{(bill?.discount || 0).toFixed(2)}
+    </span>
+    {bill?.offersApplied && bill.offersApplied.length > 0 && (
+      <span className="text-xs text-gray-500">
+        ({bill.offersApplied.join(", ")})
+      </span>
+    )}
+  </div>
+</div>
+            
+          
             <div className="flex justify-between text-sm sm:text-base">
               <span className="font-medium">Tax:</span>
               <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
