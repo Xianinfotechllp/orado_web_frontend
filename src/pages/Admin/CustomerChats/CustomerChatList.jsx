@@ -21,6 +21,7 @@ const AdminChatList = ({ onSelectChat, selectedUserId }) => {
         if (!response.ok) throw new Error('Failed to fetch chats');
 
         const data = await response.json();
+        console.log('data', data)
         const uniqueChats = [];
         const seenUserIds = new Set();
 

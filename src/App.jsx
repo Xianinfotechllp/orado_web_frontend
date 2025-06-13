@@ -33,6 +33,10 @@ import Ticket from "./pages/Admin/ticketSystem/Ticket";
 import RestaurantCommission from "./pages/Admin/RestaurantCommission";
 import AdminCustomerChatDashboard from "./pages/Admin/CustomerChats/AdminCustomerChatDashboard";
 import UserManagement from "./pages/Admin/UserManagement";
+import AdminCustomerOrderPage from "./pages/Admin/customer/AdminCustomerOrderPage";
+import RefundComponent from "./pages/Admin/customer/RefundComponent";
+import RefundTransactionsPage from "./pages/Admin/RefundTransactionsPage";
+import AccessLogs from "./pages/Admin/AdminAccessLogs";
 import RestaurantOrderList from "./pages/Admin/RestaurantOrderList";
 import RestaurantReviewsPage from "./pages/Admin/reviews/RestaurantReviewPage";
 import RestaurantListforReviews from "./pages/Admin/reviews/RestaurantListforReviews";
@@ -87,10 +91,14 @@ function App() {
           <Route path="admin-add" element={<AddAdmin />} />
           <Route path="admin-manage" element={<AdminManage />} />
           <Route path="admin-ticket" element={<Ticket />} />
+          <Route path="access-logs" element={<AccessLogs />} />
 
           {/* admin-customer section */}
           <Route path="admin-customer-chat" element={<AdminCustomerChatDashboard />} />
           <Route path="user-managemnet" element={<UserManagement />} />
+          <Route path="customer/:userId/orders" element={<AdminCustomerOrderPage />} />
+          <Route path="order/refund" element={<RefundComponent />} />
+          <Route path="refund/transactions" element={<RefundTransactionsPage />} />
 
 
           {/* Add more nested routes as needed */}
