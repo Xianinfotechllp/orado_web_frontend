@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState} from 'react'
 import AddressAndPayment from '../../components/addToCart/DeliveryPaymentForm'
 import MyBasket from '../../components/addToCart/MyBasket'
 import Navbar from '../../components/layout/Navbar';
@@ -7,6 +7,8 @@ import Navbar from '../../components/layout/Navbar';
 
 
 const AddToCart = () => {
+
+  const [useWallet, setUseWallet] = useState(false);
 
     const handleLocationSelect = (location) => {
     console.log("Selected Location:", location);
@@ -17,10 +19,10 @@ const AddToCart = () => {
       <Navbar />
       <div className="flex flex-col lg:flex-row mt-20 gap-6 p-6">
         <div className="w-full lg:w-2/3">
-          <AddressAndPayment />
+          <AddressAndPayment useWallet = {useWallet} />
         </div>
         <div className="w-full lg:w-1/3">
-          <MyBasket />
+          <MyBasket useWallet = {useWallet} setUseWallet = {setUseWallet} />
         </div>
 
        

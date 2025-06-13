@@ -4,25 +4,30 @@ import { getAddress, updateAddress, addAddress } from "../../apis/userApi";
 import { placeOrder } from "../../apis/orderApi";
 import EditAddressForm from "../address/EditAddressForm";
 import NewAddressForm from "../address/NewAddressForm";
+import OrderSuccessModal from "./OrderSuccessfullModal";
+import { useNavigate } from "react-router-dom";
 import { setSelectedAddress } from "../../slices/addressSlice";
-import { clearCart } from "../../slices/cartSlice";
+import { clearCart, setCartId } from "../../slices/cartSlice";
+import { clearCartApi, getCart } from "../../apis/cartApi";
+import { persistor } from "../../store/store"; // Import persistor to clear persisted state
+import store from "../../store/store"; // Import store to check state after clearing cart
 
-export default function DeliveryPaymentForm() {
+export default function DeliveryPaymentForm({useWallet}) {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
   const [addresses, setAddresses] = useState([]);
   const [localSelectedAddress, setLocalSelectedAddress] = useState(null);
   const [editingAddress, setEditingAddress] = useState(null);
-
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [orderId, setOrderId] = useState(null);
+  const [estimatedDelivery, setEstimatedDelivery] = useState("60-70 mins"); // You can fetch actual ETA if available
+
   const user = useSelector((state) => state.auth.user);
-  const cartId = useSelector((state) => state.cart.cartId)
-
-
-  const location = useSelector((state) => state.location.location);
-
-
+  const cartId = useSelector((state) => state.cart.cartId);
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -41,7 +46,7 @@ export default function DeliveryPaymentForm() {
   }, [user?._id, dispatch]);
 
   const handleAddressUpdate = (updatedAddress) => {
-    updateAddress(user._id, updatedAddress.addressId, updatedAddress)
+    updateAddress(updatedAddress.addressId, updatedAddress)
       .then(() => {
         setAddresses((prev) =>
           prev.map((addr) =>
@@ -61,36 +66,82 @@ export default function DeliveryPaymentForm() {
       alert("Please select a delivery address first.");
       return;
     }
+
+    if (!cartId) {
+      alert("No cart items found. Please add items to cart first.");
+      return;
+    }
+
     try {
-     const orderPayload = {
+      const orderPayload = {
         cartId: cartId,
         userId: user._id,
         paymentMethod,
+        useWallet,
         longitude: localSelectedAddress.location.longitude,
         latitude: localSelectedAddress.location.latitude,
         street: localSelectedAddress.street,
-        area: localSelectedAddress.area,       // if exists
-        landmark: localSelectedAddress.landmark, // if exists
+        area: localSelectedAddress.area,
+        landmark: localSelectedAddress.landmark,
         city: localSelectedAddress.city,
         state: localSelectedAddress.state,
-        pincode: localSelectedAddress.zip,     // assuming zip = pincode
-        country: localSelectedAddress.country, // if exists
+        pincode: localSelectedAddress.zip,
+        country: localSelectedAddress.country,
       };
+      
+      console.log("Placing order with payload:", orderPayload);
+      
       const res = await placeOrder(orderPayload);
-      if (res.status === 201) {
-      dispatch(clearCart()); // 🔥 this clears Redux cart
-      // navigate("/order-success"); // or go to order page
-    }
-      alert("Order placed successfully!");
-      // Redirect or clear cart here
+      console.log("Place order response:", res);
+
+      if (res?.orderId) {
+        // Clear Redux first
+        dispatch(clearCart());
+         console.log("Redux cart state after clearing:", store.getState().cart);
+        
+        // Then clear backend
+        const response = await clearCartApi(user._id);
+        console.log("Clear cart API response:", response);
+        
+        // Force refresh
+        const freshCart = await getCart();
+        if (freshCart?.products?.length) {
+          // Should be empty, but handle just in case
+          dispatch(clearCart());
+          console.log("Cart after clearing:", freshCart);
+        }
+        
+        setOrderSuccess(true);
+        setOrderId(res.orderId);
+      }
     } catch (error) {
       console.error("Failed to place order:", error);
-      alert("Failed to place order. Please try again.");
+      
+      // More specific error messages
+      if (error.response?.status === 400) {
+        alert("Invalid order data. Please check your cart and try again.");
+      } else {
+        alert("Failed to place order. Please try again.");
+      }
     }
+  };
+
+  const handleOrderModalClose = () => {
+    setOrderSuccess(false);
+    navigate(`/orders/${orderId}`); // Adjust the route if necessary
   };
 
   return (
     <div className="w-full space-y-4">
+      {/* Show order success modal */}
+      {orderSuccess && (
+        <OrderSuccessModal
+          orderId={orderId}
+          estimatedDelivery={estimatedDelivery}
+          onClose={handleOrderModalClose}
+        />
+      )}
+
       {/* Delivery Address Section */}
       <div className="bg-white border border-gray-300 rounded-lg p-4">
         <div className="flex justify-between items-start mb-3">
@@ -116,7 +167,7 @@ export default function DeliveryPaymentForm() {
         </div>
       </div>
 
-      {/* Addresses List */}
+      {/* Address List */}
       <div>
         {addresses?.map((address) => (
           <div

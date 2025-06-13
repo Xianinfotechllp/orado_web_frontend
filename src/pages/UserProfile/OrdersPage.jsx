@@ -15,7 +15,7 @@ const OrdersPage = () => {
         <div className="flex flex-col md:flex-row">
           {/* Mobile menu button */}
           <div className="md:hidden flex justify-between items-center p-4 bg-white border-b">
-            <h2 className="text-xl font-semibold">My Account</h2>
+            <h2 className="text-xl font-semibold">Past Orders</h2>
             <button onClick={() => setShowSidebar(!showSidebar)}>
               <Menu className="w-6 h-6" />
             </button>

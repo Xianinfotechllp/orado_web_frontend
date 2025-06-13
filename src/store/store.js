@@ -25,11 +25,23 @@ const rootReducer = combineReducers({
   cart: cartReducer,   // ✅ add cart reducer
 });
 
-// ✅ Persist config including cart
 const persistConfig = {
   key: "root",
   storage: storageSession,
-  whitelist: ["auth", "location", "address", "cart"],  // ✅ persist cart too
+  whitelist: ["auth", "location", "address", "cart"],
+  migrate: (state) => {
+    if (state.cart?._persistCleared) {
+      return Promise.resolve({
+        ...state,
+        cart: {
+          cartId: null,
+          items: [],
+          _persistCleared: false // Reset the flag
+        }
+      });
+    }
+    return Promise.resolve(state);
+  }
 };
 
 // Create a persisted reducer

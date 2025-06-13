@@ -3,11 +3,13 @@ import SidebarItem from './SidebarItem';
 
 const sidebarItems = [
   { name: 'Orders', path: '/my-account/orders' },
-  { name: 'Orado One', path: '/swiggy-one' },
-  { name: 'Favourites', path: '/favourites' },
-  { name: 'Payments', path: '/payments' },
-  { name: 'Addresses', path: '/addresses' },
-  { name: 'Settings', path: '/my-account/settings' }
+  { name: 'Wallet', path: '/my-account/wallet' },
+  { name: 'Orado One', path: '/my-account/premium' },
+  { name: 'Favourites', path: '/my-account/favourites' },
+  // { name: 'Payments', path: '/payments' },
+  { name: 'Addresses', path: '/my-account/address' },
+  { name: 'Settings', path: '/my-account/settings' },
+  { name: 'Log Out', path: '/my-account/logout' }
 ];
 
 const Sidebar = () => {
