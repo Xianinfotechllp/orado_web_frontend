@@ -12,7 +12,9 @@ import {
   FiSettings,
 } from "react-icons/fi";
 import { GrUserAdmin } from "react-icons/gr";
-import { MdOutlineLocalOffer } from "react-icons/md";
+import { CiDeliveryTruck } from "react-icons/ci";
+import { FcCustomerSupport } from "react-icons/fc";
+import { MdDeliveryDining, MdOutlineLocalOffer } from "react-icons/md";
 import { Link, Outlet } from "react-router-dom";
 
 const SidebarItem = ({ title, icon, children, hasPermission }) => {
@@ -37,7 +39,7 @@ const SidebarItem = ({ title, icon, children, hasPermission }) => {
       </button>
       <div
         className={`ml-6 bg-white text-gray-800 overflow-hidden transition-all duration-300 rounded-lg mt-1 ${
-          open ? "max-h-100 py-2" : "max-h-0"
+          open ? "max-h-120 py-2" : "max-h-0"
         }`}
       >
         {children}
@@ -176,6 +178,12 @@ function AdminDashboard() {
             >
               Restaurant Commission
             </Link>
+            <Link
+              to="restaurant-feedback"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Restaurant Reviews
+            </Link>
           </SidebarItem>
 
           <SidebarItem
@@ -203,8 +211,20 @@ function AdminDashboard() {
             </Link>
           </SidebarItem>
           <SidebarItem
+            title="Orders"
+            icon={<CiDeliveryTruck  size={18} />}
+            hasPermission={hasPermission("agents.manage")}
+          >
+            <Link
+              to="restaurant-order"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Orders
+            </Link>
+          </SidebarItem>
+          <SidebarItem
             title="Agents"
-            icon={<FaUserSecret size={18} />}
+            icon={<MdDeliveryDining  size={18} />}
             hasPermission={hasPermission("agents.manage")}
           >
             <Link
@@ -242,7 +262,7 @@ function AdminDashboard() {
 
           <SidebarItem
             title="Customers"
-            icon={<GrUserAdmin size={18} />}
+            icon={<FcCustomerSupport  size={18} />}
             hasPermission={hasPermission("users.manage")}
           >
             <Link

@@ -11,7 +11,7 @@ const apiClient = axios.create({
 // Attach token automatically to every request
 apiClient.interceptors.request.use(
   (config) => {
-    const token = store.getState().auth.token;
+    const token = sessionStorage.getItem('adminToken')
     console.log("Token attached to request:", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
