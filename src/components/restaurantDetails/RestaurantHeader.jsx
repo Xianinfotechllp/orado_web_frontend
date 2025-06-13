@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
+import { Search, Star, Clock, MapPin, ChevronRight, Plus, Minus, ShoppingCart, Heart, Share2, Award, Truck } from "lucide-react";
 
 function RestaurantHeader({restaurant}) {
+    const [isFavorite, setIsFavorite] = useState(false);
   return (
     <div className="relative bg-white shadow-xl rounded-3xl overflow-hidden mb-8">
        <div className="relative h-80 md:h-96">
@@ -43,20 +45,20 @@ function RestaurantHeader({restaurant}) {
          
          {/* Restaurant info */}
          <div className="absolute bottom-6 left-6 right-6 text-white">
-           <h1 className="text-4xl font-bold mb-3 drop-shadow-lg">{restaurant.name}</h1>
+           <h1 className="text-4xl font-bold mb-3 drop-shadow-lg">{restaurant?.name}</h1>
            <div className="flex items-center gap-6 text-sm mb-4">
              <div className="flex items-center gap-2 bg-green-600 px-3 py-1 rounded-full">
                <Star size={16} fill="currentColor" className="text-white" />
-               <span className="font-bold">{restaurant.rating}</span>
-               <span>({restaurant.totalReviews?.toLocaleString()})</span>
+               <span className="font-bold">{restaurant?.rating}</span>
+               <span>({restaurant?.totalReviews?.toLocaleString()})</span>
              </div>
              <div className="flex items-center gap-1 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">
                <Clock size={16} />
-               <span>{restaurant.deliveryTime}</span>
+               <span>{restaurant?.deliveryTime}</span>
              </div>
              <div className="flex items-center gap-1 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">
                <MapPin size={16} />
-               <span>{restaurant.cuisine}</span>
+               <span>{restaurant?.cuisine}</span>
              </div>
            </div>
            
@@ -65,7 +67,7 @@ function RestaurantHeader({restaurant}) {
              <div className="flex gap-2 overflow-x-auto">
                {restaurant.offers.map((offer, index) => (
                  <span key={index} className="bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap">
-                   🎯 {offer}
+                   🎯 {offer[0].title}
                  </span>
                ))}
              </div>
@@ -79,15 +81,26 @@ function RestaurantHeader({restaurant}) {
            <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl border border-orange-200">
              <MapPin size={20} className="text-orange-600" />
              <div>
-               <div className="font-medium text-gray-800">Address</div>
-               <div className="text-sm text-gray-600">{restaurant.address}</div>
+              
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+  <MapPin size={20} className="text-orange-600" />
+  <div>
+    <div className="font-medium text-gray-800">Address</div>
+    <div className="text-sm text-gray-600">
+      {restaurant.address
+        ? `${restaurant.address.street}, ${restaurant.address.city}, ${restaurant.address.state}, ${restaurant.address.country} - ${restaurant.address.zip}`
+        : "No address available"}
+    </div>
+  </div>
+</div>
+
              </div>
            </div>
            <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200">
              <Clock size={20} className="text-green-600" />
              <div>
                <div className="font-medium text-gray-800">Hours</div>
-               <div className="text-sm text-gray-600">{restaurant.openingHours}</div>
+               {/* <div className="text-sm text-gray-600">{restaurant.openingHours}</div> */}
              </div>
            </div>
            <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">

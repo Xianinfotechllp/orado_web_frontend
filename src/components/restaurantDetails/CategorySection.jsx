@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import Menucard from "./Menucard";
 import { addToCart, getCart } from "../../apis/cartApi";
 import { useDispatch, useSelector } from "react-redux";
-import { setCart ,addItem} from "../../slices/cartSlice";
-import { ChefHat, Clock, Star, TrendingUp } from "lucide-react";
+import { setCart, addItem } from "../../slices/cartSlice";
+import { ChefHat, Clock, Star, TrendingUp, Filter, X } from "lucide-react";
 
 function CategorySection({ category, restaurantId }) {
   const dispatch = useDispatch();
@@ -17,44 +17,53 @@ function CategorySection({ category, restaurantId }) {
     avgRating: 0,
     popularItems: 0
   });
-const getProductQuantity = (productId) => {
-  if (cartItems[productId] !== undefined) {
-    return cartItems[productId];
-  }
-  const item = cartFromRedux.find(item => {
-    const id = item.product?._id || item.productId?._id;
-    return id === productId;
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    sortBy: "default",
+    dietary: "all",
+    priceRange: "all",
+    rating: "all"
   });
-  return item ? item.quantity : 0;
-};
+
+  const getProductQuantity = (productId) => {
+    if (cartItems[productId] !== undefined) {
+      return cartItems[productId];
+    }
+    const item = cartFromRedux.find(item => {
+      const id = item.product?._id || item.productId?._id;
+      return id === productId;
+    });
+    return item ? item.quantity : 0;
+  };
+
   // Calculate category statistics
   useEffect(() => {
     if (category?.items) {
       const totalItems = category.items.length;
       const avgRating = category.items.reduce((acc, item) => acc + (item.rating || 4.2), 0) / totalItems;
       const popularItems = category.items.filter(item => item.isPopular || item.orderCount > 50).length;
-      
+
       setCategoryStats({
         totalItems,
         avgRating: avgRating.toFixed(1),
         popularItems
       });
     }
-}, [category]);
+  }, [category]);
 
   // Sync local cartItems state with Redux cart items
-useEffect(() => {
-  const cartMap = {};
-  if (cartFromRedux && cartFromRedux.length > 0) {
-    cartFromRedux.forEach(item => {
-      const productId = item.product?._id || item.productId?._id;
-      if(productId){
-        cartMap[productId] = item.quantity;
-      }
-    });
-  }
-  setCartItems(cartMap);
-}, [cartFromRedux]);
+  useEffect(() => {
+    const cartMap = {};
+    if (cartFromRedux && cartFromRedux.length > 0) {
+      cartFromRedux.forEach(item => {
+        const productId = item.product?._id || item.productId?._id;
+        if (productId) {
+          cartMap[productId] = item.quantity;
+        }
+      });
+    }
+    setCartItems(cartMap);
+  }, [cartFromRedux]);
 
   useEffect(() => {
     if (!user?._id) return;
@@ -78,33 +87,30 @@ useEffect(() => {
     fetchCart();
   }, [user, dispatch]);
 
-const handleAddCart = async (item, quantity) => {
-  try {
-   
-    const userId = user._id;
-    console.log(item)
+  const handleAddCart = async (item, quantity) => {
+    try {
+      const userId = user._id;
+      console.log(item)
 
-    // Local optimistic UI update
-    setCartItems((prev) => ({
-      ...prev,
-      [item._id]: quantity,
-    }));
-    // dispatch(addItem({ product: item, quantity }));
-  
+      // Local optimistic UI update
+      setCartItems((prev) => ({
+        ...prev,
+        [item._id]: quantity,
+      }));
+      // dispatch(addItem({ product: item, quantity }));
 
-    // Update backend
-const res = await addToCart(restaurantId, item._id, quantity);
-console.log(res.cart)
- if (res?._id) {
-  dispatch(setCart(res.cart));
-}
-  } catch (error) {
-    console.error("Failed to update cart", error);
-    // Revert UI state on error
-  }
-};
+      // Update backend
+      const res = await addToCart(restaurantId, item._id, quantity);
+      console.log(res.cart)
 
-
+      if (res?._id) {
+        dispatch(setCart(res.cart));
+      }
+    } catch (error) {
+      console.error("Failed to update cart", error);
+      // Revert UI state on error
+    }
+  };
 
   const getCategoryIcon = (categoryName) => {
     const name = categoryName?.toLowerCase();
@@ -115,6 +121,63 @@ console.log(res.cart)
     if (name?.includes('bread') || name?.includes('naan')) return '🥖';
     return '🍽️';
   };
+
+  const applyFilters = () => {
+    let filteredItems = [...category.items];
+
+    // Apply sorting
+    switch (filters.sortBy) {
+      case "price-low":
+        filteredItems.sort((a, b) => a.price - b.price);
+        break;
+      case "price-high":
+        filteredItems.sort((a, b) => b.price - a.price);
+        break;
+      case "rating":
+        filteredItems.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case "popular":
+        filteredItems.sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0));
+        break;
+      default:
+        // Default sorting (as per original order)
+        break;
+    }
+
+    // Apply dietary filters
+    if (filters.dietary !== "all") {
+      filteredItems = filteredItems.filter(item => {
+        if (filters.dietary === "veg") return item.isVeg;
+        if (filters.dietary === "nonveg") return !item.isVeg;
+        return true;
+      });
+    }
+
+    // Apply price range filters
+    if (filters.priceRange !== "all") {
+      filteredItems = filteredItems.filter(item => {
+        const price = item.price;
+        if (filters.priceRange === "under500") return price < 500;
+        if (filters.priceRange === "500-1000") return price >= 500 && price <= 1000;
+        if (filters.priceRange === "over1000") return price > 1000;
+        return true;
+      });
+    }
+
+    // Apply rating filters
+    if (filters.rating !== "all") {
+      filteredItems = filteredItems.filter(item => {
+        const rating = item.rating || 0;
+        if (filters.rating === "4+") return rating >= 4;
+        if (filters.rating === "3+") return rating >= 3;
+        return true;
+      });
+    }
+
+    return filteredItems;
+  };
+
+  const filteredItems = category?.items ? applyFilters() : [];
 
   if (isLoading) {
     return (
@@ -143,45 +206,130 @@ console.log(res.cart)
               <h2 className="text-3xl font-bold text-gray-900 mb-1">
                 {category.categoryName}
               </h2>
-              <p className="text-gray-600 text-lg leading-relaxed max-w-2xl">
+              {/* <p className="text-gray-600 text-lg leading-relaxed max-w-2xl">
                 {category.description}
-              </p>
+              </p> */}
             </div>
           </div>
         </div>
 
-        {/* Category Stats */}
-        <div className="flex flex-wrap items-center gap-6 mt-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border border-orange-100">
-          <div className="flex items-center gap-2 text-gray-700">
-            <ChefHat className="w-5 h-5 text-orange-500" />
-            <span className="font-medium">{categoryStats.totalItems} Items</span>
-          </div>
-          
-          <div className="flex items-center gap-2 text-gray-700">
-            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-            <span className="font-medium">{categoryStats.avgRating} Rating</span>
-          </div>
-          
-          {categoryStats.popularItems > 0 && (
+        {/* Category Stats and Filter Button */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-wrap items-center gap-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border border-orange-100 w-full sm:w-auto">
             <div className="flex items-center gap-2 text-gray-700">
-              <TrendingUp className="w-5 h-5 text-green-500" />
-              <span className="font-medium">{categoryStats.popularItems} Popular</span>
+              <ChefHat className="w-5 h-5 text-orange-500" />
+              <span className="font-medium">{categoryStats.totalItems} Items</span>
             </div>
-          )}
-          
-          <div className="flex items-center gap-2 text-gray-700">
-            <Clock className="w-5 h-5 text-blue-500" />
-            <span className="font-medium">15-25 min</span>
+
+            <div className="flex items-center gap-2 text-gray-700">
+              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+              <span className="font-medium">{categoryStats.avgRating} Rating</span>
+            </div>
+
+            {categoryStats.popularItems > 0 && (
+              <div className="flex items-center gap-2 text-gray-700">
+                <TrendingUp className="w-5 h-5 text-green-500" />
+                <span className="font-medium">{categoryStats.popularItems} Popular</span>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 text-gray-700">
+              <Clock className="w-5 h-5 text-blue-500" />
+              <span className="font-medium">15-25 min</span>
+            </div>
           </div>
+
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors duration-200 shadow-sm"
+          >
+            {showFilters ? (
+              <>
+                <X className="w-5 h-5" />
+                <span>Hide Filters</span>
+              </>
+            ) : (
+              <>
+                <Filter className="w-5 h-5" />
+                <span>Filter & Sort</span>
+              </>
+            )}
+          </button>
         </div>
+
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="mt-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Sort By */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                <select
+                  value={filters.sortBy}
+                  onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="default">Default</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="rating">Rating</option>
+                  <option value="popular">Popularity</option>
+                </select>
+              </div>
+
+              {/* Dietary Preference */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Dietary</label>
+                <select
+                  value={filters.dietary}
+                  onChange={(e) => setFilters({ ...filters, dietary: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="all">All Items</option>
+                  <option value="veg">Vegetarian</option>
+                  <option value="nonveg">Non-Vegetarian</option>
+                </select>
+              </div>
+
+              {/* Price Range */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+                <select
+                  value={filters.priceRange}
+                  onChange={(e) => setFilters({ ...filters, priceRange: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="all">All Prices</option>
+                  <option value="under500">Under ₹500</option>
+                  <option value="500-1000">₹500 - ₹1000</option>
+                  <option value="over1000">Over ₹1000</option>
+                </select>
+              </div>
+
+              {/* Rating */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+                <select
+                  value={filters.rating}
+                  onChange={(e) => setFilters({ ...filters, rating: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="all">All Ratings</option>
+                  <option value="4+">4+ Stars</option>
+                  <option value="3+">3+ Stars</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Items Grid */}
       <div className="relative">
-        {category.items.length > 0 ? (
+        {filteredItems.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-              {category.items.map((item, index) => (
+              {filteredItems.map((item, index) => (
                 <div
                   key={item._id}
                   className="h-full transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
@@ -190,17 +338,17 @@ console.log(res.cart)
                     animation: 'fadeInUp 0.6s ease-out forwards'
                   }}
                 >
-                <Menucard
-  item={item}
-  onQuantityChange={handleAddCart}
-  quantity={getProductQuantity(item._id)}
-/>
+                  <Menucard
+                    item={item}
+                    onQuantityChange={handleAddCart}
+                    quantity={getProductQuantity(item._id)}
+                  />
                 </div>
               ))}
             </div>
-            
+
             {/* Show More Button for large categories */}
-            {category.items.length > 8 && (
+            {filteredItems.length > 8 && (
               <div className="flex justify-center mt-10">
                 <button className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-full hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center gap-2">
                   <span>View All {category.categoryName}</span>
@@ -217,13 +365,21 @@ console.log(res.cart)
               <ChefHat className="w-12 h-12 text-gray-400" />
             </div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">
-              No items available yet
+              No items match your filters
             </h3>
             <p className="text-gray-500 text-center max-w-md">
-              We're working on adding delicious items to this category. Check back soon!
+              Try adjusting your filters to see more items
             </p>
-            <button className="mt-6 px-6 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors duration-300">
-              Notify Me
+            <button
+              onClick={() => setFilters({
+                sortBy: "default",
+                dietary: "all",
+                priceRange: "all",
+                rating: "all"
+              })}
+              className="mt-6 px-6 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors duration-300"
+            >
+              Reset Filters
             </button>
           </div>
         )}

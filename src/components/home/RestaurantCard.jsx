@@ -55,7 +55,7 @@ const RestaurantCard = ({ restaurant }) => {
                 <Clock className="w-4 h-4 text-orange-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm text-gray-700">
+                {/* <div className="text-sm text-gray-700">
                   {restaurant.openingHours && restaurant.openingHours.length > 0 ? (
                     <div className="space-y-1">
                       {restaurant.openingHours.slice(0, 2).map(({ day, openingTime, closingTime, isClosed }) => {
@@ -82,7 +82,7 @@ const RestaurantCard = ({ restaurant }) => {
                   ) : (
                     <span className="text-gray-600">10 AM - 10 PM</span>
                   )}
-                </div>
+                </div> */}
               </div>
             </div>
 
