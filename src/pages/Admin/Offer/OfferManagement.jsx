@@ -28,6 +28,7 @@ const OfferManagement = () => {
     try {
       const res = await apiClient.get("/admin/offer");
       setOffers(res.data || []); // The API returns the array directly
+      console.log(res)
     } catch (err) {
       console.error("Error fetching offers:", err);
       setError("Failed to fetch offers");
@@ -37,6 +38,9 @@ const OfferManagement = () => {
   };
 
  
+  useEffect(()=>{
+    fetchRestaurants()
+  },[])
 
   const fetchRestaurants = async () => {
     try {

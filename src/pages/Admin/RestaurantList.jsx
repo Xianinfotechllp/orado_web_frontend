@@ -38,13 +38,13 @@ const RestaurantList = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editError, setEditError] = useState(null);
   const [editSuccess, setEditSuccess] = useState(false);
+  const [newImages, setNewImages] = useState([]);
+  const [deletedImages, setDeletedImages] = useState([]);
 
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const res = await apiClient.get(
-          "/restaurants/all-restaurants"
-        );
+        const res = await apiClient.get("/restaurants/all-restaurants");
         setRestaurants(res.data.restaurants || []);
         setLoading(false);
       } catch (err) {
@@ -56,6 +56,26 @@ const RestaurantList = () => {
 
     fetchRestaurants();
   }, []);
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const remainingSlots = 5 - (editFormData.images?.length || 0) - newImages.length;
+    const filesToAdd = files.slice(0, remainingSlots);
+    setNewImages((prev) => [...prev, ...filesToAdd]);
+  };
+
+  const handleRemoveImage = (index, isNew) => {
+    if (isNew) {
+      setNewImages((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      const imageToDelete = editFormData.images[index];
+      setDeletedImages((prev) => [...prev, imageToDelete]);
+      setEditFormData((prev) => ({
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index),
+      }));
+    }
+  };
 
   const filteredRestaurants = restaurants.filter((restaurant) => {
     const matchesSearch =
@@ -87,7 +107,6 @@ const RestaurantList = () => {
       phone: restaurant.phone,
       minOrderAmount: restaurant.minOrderAmount,
       foodType: restaurant.foodType,
-      paymentMethods: restaurant.paymentMethods,
       address: {
         street: restaurant.address.street,
         city: restaurant.address.city,
@@ -96,7 +115,10 @@ const RestaurantList = () => {
       offer: restaurant.offer || "",
       cuisines: restaurant.cuisines?.join(", ") || "",
       autoOnOff: restaurant.autoOnOff,
+      images: restaurant.images || [],
     });
+    setNewImages([]);
+    setDeletedImages([]);
     setEditError(null);
     setEditSuccess(false);
   };
@@ -122,7 +144,6 @@ const RestaurantList = () => {
   };
 
   const token = sessionStorage.getItem("adminToken");
-  console.log(token);
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
@@ -130,32 +151,42 @@ const RestaurantList = () => {
     setEditError(null);
 
     try {
-      const updatedData = {
-        ...editFormData,
-        cuisines: editFormData.cuisines
-          .split(",")
-          .map((item) => item.trim())
-          .filter((item) => item),
-        address: {
-          street: editFormData.address.street,
-          city: editFormData.address.city,
-          coordinates: editingRestaurant.address.coordinates || [0, 0],
-        },
-      };
+      const formData = new FormData();
 
-      // 🔗 Real API call to update the restaurant
+      // Append all form data
+      formData.append("name", editFormData.name);
+      formData.append("phone", editFormData.phone);
+      formData.append("minOrderAmount", editFormData.minOrderAmount);
+      formData.append("foodType", editFormData.foodType);
+      formData.append("address", JSON.stringify(editFormData.address));
+      formData.append("deliveryTime", editFormData.deliveryTime);
+      formData.append("offer", editFormData.offer || "");
+      formData.append("cuisines", editFormData.cuisines.split(",").map(item => item.trim()).filter(item => item));
+      formData.append("autoOnOff", editFormData.autoOnOff);
+      
+      // Append new images
+      newImages.forEach((image) => {
+        formData.append("images", image);
+      });
+
+      // Append deleted images
+      if (deletedImages.length > 0) {
+        formData.append("deletedImages", JSON.stringify(deletedImages));
+      }
+
       const res = await apiClient.put(
         `/admin/edit/restaurant/${editingRestaurant._id}`,
-        updatedData,
+        formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
 
-      // Optional: update UI with the returned restaurant data
-      const updatedRestaurant = res.data.restaurant; // Adjust if your backend uses a different response structure
+      // Update UI with the returned restaurant data
+      const updatedRestaurant = res.data.restaurant;
       const updatedRestaurants = restaurants.map((r) =>
         r._id === updatedRestaurant._id ? updatedRestaurant : r
       );
@@ -165,6 +196,8 @@ const RestaurantList = () => {
       setTimeout(() => {
         setEditingRestaurant(null);
         setEditSuccess(false);
+        setNewImages([]);
+        setDeletedImages([]);
       }, 2000);
     } catch (err) {
       console.error("Error updating restaurant:", err);
@@ -181,17 +214,14 @@ const RestaurantList = () => {
   }
 
   if (error) {
-    return (
-     <Error/>
-    );
+    return <div className="text-center py-16 text-red-500">{error}</div>;
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white  shadow-sm border-b  top-0 sticky z-50">
+      <header className="bg-white shadow-sm border-b top-0 sticky z-50">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
@@ -206,7 +236,7 @@ const RestaurantList = () => {
       </header>
 
       {/* Filters */}
-      <div className="bg-white border-b  top-20 z-40">
+      <div className="bg-white border-b top-20 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center space-x-4 overflow-x-auto">
             <button
@@ -297,7 +327,6 @@ const RestaurantList = () => {
                   key={restaurant._id}
                   className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer group relative"
                 >
-                  {/* Edit Button (Admin Only) */}
                   <button
                     onClick={() => handleEditClick(restaurant)}
                     className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-orange-100"
@@ -306,30 +335,26 @@ const RestaurantList = () => {
                     <Edit className="h-4 w-4 text-gray-600" />
                   </button>
 
-                  {/* Restaurant Image */}
                   <div className="relative overflow-hidden">
                     <img
                       src={
-                        restaurant.images[0] ||
+                        restaurant.images?.[0] ||
                         "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop"
                       }
                       alt={restaurant.name}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
 
-                    {/* Offer Badge */}
                     {restaurant.offer && (
                       <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">
                         {restaurant.offer}
                       </div>
                     )}
 
-                    {/* Favorite Button */}
                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
                       <Heart className="h-4 w-4 text-gray-600 hover:text-red-500 hover:fill-red-500 transition-colors" />
                     </div>
 
-                    {/* Status Badge */}
                     <div className="absolute bottom-3 left-3">
                       {restaurant.autoOnOff ? (
                         <div className="bg-green-500 text-white text-xs font-medium px-3 py-1 rounded-full flex items-center shadow-lg">
@@ -344,7 +369,6 @@ const RestaurantList = () => {
                     </div>
                   </div>
 
-                  {/* Restaurant Info */}
                   <div className="p-5">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="text-lg font-bold text-gray-900 line-clamp-1">
@@ -356,12 +380,10 @@ const RestaurantList = () => {
                       </div>
                     </div>
 
-                    {/* Cuisines */}
                     <p className="text-sm text-gray-600 mb-3 line-clamp-1">
                       {restaurant.cuisines?.join(", ") || "Multi-cuisine"}
                     </p>
 
-                    {/* Delivery Info */}
                     <div className="flex items-center text-sm text-gray-600 mb-3 space-x-4">
                       <div className="flex items-center">
                         <Timer className="h-4 w-4 text-orange-500 mr-1" />
@@ -373,7 +395,6 @@ const RestaurantList = () => {
                       </div>
                     </div>
 
-                    {/* Tags */}
                     <div className="flex flex-wrap gap-2 mb-4">
                       {restaurant.foodType === "veg" && (
                         <span className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-full flex items-center border border-green-200">
@@ -401,20 +422,12 @@ const RestaurantList = () => {
                       )}
                     </div>
 
-                    {/* Footer */}
                     <div className="flex items-center justify-between text-sm text-gray-600 pt-3 border-t border-gray-100">
                       <div className="flex items-center">
                         <Shield className="h-4 w-4 text-orange-500 mr-1" />
                         <span>₹{restaurant.minOrderAmount} minimum</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        {restaurant.paymentMethods.includes("online") && (
-                          <CreditCard className="h-4 w-4 text-blue-500" />
-                        )}
-                        {restaurant.paymentMethods.includes("cash") && (
-                          <Wallet className="h-4 w-4 text-green-500" />
-                        )}
-                      </div>
+                    
                     </div>
                   </div>
                 </div>
@@ -424,7 +437,6 @@ const RestaurantList = () => {
         )}
       </main>
 
-      {/* Footer */}
       <footer className="bg-white border-t mt-16">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="text-center text-gray-600">
@@ -582,6 +594,73 @@ const RestaurantList = () => {
                       />
                     </div>
                   </div>
+
+                  {/* Image Upload Section */}
+                  <div className="col-span-2">
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                      Restaurant Images (Max 5)
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-4">
+                      {editFormData.images?.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={image}
+                            alt={`Restaurant ${index}`}
+                            className="w-full h-24 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(index, false)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+
+                      {newImages.map((image, index) => (
+                        <div key={`new-${index}`} className="relative group">
+                          <img
+                            src={URL.createObjectURL(image)}
+                            alt={`New image ${index}`}
+                            className="w-full h-24 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(index, true)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {(editFormData.images?.length + newImages.length) < 5 && (
+                      <div className="relative">
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          id="restaurant-images"
+                        />
+                        <label
+                          htmlFor="restaurant-images"
+                          className="block border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-orange-400 transition-colors cursor-pointer"
+                        >
+                          <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600">
+                            Click to upload images
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            JPG, PNG (5MB max each)
+                          </p>
+                        </label>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -736,118 +815,7 @@ const RestaurantList = () => {
                 </div>
               </div>
 
-              {/* Payment & Offers Section */}
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border border-purple-200">
-                <div className="flex items-center mb-6">
-                  <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                      />
-                    </svg>
-                  </div>
-                  <h4 className="text-lg font-semibold text-gray-900">
-                    Payment & Offers
-                  </h4>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-3">
-                      Payment Methods
-                    </label>
-                    <div className="space-y-3">
-                      <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-purple-300 hover:bg-white transition-all duration-200 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          name="paymentMethods"
-                          value="online"
-                          checked={editFormData.paymentMethods.includes(
-                            "online"
-                          )}
-                          onChange={(e) => {
-                            const { checked, value } = e.target;
-                            setEditFormData((prev) => ({
-                              ...prev,
-                              paymentMethods: checked
-                                ? [...prev.paymentMethods, value]
-                                : prev.paymentMethods.filter(
-                                    (method) => method !== value
-                                  ),
-                            }));
-                          }}
-                          className="h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                        />
-                        <span className="ml-3 text-sm font-medium text-gray-700 flex items-center">
-                          💳 Online Payment
-                        </span>
-                      </label>
-                      <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-purple-300 hover:bg-white transition-all duration-200 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          name="paymentMethods"
-                          value="cash"
-                          checked={editFormData.paymentMethods.includes("cash")}
-                          onChange={(e) => {
-                            const { checked, value } = e.target;
-                            setEditFormData((prev) => ({
-                              ...prev,
-                              paymentMethods: checked
-                                ? [...prev.paymentMethods, value]
-                                : prev.paymentMethods.filter(
-                                    (method) => method !== value
-                                  ),
-                            }));
-                          }}
-                          className="h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                        />
-                        <span className="ml-3 text-sm font-medium text-gray-700 flex items-center">
-                          💰 Cash on Delivery
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">
-                      Current Offer
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg
-                          className="h-5 w-5 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                          />
-                        </svg>
-                      </div>
-                      <input
-                        type="text"
-                        name="offer"
-                        value={editFormData.offer || ""}
-                        onChange={handleEditFormChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm"
-                        placeholder="50% OFF up to ₹100"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
+           
               {/* Cuisine & Status Section */}
               <div className="bg-gradient-to-br from-yellow-50 to-amber-100 rounded-2xl p-6 border border-yellow-200">
                 <div className="flex items-center mb-6">

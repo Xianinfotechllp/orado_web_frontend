@@ -44,6 +44,7 @@ import OfferManagement from "./pages/Admin/Offer/OfferManagement";
 import CreateOffer from "./pages/Admin/Offer/CreateOffer";
 import AssignOffer from "./pages/Admin/Offer/AssignOffer";
 import RestaurantListForOrders from "./pages/Admin/RestaurantListForOrders";
+import SurgeAreaSelector from "./pages/Admin/Surge/SurgeAreaSelector";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -94,6 +95,7 @@ function App() {
           <Route path="admin-manage" element={<AdminManage />} />
           <Route path="admin-ticket" element={<Ticket />} />
           <Route path="access-logs" element={<AccessLogs />} />
+          <Route path="admin-surge" element={<SurgeAreaSelector />} />
 
           {/* admin-customer section */}
           <Route path="admin-customer-chat" element={<AdminCustomerChatDashboard />} />

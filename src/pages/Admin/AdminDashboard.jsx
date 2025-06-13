@@ -1,4 +1,4 @@
-import { TicketCheck, Receipt } from "lucide-react";
+import { TicketCheck, Receipt, SquareGanttChart } from "lucide-react";
 import React, { useState } from "react";
 import { FaUserSecret } from "react-icons/fa";
 import {
@@ -12,11 +12,8 @@ import {
   FiSettings,
 } from "react-icons/fi";
 import { CiDeliveryTruck } from "react-icons/ci";
-import { FcCustomerSupport } from "react-icons/fc";
 import { MdDeliveryDining, MdOutlineLocalOffer } from "react-icons/md";
-import {FiMenu, FiLogOut, FiChevronDown, FiChevronUp,
-  FiPieChart, FiClipboard, FiHome, FiUser, FiSettings
-} from 'react-icons/fi';
+
 import { GrUserAdmin , GrUser} from 'react-icons/gr';
 import { Link, Outlet } from 'react-router-dom';
 
@@ -223,6 +220,18 @@ function AdminDashboard() {
               className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
             >
               Orders
+            </Link>
+          </SidebarItem>
+          <SidebarItem
+            title="surge"
+            icon={<SquareGanttChart  size={18} />}
+            hasPermission={hasPermission("agents.manage")}
+          >
+            <Link
+              to="admin-surge"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Surge Selecter
             </Link>
           </SidebarItem>
           <SidebarItem
