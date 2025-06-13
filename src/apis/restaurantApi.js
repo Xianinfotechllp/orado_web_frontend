@@ -56,6 +56,7 @@ export const getRestaurantById = async (restaurantId) => {
 };
 
 
+
 // fetch retruants by category and location
 export const getRestaurantsByLocationAndCategory = async (latitude, longitude, categoryName, distance = 5000) => {
   try {
@@ -96,6 +97,25 @@ export const getRestaurantsBySearchQuery = async ({
     console.error("Error searching restaurants:", error);
     throw error;
   }
+};
+
+
+
+// creating restaurant 
+export const createRestaurant = async (formData) => {
+  try {
+    const response = await apiClient.post('/restaurants/register', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    console.log("Restaurant created:", response.data);
+    return response.data;
+
+  } catch (error) {
+    console.error("Error creating restaurant:", error.response?.data || error.message);
+    throw error;
+  }
 };
 
 

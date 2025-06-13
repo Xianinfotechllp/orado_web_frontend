@@ -16,6 +16,7 @@ import Faq from "./pages/Faq/Faq";
 import OrdersPage from "./pages/UserProfile/OrdersPage";
 import SettingsPage from "./pages/UserProfile/SettingsPage";
 import NotificationPage from "./pages/Notification/NotificationPage";
+
 import AddressPage from "./pages/UserProfile/AddressPage";
 import PremiumPage from "./pages/UserProfile/PremiumPage";
 import FavouriteRestaurantsPage from "./pages/UserProfile/FavouriteRestaurantsPage";
@@ -26,12 +27,24 @@ import RestaurantSearchPage from "./pages/Search/RestaurantSearchPage";
 import ProtectedRoute from "./components/protectedRoutes/ProtectedRoutes";
 import WalletTopUpPage from "./pages/UserProfile/WalletTopUpPage";
 
+
+import AdminLogin from "./pages/Admin/AdminLogin";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import { ToastContainer } from "react-toastify";
+import RestaurantApprovalsPage from "./pages/Admin/RestaurantApprovalsPage";
+import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDetails";
+
+import About from "./pages/Merchant/AboutMerchant";
+import Partner from "./pages/Merchant/Partner";
+import MerchantDashboard from "./pages/Merchant/MerchantDashboard";
+
 function App() {
   const [count, setCount] = useState(0);
 
   return (
     <>
       <Routes>
+
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
@@ -80,7 +93,34 @@ function App() {
         <Route path="/my-account/wallet" element={
           <ProtectedRoute><WalletTopUpPage /></ProtectedRoute>
         } />
+
+        <Route
+          path="/restaurant/details/:restaurantId"
+          element={<RestaurantDeatils />}
+        />
+        <Route path="/faq" element={<Faq />} />
+        <Route path="/notifications" element={<NotificationPage />} />
+
+        {/* Merchant side */}
+        <Route path="/merchant-detail" element={<About />} />
+        <Route path="/partner-with-orado" element={<Partner />} />
+        <Route path="/merchant" element={<MerchantDashboard />} />
+
+        {/* Admin-Side */}
+        <Route path="admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />}>
+          <Route
+            path="restaurant-approvals"
+            element={<RestaurantApprovalsPage />}
+          />
+          <Route
+            path="restaurant-approvals/:id"
+            element={<RestaurantApplicationDetails />}
+          />
+          {/* Add more nested routes as needed */}
+        </Route>
       </Routes>
+      <ToastContainer />
     </>
   );
 }
