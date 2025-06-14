@@ -44,6 +44,8 @@ import OfferManagement from "./pages/Admin/Offer/OfferManagement";
 import CreateOffer from "./pages/Admin/Offer/CreateOffer";
 import AssignOffer from "./pages/Admin/Offer/AssignOffer";
 import RestaurantEarningsTable from "./pages/Admin/RestaurantEarningsTable";
+import RestaurantListForOrders from "./pages/Admin/RestaurantListForOrders";
+import SurgeAreaSelector from "./pages/Admin/Surge/SurgeAreaSelector";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -80,8 +82,9 @@ function App() {
           <Route path="restaurant-createmenu" element={<CreateMenu />} />
           <Route path="restaurant-permission" element={<RestaurantPermissions />} />
           <Route path="restaurant-commission" element={<RestaurantCommission />} />
+          <Route path="restaurant-order" element={<RestaurantListForOrders />} />
           <Route path="restaurant-feedback" element={<RestaurantListforReviews />} />
-          <Route path="restaurant-earnings" element={<RestaurantEarningsTable />} />
+           <Route path="restaurant-earnings" element={<RestaurantEarningsTable />} />
 
           {/* offer section */}
           <Route path="create-offer" element={<CreateOffer />} />
@@ -94,6 +97,7 @@ function App() {
           <Route path="admin-manage" element={<AdminManage />} />
           <Route path="admin-ticket" element={<Ticket />} />
           <Route path="access-logs" element={<AccessLogs />} />
+          <Route path="admin-surge" element={<SurgeAreaSelector />} />
 
           {/* admin-customer section */}
           <Route path="admin-customer-chat" element={<AdminCustomerChatDashboard />} />

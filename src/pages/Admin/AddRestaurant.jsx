@@ -12,6 +12,8 @@ import {
   ChevronDown,
   Info,
   AlertCircle,
+  Image,
+  X,
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
@@ -51,6 +53,7 @@ const AddRestaurant = () => {
     fssaiDoc: null,
     gstDoc: null,
     aadharDoc: null,
+    images: [], // Changed to array to hold multiple images
   });
 
   const [merchants, setMerchants] = useState([]);
@@ -112,10 +115,20 @@ const AddRestaurant = () => {
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
-    setDocuments((prev) => ({
-      ...prev,
-      [name]: files[0],
-    }));
+
+    if (name === "images") {
+      // For images, we want to keep previous images and add new ones
+      setDocuments((prev) => ({
+        ...prev,
+        images: [...prev.images, ...Array.from(files)].slice(0, 5), // Limit to 5 images
+      }));
+    } else {
+      // For single file uploads
+      setDocuments((prev) => ({
+        ...prev,
+        [name]: files[0],
+      }));
+    }
   };
 
   const addOpeningHour = () => {
@@ -234,6 +247,10 @@ const AddRestaurant = () => {
       if (!documents.gstDoc) newErrors.gstDoc = "GST document is required";
       if (!documents.aadharDoc)
         newErrors.aadharDoc = "Aadhar document is required";
+      if (documents.images.length < 1)
+        newErrors.images = "Please upload at least 1 image";
+      if (documents.images.length > 5)
+        newErrors.images = "Maximum 5 images allowed";
     }
 
     setErrors(newErrors);
@@ -293,6 +310,10 @@ const AddRestaurant = () => {
     if (documents.gstDoc) formDataToSend.append("gstDoc", documents.gstDoc);
     if (documents.aadharDoc)
       formDataToSend.append("aadharDoc", documents.aadharDoc);
+    // Append each image
+    documents.images.forEach((image, index) => {
+      formDataToSend.append(`images`, image);
+    });
 
     try {
       const response = await createRestaurant(formDataToSend);
@@ -1042,6 +1063,78 @@ const AddRestaurant = () => {
             {/* Step 4: Documents */}
             {currentStep === 4 && (
               <div className="space-y-6">
+                <div className="mt-8">
+                  <div className="border-l-4 border-orange-500 pl-4 mb-6">
+                    <h3 className="text-xl font-semibold text-gray-800">
+                      Restaurant Images
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      Upload at least 5 images of your restaurant (max 5)
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="flex items-center text-sm font-medium text-gray-700">
+                      <Image className="w-4 h-4 mr-2 text-orange-500" />
+                      Restaurant Photos
+                    </label>
+
+                    {/* Image upload area */}
+                    <div className="relative">
+                      <input
+                        type="file"
+                        name="images"
+                        onChange={handleFileChange}
+                        multiple
+                        accept="image/*"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-orange-400 transition-colors duration-300">
+                        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">
+                          Click to upload images (5 max)
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          JPG, PNG (5MB max each)
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Preview of selected images */}
+                    {documents.images.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">
+                          Selected Images ({documents.images.length}/5)
+                        </h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                          {documents.images.map((image, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={URL.createObjectURL(image)}
+                                alt={`Restaurant preview ${index + 1}`}
+                                className="w-full h-24 object-cover rounded-lg"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDocuments((prev) => ({
+                                    ...prev,
+                                    images: prev.images.filter(
+                                      (_, i) => i !== index
+                                    ),
+                                  }));
+                                }}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="border-l-4 border-orange-500 pl-4 mb-6">
                   <h3 className="text-xl font-semibold text-gray-800">
                     Required Documents

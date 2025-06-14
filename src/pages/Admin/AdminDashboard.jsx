@@ -1,11 +1,19 @@
-import { TicketCheck, Receipt } from "lucide-react";
+import { TicketCheck, Receipt, SquareGanttChart } from "lucide-react";
 import React, { useState } from "react";
 import { FaUserSecret } from "react-icons/fa";
-import { MdOutlineLocalOffer } from 'react-icons/md';
-  import {
-  FiMenu, FiLogOut, FiChevronDown, FiChevronUp,
-  FiPieChart, FiClipboard, FiHome, FiUser, FiSettings, 
-} from 'react-icons/fi';
+import {
+  FiMenu,
+  FiLogOut,
+  FiChevronDown,
+  FiChevronUp,
+  FiPieChart,
+  FiClipboard,
+  FiHome,
+  FiSettings,
+} from "react-icons/fi";
+import { CiDeliveryTruck } from "react-icons/ci";
+import { MdDeliveryDining, MdOutlineLocalOffer } from "react-icons/md";
+
 import { GrUserAdmin , GrUser} from 'react-icons/gr';
 import { Link, Outlet } from 'react-router-dom';
 
@@ -38,7 +46,7 @@ const SidebarItem = ({ title, icon, children, hasPermission, closeSidebar }) => 
       </button>
       <div
         className={`ml-6 bg-white text-gray-800 overflow-hidden transition-all duration-300 rounded-lg mt-1 ${
-          open ? "max-h-100 py-2" : "max-h-0"
+          open ? "max-h-120 py-2" : "max-h-0"
         }`}
       >
         {React.Children.map(children, child => {
@@ -197,6 +205,12 @@ function AdminDashboard() {
             >
               Restaurant Earnings
             </Link>
+            <Link
+              to="restaurant-feedback"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Restaurant Reviews
+            </Link>
           </SidebarItem>
 
           <SidebarItem
@@ -225,8 +239,32 @@ function AdminDashboard() {
             </Link>
           </SidebarItem>
           <SidebarItem
+            title="Orders"
+            icon={<CiDeliveryTruck  size={18} />}
+            hasPermission={hasPermission("agents.manage")}
+          >
+            <Link
+              to="restaurant-order"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Orders
+            </Link>
+          </SidebarItem>
+          <SidebarItem
+            title="surge"
+            icon={<SquareGanttChart  size={18} />}
+            hasPermission={hasPermission("agents.manage")}
+          >
+            <Link
+              to="admin-surge"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Surge Selecter
+            </Link>
+          </SidebarItem>
+          <SidebarItem
             title="Agents"
-            icon={<FaUserSecret size={18} />}
+            icon={<MdDeliveryDining  size={18} />}
             hasPermission={hasPermission("agents.manage")}
             closeSidebar={closeSidebar}
           >
@@ -263,6 +301,9 @@ function AdminDashboard() {
               Manage Admins
             </Link>
           </SidebarItem>
+
+
+         
 
           <SidebarItem 
             title="Customers" 

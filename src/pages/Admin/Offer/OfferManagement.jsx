@@ -1,27 +1,25 @@
-import React, { useState, useEffect } from "react";
-import {
-  ArrowRight,
-  CheckCircle2,
-  AlertCircle,
-  Tag,
-  Settings,
-  TrendingUp,
-  Search,
-  Calendar,
-  Percent,
-  DollarSign,
-} from "lucide-react";
+import { useState, useEffect } from "react";
 import axios from "axios";
+import apiClient from "../../../apis/apiClient/apiClient";
+import { Search } from "lucide-react";
 import LoadingForAdmins from "../AdminUtils/LoadingForAdmins";
 import CreateOffer from "./CreateOffer";
 import AssignOffer from "./AssignOffer";
-import apiClient from "../../../apis/apiClient/apiClient";
 
-function OfferManagement() {
-  const [offers, setOffers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+const OfferManagement = () => {
   const [restaurants, setRestaurants] = useState([]);
+  const [filteredRestaurants, setFilteredRestaurants] = useState([]);
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState({
+    restaurants: false,
+    offers: false,
+    assigning: false,
+  });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [search, setSearch] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -30,6 +28,7 @@ function OfferManagement() {
     try {
       const res = await apiClient.get("/admin/offer");
       setOffers(res.data || []); // The API returns the array directly
+      console.log(res)
     } catch (err) {
       console.error("Error fetching offers:", err);
       setError("Failed to fetch offers");
@@ -38,22 +37,23 @@ function OfferManagement() {
     }
   };
 
+ 
+  useEffect(()=>{
+    fetchRestaurants()
+  },[])
+
   const fetchRestaurants = async () => {
     try {
-      const res = await apiClient.get(
-        "/restaurants/all-restaurants"
-      );
-      setRestaurants(res.data.restaurants || []);
+      setLoading((prev) => ({ ...prev, restaurants: true }));
+      const res = await axios.get("http://localhost:5000/restaurants/all-restaurants");
+      const data = res.data.restaurants || [];
+      setRestaurants(data);
+      setFilteredRestaurants(data);
     } catch (err) {
-      console.error("Error fetching restaurants:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchOffers();
-    fetchRestaurants();
-  }, []);
-
+      setError("Failed to load restaurants");
+    } finally {
+      setLoading((prev) => ({ ...prev, restaurants: false }));}}
+      
   const handleDelete = async (offerId) => {
     if (window.confirm("Are you sure you want to delete this offer?")) {
       try {
@@ -67,317 +67,187 @@ function OfferManagement() {
     }
   };
 
- const filteredOffers = offers.filter((o) => {
-  const search = searchTerm.toLowerCase().trim();
-  
-  // Check title
-  if (o.title?.toLowerCase().includes(search)) {
-    return true;
-  }
-  
-  // Check description
-  if (o.description?.toLowerCase().includes(search)) {
-    return true;
-  }
-  
-  // Check restaurant names
-  if (o.applicableRestaurants?.length > 0) {
-    const hasMatchingRestaurant = o.applicableRestaurants.some(restId => {
-      const restaurant = restaurants.find(r => r._id === restId);
-      return restaurant?.name.toLowerCase().includes(search);
-    });
-    
-    if (hasMatchingRestaurant) {
-      return true;
-    }
-  }
-  
-  return false;
-});
-
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentOffers = filteredOffers.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredOffers.length / itemsPerPage);
-
-  const stats = {
-    total: offers.length,
-    active: offers.filter(o => new Date(o.validTill) > new Date()).length,
-    avgDiscount:
-      offers
-        .filter((o) => o.type === "percentage")
-        .reduce((acc, o) => acc + (o.discountValue || 0), 0) /
-      Math.max(
-        offers.filter((o) => o.type === "percentage").length,
-        1
-      ),
+  const handleSearch = (text) => {
+    setSearch(text);
+    const filtered = restaurants.filter((r) =>
+      r.name?.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredRestaurants(filtered);
   };
 
+  const fetchRestaurantOffers = async (restaurantId) => {
+    try {
+      setLoading((prev) => ({ ...prev, offers: true }));
+      const res = await apiClient.get(`/merchant/restaurant/${restaurantId}/offer`);
+      setOffers(res.data.offers || []);
+    } catch (err) {
+      setError("Failed to load offers");
+    } finally {
+      setLoading((prev) => ({ ...prev, offers: false }));
+    }
+  };
+
+  const handleRestaurantClick = async (restaurant) => {
+    setSelectedRestaurant(restaurant);
+    await fetchRestaurantOffers(restaurant._id);
+    setShowModal(true);
+  };
+
+  const toggleOfferAssignment = async (offerId) => {
+    if (!selectedRestaurant) return;
+    setLoading((prev) => ({ ...prev, assigning: true }));
+    setError("");
+    setSuccess("");
+
+    try {
+      const res = await apiClient.put(
+        `/merchant/restaurants/${selectedRestaurant._id}/offer/${offerId}`,
+        {}
+      );
+      setSuccess(res.data.message);
+      setOffers((prevOffers) =>
+        prevOffers.map((offer) =>
+          offer._id === offerId
+            ? {
+                ...offer,
+                applicableRestaurants: res.data.offer.applicableRestaurants,
+              }
+            : offer
+        )
+      );
+    } catch (err) {
+      setError("Failed to toggle offer");
+    } finally {
+      setLoading((prev) => ({ ...prev, assigning: false }));
+    }
+  };
+
+  const isAssigned = (offer) =>
+    offer.applicableRestaurants?.includes(selectedRestaurant?._id);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Tag className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">
-                  Offer Management
-                </h1>
-                <p className="text-sm text-gray-500">
-                  Manage discount offers and promotions
-                </p>
-              </div>
-            </div>
-            <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-              Admin Panel
-            </span>
-          </div>
-        </div>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold text-gray-800">Offer Management</h2>
+        <p className="text-sm text-gray-500">Click on a restaurant to manage offers</p>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Total */}
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Total Offers
-                </p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats.total}
-                </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Tag className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
+      <div className="mb-6 flex items-center space-x-3">
+        <Search className="text-gray-400 w-5 h-5" />
+        <input
+          type="text"
+          placeholder="Search restaurants..."
+          value={search}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="w-full border px-4 py-2 rounded-lg shadow-sm focus:ring-2 focus:ring-orange-500"
+        />
+      </div>
 
-          {/* Active */}
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active Offers</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats.active}
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
+      {error && (
+        <div className="bg-red-100 text-red-700 px-4 py-3 rounded mb-4">{error}</div>
+      )}
 
-          {/* Average */}
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Avg Discount
-                </p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats.avgDiscount.toFixed(1)}%
-                </p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
+      {loading.restaurants ? (
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
         </div>
-
-        {/* Create Offer Component */}
-        <CreateOffer 
-          onOfferCreated={fetchOffers} 
-          restaurants={restaurants} 
-        />
-
-        {/* Assign Offer Component */}
-        <AssignOffer 
-          offers={offers.filter(o => !o.applicableRestaurants || o.applicableRestaurants.length === 0)} 
-          restaurants={restaurants} 
-          onAssignmentSuccess={fetchOffers} 
-        />
-
-        {/* Offers Table */}
-        <div className="bg-white rounded-xl shadow-sm border">
-          <div className="px-6 py-5 border-b flex justify-between items-center">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Offers Overview
-              </h2>
-              <p className="text-sm text-gray-500">
-                View and manage all discount offers
-              </p>
-            </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search offers..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg text-sm"
-              />
-            </div>
-          </div>
-
-          {loading ? (
-            <LoadingForAdmins />
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Restaurant(s)
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Title
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Description
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Discount
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Validity
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {currentOffers.map((o) => {
-                      const restaurantNames = o.applicableRestaurants 
-                        ? o.applicableRestaurants.map(restId => {
-                            const r = restaurants.find(r => r._id === restId);
-                            return r ? r.name : null;
-                          }).filter(Boolean).join(", ")
-                        : "Unassigned";
-                      const isActive = new Date(o.validTill) > new Date();
-                      return (
-                        <tr key={o._id}>
-                          <td className="px-6 py-4">
-                            {restaurantNames}
-                          </td>
-                          <td className="px-6 py-4 font-medium">
-                            {o.title}
-                          </td>
-                          <td className="px-6 py-4">
-                            {o.description || "—"}
-                          </td>
-                          <td className="px-6 py-4">
-                            {o.discountValue}{o.type === "percentage" ? "%" : "$"}
-                            {o.maxDiscount && o.type === "percentage" && (
-                              <span className="text-xs text-gray-500 ml-1">(max ${o.maxDiscount})</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-1 text-sm">
-                              <Calendar className="w-4 h-4 text-gray-400" />
-                              <span>
-                                {new Date(o.validFrom).toLocaleDateString()}
-                              </span>
-                              <ArrowRight className="w-4 h-4 text-gray-400" />
-                              <span>
-                                {new Date(o.validTill).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            {isActive ? (
-                              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                                Active
-                              </span>
-                            ) : (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">
-                                Expired
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            <button
-                              onClick={() => handleDelete(o._id)}
-                              className="text-red-600 hover:text-red-900 text-sm font-medium"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {currentOffers.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan="7"
-                          className="text-center py-6 text-gray-500"
-                        >
-                          No offers found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {filteredRestaurants.map((r) => (
+            <div
+              key={r._id}
+              onClick={() => handleRestaurantClick(r)}
+              className="border rounded-xl overflow-hidden shadow hover:shadow-lg cursor-pointer transition"
+            >
+              {r.images?.[0] && (
+                <img
+                  src={r.images[0]} 
+                  alt={r.name}
+                  className="w-full h-40 object-cover"
+                />
+              )}
+              <div className="p-4">
+                <h3 className="text-lg font-semibold">{r.name}</h3>
+                {r.address && (
+                  <p className="text-sm text-gray-500">
+                    {[r.address.street, r.address.city, r.address.state]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </p>
+                )}
+                <p className="text-xs text-orange-600 mt-2">Tap to manage offers</p>
               </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex justify-end items-center px-6 py-4 space-x-2 text-sm">
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 rounded border text-gray-700 hover:bg-gray-100 disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPage(i + 1)}
-                      className={`px-3 py-1 rounded border ${
-                        currentPage === i + 1
-                          ? "bg-purple-600 text-white"
-                          : "hover:bg-gray-100"
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1 rounded border text-gray-700 hover:bg-gray-100 disabled:opacity-50"
-                  >
-                    Next
-                  </button>
+      {/* Modal */}
+      {showModal && (
+<div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30">
+          <div className="bg-white w-full max-w-2xl rounded-lg overflow-hidden shadow-lg">
+            <div className="p-6">
+              <h3 className="text-2xl font-bold mb-2">
+                Manage Offers - {selectedRestaurant?.name}
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Toggle offers on/off for this restaurant.
+              </p>
+
+              {success && (
+                <div className="bg-green-100 border border-green-300 text-green-800 p-3 rounded mb-4">
+                  {success}
                 </div>
               )}
-            </>
-          )}
+
+              {loading.offers ? (
+                <div className="flex justify-center items-center h-20">
+                  <div className="animate-spin h-6 w-6 border-t-2 border-b-2 border-orange-500 rounded-full"></div>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {offers.map((offer) => (
+                    <div
+                      key={offer._id}
+                      className="flex items-center justify-between border px-4 py-3 rounded"
+                    >
+                      <div>
+                        <h4 className="font-medium">{offer.title}</h4>
+                        <p className="text-sm text-gray-500">{offer.description}</p>
+                        <p className="text-xs text-gray-400">
+                          Valid: {new Date(offer.validFrom).toLocaleDateString()} -{" "}
+                          {new Date(offer.validTill).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <label className="inline-flex relative items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={isAssigned(offer)}
+                          onChange={() => toggleOfferAssignment(offer._id)}
+                          disabled={loading.assigning}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-600 after:content-[''] after:absolute after:left-[4px] after:top-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-gray-100 px-4 py-3 flex justify-end">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-5 py-2 bg-white border rounded hover:bg-gray-200"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
-}
+};
 
 export default OfferManagement;
