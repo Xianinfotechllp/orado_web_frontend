@@ -264,10 +264,22 @@ export default function MyBasket({ useWallet, setUseWallet }) {
             <span className="font-medium">Sub Total:</span>
             <span className="font-medium">₹{(bill?.subtotal || 0).toFixed(2)}</span>
           </div>
+
+          
+          
           <div className="flex justify-between text-sm sm:text-base">
-            <span className="font-medium">Discount:</span>
-            <span className="font-medium text-[#ea4525]">- ₹{(bill?.discount || 0).toFixed(2)}</span>
-          </div>
+  <span className="font-medium">Discount:</span>
+  <div className="text-right">
+    <div className="font-medium text-[#ea4525]">- ₹{(bill?.discount || 0).toFixed(2)}</div>
+    {bill?.offersApplied?.length > 0 && (
+      <div className="text-xs text-gray-600 mt-1">
+        {bill.offersApplied.map((offer, index) => (
+          <div key={index}>• {offer}</div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
           <div className="flex justify-between text-sm sm:text-base">
             <span className="font-medium">Tax:</span>
             <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
