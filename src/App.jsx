@@ -43,6 +43,7 @@ import RestaurantListforReviews from "./pages/Admin/reviews/RestaurantListforRev
 import OfferManagement from "./pages/Admin/Offer/OfferManagement";
 import CreateOffer from "./pages/Admin/Offer/CreateOffer";
 import AssignOffer from "./pages/Admin/Offer/AssignOffer";
+import RestaurantEarningsTable from "./pages/Admin/RestaurantEarningsTable";
 import RestaurantListForOrders from "./pages/Admin/RestaurantListForOrders";
 import SurgeAreaSelector from "./pages/Admin/Surge/SurgeAreaSelector";
 import AdminNotificationSender from "./pages/Admin/notifications/AdminNotificationSender";
@@ -85,7 +86,8 @@ function App() {
           <Route path="restaurant-commission" element={<RestaurantCommission />} />
           <Route path="restaurant-order" element={<RestaurantListForOrders />} />
           <Route path="restaurant-feedback" element={<RestaurantListforReviews />} />
- 
+           <Route path="restaurant-earnings" element={<RestaurantEarningsTable />} />
+
           {/* offer section */}
           <Route path="create-offer" element={<CreateOffer />} />
           <Route path="assign-offer" element={<AssignOffer />} />
