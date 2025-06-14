@@ -12,7 +12,7 @@ import { clearCartApi, getCart } from "../../apis/cartApi";
 import { persistor } from "../../store/store"; // Import persistor to clear persisted state
 import store from "../../store/store"; // Import store to check state after clearing cart
 
-export default function DeliveryPaymentForm() {
+export default function DeliveryPaymentForm({useWallet}) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -77,6 +77,7 @@ export default function DeliveryPaymentForm() {
         cartId: cartId,
         userId: user._id,
         paymentMethod,
+        useWallet,
         longitude: localSelectedAddress.location.longitude,
         latitude: localSelectedAddress.location.latitude,
         street: localSelectedAddress.street,

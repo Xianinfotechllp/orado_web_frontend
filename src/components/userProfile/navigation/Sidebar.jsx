@@ -3,6 +3,7 @@ import SidebarItem from './SidebarItem';
 
 const sidebarItems = [
   { name: 'Orders', path: '/my-account/orders' },
+  { name: 'Wallet', path: '/my-account/wallet' },
   { name: 'Orado One', path: '/my-account/premium' },
   { name: 'Favourites', path: '/my-account/favourites' },
   // { name: 'Payments', path: '/payments' },

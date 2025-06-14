@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { getBillSummary } from "../../apis/orderApi";
+import { getWalletBalance } from "../../apis/walletApi";
 import {
   clearCartApi,
   getCart,
@@ -17,12 +18,14 @@ import {
 } from "../../apis/cartApi";
 import { setCart, clearCart } from "../../slices/cartSlice";
 
-export default function MyBasket() {
+export default function MyBasket({ useWallet, setUseWallet }) {
   const [items, setItems] = useState([]);
   const [cartDetails, setCartDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [bill, setBill] = useState({});
   const [buttonLoading, setButtonLoading] = useState(null);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [walletLoading, setWalletLoading] = useState(false);
 
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
@@ -36,7 +39,8 @@ export default function MyBasket() {
         userId: user._id,
         longitude: selectedAddress.location.longitude,
         latitude: selectedAddress.location.latitude,
-        cartId,
+        cartId: cartId,
+        useWallet: useWallet,
       });
       setBill(billRes.data);
     } catch (err) {
@@ -54,7 +58,7 @@ export default function MyBasket() {
         dispatch(setCart(cart));
         setCartDetails(cart);
         setItems(cart.products || []);
-        await fetchBill(cart._id);  // bill summary here
+        await fetchBill(cart._id);
       } else {
         dispatch(clearCart());
         setItems([]);
@@ -72,6 +76,22 @@ export default function MyBasket() {
     }
   };
 
+  const fetchWalletBalance = async () => {
+    try {
+      const res = await getWalletBalance();
+      setWalletBalance(res.walletBalance);
+      if (res.walletBalance <= 0) {
+        setUseWallet(false);
+      }
+    } catch (err) {
+      console.error("Failed to load wallet balance:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchWalletBalance();
+  }, []);
+
   useEffect(() => {
     fetchCartData();
   }, [user?._id]);
@@ -80,21 +100,19 @@ export default function MyBasket() {
     if (cartDetails._id && selectedAddress) {
       fetchBill(cartDetails._id);
     }
-  }, [selectedAddress]);
+  }, [cartDetails._id, selectedAddress, useWallet]);
 
   const updateQuantity = async (productId, change) => {
     try {
       setButtonLoading(productId);
       const selectedItem = items.find((item) => item.productId._id === productId);
       if (!selectedItem) return;
-
       const newQuantity = selectedItem.quantity + change;
       if (newQuantity <= 0) {
         await removeFromCart(productId);
       } else {
         await updateCart({ productId, quantity: newQuantity });
       }
-
       await fetchCartData();
     } catch (error) {
       console.error("Failed to update quantity", error);
@@ -124,12 +142,19 @@ export default function MyBasket() {
         setItems([]);
         setCartDetails({});
         setBill({});
+        setUseWallet(false);
       }
     } catch (error) {
       console.error("Failed to clear cart", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleWalletToggle = (e) => {
+    if (walletBalance <= 0) return;
+    const newUseWallet = e.target.checked;
+    setUseWallet(newUseWallet);
   };
 
   if (loading) {
@@ -142,14 +167,10 @@ export default function MyBasket() {
 
   return (
     <div className="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden sm:max-w-md md:max-w-lg">
-      {/* Header */}
-      <div className="text-white p-4 flex items-center gap-3" style={{ backgroundColor: "#ea4525" }}>
+      <div className="text-white p-4 flex items-center gap-3 bg-[#ea4525]">
         <div className="relative">
           <ShoppingBasket size={24} />
-          <div
-            className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold"
-            style={{ color: "#ea4525" }}
-          >
+          <div className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-[#ea4525]">
             {items.length > 0 ? items.length : "✓"}
           </div>
         </div>
@@ -165,7 +186,6 @@ export default function MyBasket() {
         )}
       </div>
 
-      {/* Items */}
       <div className="bg-gray-50 p-3 space-y-3 sm:p-4 sm:space-y-4">
         {items.length === 0 ? (
           <div className="text-center text-gray-600 font-medium py-8 space-y-4">
@@ -194,7 +214,11 @@ export default function MyBasket() {
                     <button
                       onClick={() => updateQuantity(item.productId._id, -1)}
                       disabled={buttonLoading === item.productId._id}
-                      className={`p-1 ${buttonLoading === item.productId._id ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100 text-gray-600"}`}
+                      className={`p-1 ${
+                        buttonLoading === item.productId._id
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-gray-100 text-gray-600"
+                      }`}
                     >
                       <Minus size={14} />
                     </button>
@@ -204,7 +228,11 @@ export default function MyBasket() {
                     <button
                       onClick={() => updateQuantity(item.productId._id, 1)}
                       disabled={buttonLoading === item.productId._id}
-                      className={`p-1 ${buttonLoading === item.productId._id ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100 text-gray-600"}`}
+                      className={`p-1 ${
+                        buttonLoading === item.productId._id
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-gray-100 text-gray-600"
+                      }`}
                     >
                       <Plus size={14} />
                     </button>
@@ -212,7 +240,11 @@ export default function MyBasket() {
                   <button
                     onClick={() => removeItem(item.productId._id)}
                     disabled={buttonLoading === item.productId._id}
-                    className={`text-white w-5 h-5 rounded flex items-center justify-center bg-red-500 ${buttonLoading === item.productId._id ? "opacity-50 cursor-not-allowed" : "hover:opacity-80"}`}
+                    className={`text-white w-5 h-5 rounded flex items-center justify-center bg-red-500 ${
+                      buttonLoading === item.productId._id
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:opacity-80"
+                    }`}
                   >
                     <Delete size={16} />
                   </button>
@@ -226,51 +258,46 @@ export default function MyBasket() {
         )}
       </div>
 
-      {/* Bill Summary */}
       {items.length > 0 && (
-        <>
-          <div className="p-4 space-y-2 border-t">
-            <div className="flex justify-between text-sm sm:text-base">
-              <span className="font-medium">Sub Total:</span>
-              <span className="font-medium">₹{(bill?.subtotal || 0).toFixed(2)}</span>
-            </div>
-
-  <div className="flex justify-between text-sm sm:text-base">
-  <span className="font-medium">Discounts:</span>
-  <div className="flex flex-col items-end">
-    <span className="font-medium" style={{ color: "#ea4525" }}>
-      ₹{(bill?.discount || 0).toFixed(2)}
-    </span>
-    {bill?.offersApplied && bill.offersApplied.length > 0 && (
-      <span className="text-xs text-gray-500">
-        ({bill.offersApplied.join(", ")})
-      </span>
-    )}
-  </div>
-</div>
-            
-          
-            <div className="flex justify-between text-sm sm:text-base">
-              <span className="font-medium">Tax:</span>
-              <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-sm sm:text-base">
-              <span className="font-medium">Delivery Fee:</span>
-              <span className="font-medium">₹{(bill?.deliveryFee || 0).toFixed(2)}</span>
-            </div>
+        <div className="p-4 space-y-2 border-t">
+          <div className="flex justify-between text-sm sm:text-base">
+            <span className="font-medium">Sub Total:</span>
+            <span className="font-medium">₹{(bill?.subtotal || 0).toFixed(2)}</span>
           </div>
-
-          <div className="p-4 pt-0">
-            <button
-              disabled={items.length === 0}
-              className={`w-full text-white font-semibold py-3 px-4 rounded-lg text-base sm:text-lg flex justify-between items-center ${items.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}`}
-              style={{ backgroundColor: "#ea4525" }}
-            >
-              <span>{items.length === 0 ? "No items to pay" : "Total to pay"}</span>
-              <span>₹{(bill?.total || 0).toFixed(2)}</span>
-            </button>
+          <div className="flex justify-between text-sm sm:text-base">
+            <span className="font-medium">Discount:</span>
+            <span className="font-medium text-[#ea4525]">- ₹{(bill?.discount || 0).toFixed(2)}</span>
           </div>
-        </>
+          <div className="flex justify-between text-sm sm:text-base">
+            <span className="font-medium">Tax:</span>
+            <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-sm sm:text-base">
+            <span className="font-medium">Delivery Fee:</span>
+            <span className="font-medium">₹{(bill?.deliveryFee || 0).toFixed(2)}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm sm:text-base pt-2">
+            <label className="font-medium flex items-center gap-2">
+              <input
+                type="checkbox"
+                disabled={walletBalance <= 0 || walletLoading}
+                checked={walletBalance > 0 && useWallet}
+                onChange={handleWalletToggle}
+              />
+              Use Wallet (₹{walletBalance.toFixed(2)} available)
+            </label>
+          </div>
+          {bill?.walletUsed > 0 && (
+            <div className="flex justify-between text-sm sm:text-base mb-2">
+              <span className="font-medium text-green-600">Wallet Used:</span>
+              <span className="font-medium text-green-600">- ₹{bill.walletUsed.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex justify-between text-sm sm:text-base font-semibold border-t pt-2">
+            <span>Payable Now:</span>
+            <span>₹{(bill?.payable ?? bill?.total ?? 0).toFixed(2)}</span>
+          </div>
+        </div>
       )}
     </div>
   );

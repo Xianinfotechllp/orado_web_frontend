@@ -7,7 +7,8 @@ import {
   CreditCard, 
   MapPin, 
   Settings,
-  LogOut 
+  LogOut,
+  Wallet 
 } from 'lucide-react';
 
 const SidebarItem = ({ name, path }) => {
@@ -17,7 +18,9 @@ const SidebarItem = ({ name, path }) => {
     switch(name.toLowerCase()) {
       case 'orders':
         return <ShoppingBag className={iconClass} />;
-      case 'swiggy one':
+      case 'wallet':
+        return <Wallet className={iconClass} />;
+      case 'orado one':
         return <Crown className={iconClass} />;
       case 'favourites':
         return <Heart className={iconClass} />;
