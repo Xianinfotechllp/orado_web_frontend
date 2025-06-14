@@ -1,17 +1,25 @@
 import { TicketCheck, Receipt } from "lucide-react";
 import React, { useState } from "react";
 import { FaUserSecret } from "react-icons/fa";
-import {
+import { MdOutlineLocalOffer } from 'react-icons/md';
+  import {
   FiMenu, FiLogOut, FiChevronDown, FiChevronUp,
-  FiPieChart, FiClipboard, FiHome, FiUser, FiSettings
+  FiPieChart, FiClipboard, FiHome, FiUser, FiSettings, 
 } from 'react-icons/fi';
 import { GrUserAdmin , GrUser} from 'react-icons/gr';
 import { Link, Outlet } from 'react-router-dom';
 
-const SidebarItem = ({ title, icon, children, hasPermission }) => {
+const SidebarItem = ({ title, icon, children, hasPermission, closeSidebar }) => {
   const [open, setOpen] = useState(false);
 
   if (!hasPermission) return null;
+
+  // Function to handle link clicks
+  const handleLinkClick = () => {
+    if (closeSidebar) {
+      closeSidebar();
+    }
+  };
 
   return (
     <div className="text-sm w-full">
@@ -33,7 +41,14 @@ const SidebarItem = ({ title, icon, children, hasPermission }) => {
           open ? "max-h-100 py-2" : "max-h-0"
         }`}
       >
-        {children}
+        {React.Children.map(children, child => {
+          if (React.isValidElement(child)) {
+            return React.cloneElement(child, {
+              onClick: handleLinkClick
+            });
+          }
+          return child;
+        })}
       </div>
     </div>
   );
@@ -46,6 +61,10 @@ function AdminDashboard() {
   // Check if user has specific permission
   const hasPermission = (permission) => {
     return permissions.includes(permission);
+  };
+
+  const closeSidebar = () => {
+    setShowSidebar(false);
   };
 
   return (
@@ -99,6 +118,7 @@ function AdminDashboard() {
             title="Dashboard"
             icon={<FiPieChart size={18} />}
             hasPermission={true} // Always show dashboard
+            closeSidebar={closeSidebar}
           >
             <Link
               to=""
@@ -115,6 +135,7 @@ function AdminDashboard() {
               hasPermission("merchants.manage") ||
               hasPermission("agents.manage")
             }
+            closeSidebar={closeSidebar}
           >
             {hasPermission("merchants.manage") && (
               <Link
@@ -138,6 +159,7 @@ function AdminDashboard() {
             title="Restaurants"
             icon={<FiHome size={18} />}
             hasPermission={hasPermission("merchants.manage")}
+            closeSidebar={closeSidebar}
           >
             <Link
               to="restaurant-add"
@@ -169,12 +191,19 @@ function AdminDashboard() {
             >
               Restaurant Commission
             </Link>
+            <Link
+              to="restaurant-earnings"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Restaurant Earnings
+            </Link>
           </SidebarItem>
 
           <SidebarItem
             title="Offers"
             icon={<MdOutlineLocalOffer size={18} />}
             hasPermission={hasPermission("agents.manage")}
+            closeSidebar={closeSidebar}
           >
             <Link
               to="create-offer"
@@ -199,6 +228,7 @@ function AdminDashboard() {
             title="Agents"
             icon={<FaUserSecret size={18} />}
             hasPermission={hasPermission("agents.manage")}
+            closeSidebar={closeSidebar}
           >
             <Link
               to="#"
@@ -218,6 +248,7 @@ function AdminDashboard() {
             title="Admins"
             icon={<GrUserAdmin size={18} />}
             hasPermission={hasPermission("users.manage")}
+            closeSidebar={closeSidebar}
           >
             <Link
               to="admin-add"
@@ -237,6 +268,7 @@ function AdminDashboard() {
             title="Customers" 
             icon={<GrUser size={18}/>}
             hasPermission={hasPermission('users.manage')}
+            closeSidebar={closeSidebar}
           >
             <Link
               to="user-managemnet"
@@ -256,6 +288,7 @@ function AdminDashboard() {
             title="Ticket"
             icon={<TicketCheck size={18} />}
             hasPermission={hasPermission("support.manage")}
+            closeSidebar={closeSidebar}
           >
             <Link
               to="admin-ticket"
@@ -268,6 +301,7 @@ function AdminDashboard() {
             title="Transactions" 
             icon={<Receipt size={18}/>}
             hasPermission={hasPermission('support.manage')}
+            closeSidebar={closeSidebar}
           >
             <Link to="refund/transactions" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
               Refunds
@@ -278,6 +312,7 @@ function AdminDashboard() {
             title="Settings"
             icon={<FiSettings size={18} />}
             hasPermission={true} // Always show settings
+            closeSidebar={closeSidebar}
           >
             <Link
               to="#"

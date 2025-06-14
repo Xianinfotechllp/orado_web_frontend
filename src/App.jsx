@@ -43,6 +43,7 @@ import RestaurantListforReviews from "./pages/Admin/reviews/RestaurantListforRev
 import OfferManagement from "./pages/Admin/Offer/OfferManagement";
 import CreateOffer from "./pages/Admin/Offer/CreateOffer";
 import AssignOffer from "./pages/Admin/Offer/AssignOffer";
+import RestaurantEarningsTable from "./pages/Admin/RestaurantEarningsTable";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -80,6 +81,7 @@ function App() {
           <Route path="restaurant-permission" element={<RestaurantPermissions />} />
           <Route path="restaurant-commission" element={<RestaurantCommission />} />
           <Route path="restaurant-feedback" element={<RestaurantListforReviews />} />
+          <Route path="restaurant-earnings" element={<RestaurantEarningsTable />} />
 
           {/* offer section */}
           <Route path="create-offer" element={<CreateOffer />} />
