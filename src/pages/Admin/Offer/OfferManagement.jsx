@@ -45,7 +45,7 @@ const OfferManagement = () => {
   const fetchRestaurants = async () => {
     try {
       setLoading((prev) => ({ ...prev, restaurants: true }));
-      const res = await axios.get("http://localhost:5000/restaurants/all-restaurants");
+      const res = await apiClient.get("/restaurants/all-restaurants");
       const data = res.data.restaurants || [];
       setRestaurants(data);
       setFilteredRestaurants(data);

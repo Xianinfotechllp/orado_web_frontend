@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import OrderCard from './AdminOrderCard';
 import OrderDetailsPanel from './AdminOrderPanel';
+import apiClient from '../../../apis/apiClient/apiClient';
 
 const AdminOrdersContent = ({ userId }) => {
   const [orders, setOrders] = useState([]);
@@ -14,11 +15,9 @@ const AdminOrdersContent = ({ userId }) => {
 
     const fetchOrders = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/admin/customer-orders/${userId}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+        const res = await apiClient.get(`/admin/customer-orders/${userId}`
+          
+        );
         console.log("Fetched admin customer orders:", res.data);
         setOrders(res.data.data || []);
       } catch (error) {

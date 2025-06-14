@@ -7,12 +7,10 @@ const apiClient = axios.create({
   baseURL: BASE_URL,
 });
 
-const token=sessionStorage.getItem('adminToken')
 // Attach token automatically to every request
 apiClient.interceptors.request.use(
   (config) => {
-
-    // const token = store.getState().auth.token;
+    const token = sessionStorage.getItem('adminToken');  // fetch fresh value
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -20,5 +18,6 @@ apiClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
 
 export default apiClient;

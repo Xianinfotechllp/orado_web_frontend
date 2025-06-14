@@ -1,380 +1,471 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { toast } from 'react-toastify';
+import React, { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import {createSurgeArea } from "../../../apis/surgeApi"
+mapboxgl.accessToken = 'pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w';
 
-const SurgeAreaSelector = () => {
+const SurgeAreaMap = () => {
+  const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
-  const [map, setMap] = useState(null);
-  const [currentShape, setCurrentShape] = useState(null);
-  const [drawingMode, setDrawingMode] = useState(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [startPoint, setStartPoint] = useState(null);
-  const [searchInput, setSearchInput] = useState('');
-  const [surgeMultiplier, setSurgeMultiplier] = useState(1.5);
-  const [surgeType, setSurgeType] = useState('high-demand');
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [surgeZones, setSurgeZones] = useState([]);
+  const [circle, setCircle] = useState(null);
+  const [radius, setRadius] = useState(1000);
+  const [center, setCenter] = useState(null);
+  const markerRef = useRef(null);
 
-  // Helper functions for coordinate conversion
-  const circleToPolygon = (center, radius, points = 32) => {
-    const coordinates = [];
-    for (let i = 0; i < points; i++) {
-      const angle = (i * 2 * Math.PI) / points;
-      const lat = center.lat + (radius / 111320) * Math.cos(angle);
-      const lng = center.lng + (radius / (111320 * Math.cos(center.lat * (Math.PI / 180)))) * Math.sin(angle);
-      coordinates.push([lng, lat]);
-    }
-    coordinates.push(coordinates[0]);
-    return coordinates;
-  };
+  // Form state
+  const [name, setName] = useState('');
+  const [reason, setReason] = useState('');
+  const [surgeType, setSurgeType] = useState('fixed');
+  const [surgeValue, setSurgeValue] = useState(0);
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const rectangleToPolygon = (bounds) => {
-    const ne = bounds.getNorthEast();
-    const sw = bounds.getSouthWest();
-    return [
-      [ne.lng, ne.lat],
-      [sw.lng, ne.lat],
-      [sw.lng, sw.lat],
-      [ne.lng, sw.lat],
-      [ne.lng, ne.lat]
-    ];
-  };
-
-  // Predefined locations
-  const locations = {
-    'delhi': [28.6139, 77.2090],
-    'mumbai': [19.0760, 72.8777],
-    'bangalore': [12.9716, 77.5946]
-  };
-
-  const surgeColors = {
-    'high-demand': '#ef4444',
-    'medium-demand': '#f97316',
-    'event-based': '#8b5cf6'
-  };
-
-  // Load Leaflet
+  // Initialize map
   useEffect(() => {
-    const loadLeaflet = async () => {
-      if (typeof window !== 'undefined') {
-        // Load CSS
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-        link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
-        link.crossOrigin = '';
-        document.head.appendChild(link);
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [76.32, 9.995],
+      zoom: 13
+    });
 
-        // Load JS
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-        script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
-        script.crossOrigin = '';
-        script.onload = initMap;
-        document.head.appendChild(script);
-      }
-    };
+    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    const initMap = () => {
-      if (mapRef.current && !map && window.L) {
-        const leafletMap = window.L.map(mapRef.current).setView([28.6139, 77.2090], 11);
-        
-        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors',
-          maxZoom: 18
-        }).addTo(leafletMap);
+    mapRef.current = map;
 
-        setMap(leafletMap);
-        setMapLoaded(true);
-      }
-    };
-
-    loadLeaflet();
-
-    return () => {
-      if (map) {
-        map.remove();
-      }
-    };
+    return () => map.remove();
   }, []);
 
-  // Drawing event handlers
-  useEffect(() => {
-    if (!map) return;
+  // Create circle GeoJSON
+  const createCircleGeoJSON = (center, radiusInMeters, points = 64) => {
+    const coords = {
+      latitude: center[1],
+      longitude: center[0]
+    };
+    const km = radiusInMeters / 1000;
+    const ret = [];
+    const distanceX = km / (111.320 * Math.cos((coords.latitude * Math.PI) / 180));
+    const distanceY = km / 110.574;
 
-    const handleMouseDown = (e) => {
-      if (!drawingMode) return;
-      setIsDrawing(true);
-      setStartPoint(e.latlng);
-      if (currentShape) {
-        map.removeLayer(currentShape);
-        setCurrentShape(null);
+    for (let i = 0; i < points; i++) {
+      const theta = (i / points) * (2 * Math.PI);
+      const x = distanceX * Math.cos(theta);
+      const y = distanceY * Math.sin(theta);
+      ret.push([coords.longitude + x, coords.latitude + y]);
+    }
+    ret.push(ret[0]);
+
+    return {
+      type: 'Feature',
+      properties: {
+        radius: radiusInMeters
+      },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [ret]
       }
     };
+  };
 
-    const handleMouseMove = (e) => {
-      if (!isDrawing || !startPoint) return;
-      if (currentShape) map.removeLayer(currentShape);
-      
-      const color = surgeColors[surgeType];
-      let shape;
+  // Draw or update circle on map
+  const drawOrUpdateCircle = (lngLat) => {
+    const circleFeature = createCircleGeoJSON(lngLat, radius);
 
-      if (drawingMode === 'circle') {
-        const radius = startPoint.distanceTo(e.latlng);
-        shape = window.L.circle(startPoint, {
-          radius,
-          color,
-          fillColor: color,
-          fillOpacity: 0.3,
-          weight: 3
-        }).addTo(map);
-      } else if (drawingMode === 'rectangle') {
-        const bounds = window.L.latLngBounds(startPoint, e.latlng);
-        shape = window.L.rectangle(bounds, {
-          color,
-          fillColor: color,
-          fillOpacity: 0.3,
-          weight: 3
-        }).addTo(map);
-      }
+    if (mapRef.current.getSource('surgeCircle')) {
+      mapRef.current.getSource('surgeCircle').setData(circleFeature);
+    } else {
+      mapRef.current.addSource('surgeCircle', {
+        type: 'geojson',
+        data: circleFeature
+      });
 
-      setCurrentShape(shape);
-    };
-
-    const handleMouseUp = async (e) => {
-      if (!isDrawing || !startPoint) return;
-      setIsDrawing(false);
-
-      if (currentShape) {
-        let polygonCoordinates;
-        if (drawingMode === 'circle') {
-          const radius = startPoint.distanceTo(e.latlng);
-          polygonCoordinates = circleToPolygon(startPoint, radius);
-        } else if (drawingMode === 'rectangle') {
-          const bounds = currentShape.getBounds();
-          polygonCoordinates = rectangleToPolygon(bounds);
+      mapRef.current.addLayer({
+        id: 'surgeCircleLayer',
+        type: 'fill',
+        source: 'surgeCircle',
+        paint: {
+          'fill-color': '#FF5722',
+          'fill-opacity': 0.3,
+          'fill-outline-color': '#FF5722'
         }
+      });
 
-        const newZone = {
-          id: Date.now(),
-          type: surgeType,
-          multiplier: surgeMultiplier,
-          coordinates: polygonCoordinates
-        };
-
-        setSurgeZones(prev => [...prev, newZone]);
-        await submitSurgeZone(newZone);
-      }
-
-      resetDrawingMode();
-    };
-
-    if (drawingMode) {
-      map.on('mousedown', handleMouseDown);
-      map.on('mousemove', handleMouseMove);
-      map.on('mouseup', handleMouseUp);
-      map.getContainer().style.cursor = 'crosshair';
+      mapRef.current.addLayer({
+        id: 'surgeCircleBorder',
+        type: 'line',
+        source: 'surgeCircle',
+        paint: {
+          'line-color': '#FF5722',
+          'line-width': 2
+        }
+      });
     }
-
-    return () => {
-      map.off('mousedown', handleMouseDown);
-      map.off('mousemove', handleMouseMove);
-      map.off('mouseup', handleMouseUp);
-      map.getContainer().style.cursor = '';
-    };
-  }, [map, drawingMode, isDrawing, startPoint, currentShape]);
-
-  const resetDrawingMode = () => {
-    setDrawingMode(null);
-    setIsDrawing(false);
-    setStartPoint(null);
-    if (map) map.getContainer().style.cursor = '';
+    setCircle(circleFeature);
   };
 
-  const startDrawing = (type) => {
-    setDrawingMode(type);
-  };
+  // Add circle handler
+  const handleAddCircle = () => {
+    const mapCenter = mapRef.current.getCenter();
+    const lngLat = [mapCenter.lng, mapCenter.lat];
+    setCenter(lngLat);
 
-  const submitSurgeZone = async (zone) => {
-    try {
-      toast.success(`Created ${zone.type} zone with ${zone.multiplier}x multiplier`);
-      console.log('Zone coordinates:', zone.coordinates);
-    } catch (error) {
-      toast.error('Failed to save zone');
-      console.error(error);
-    }
-  };
+    if (markerRef.current) markerRef.current.remove();
 
-  const searchLocation = () => {
-    const query = searchInput.trim().toLowerCase();
-    if (!query || !map) return;
+    const marker = new mapboxgl.Marker({
+      draggable: true,
+      color: '#FF5722'
+    })
+      .setLngLat(lngLat)
+      .addTo(mapRef.current);
 
-    for (let city in locations) {
-      if (city.includes(query)) {
-        const [lat, lng] = locations[city];
-        map.setView([lat, lng], 13);
-        
-        window.L.marker([lat, lng])
-          .addTo(map)
-          .bindPopup(`📍 ${city.charAt(0).toUpperCase() + city.slice(1)}`)
-          .openPopup();
-        return;
-      }
-    }
-    toast.error('Location not found');
-  };
-
-  const clearAllZones = () => {
-    if (!map) return;
-    
-    map.eachLayer(layer => {
-      if (layer instanceof window.L.Circle || 
-          layer instanceof window.L.Rectangle || 
-          layer instanceof window.L.Marker) {
-        map.removeLayer(layer);
-      }
+    marker.on('dragend', () => {
+      const newLngLat = [marker.getLngLat().lng, marker.getLngLat().lat];
+      setCenter(newLngLat);
+      drawOrUpdateCircle(newLngLat);
     });
+
+    markerRef.current = marker;
+    drawOrUpdateCircle(lngLat);
+  };
+
+  // Update circle when radius changes
+  useEffect(() => {
+    if (circle && center) drawOrUpdateCircle(center);
+  }, [radius]);
+
+  // Save surge area
+  const handleSave = async () => {
+    if (!center) {
+      alert('Please add a surge area first by clicking "Add Surge Zone"');
+      return;
+    }
+
+    if (!name || !reason || !surgeValue || !startTime || !endTime) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    const payload = {
+      name,
+      surgeReason: reason,
+      surgeType,
+      surgeValue: Number(surgeValue),
+      center,
+      radius,
+      startTime,
+      endTime,
+      type: 'Circle'
+    };
+
+    setIsSubmitting(true);
     
-    setSurgeZones([]);
-    resetDrawingMode();
+    try {
+      console.log(payload)
+       
+
+      const data = await createSurgeArea({
+  name: payload.name,
+ surgeReason:payload.surgeReason,
+  type: "Circle",
+  center: payload.center,
+  radius:  payload.radius,  // in meters
+  surgeType: payload.surgeType,
+   surgeValue: payload.surgeValue,
+  startTime:  payload.startTime,
+  endTime: payload.endTime
+})
+      if (data.success) {
+        alert('Surge area saved successfully!');
+        // Reset form
+        setName('');
+        setReason('');
+        setSurgeValue(0);
+        setStartTime('');
+        setEndTime('');
+        setCenter(null);
+        if (markerRef.current) markerRef.current.remove();
+        if (mapRef.current.getSource('surgeCircle')) {
+          mapRef.current.removeLayer('surgeCircleLayer');
+          mapRef.current.removeLayer('surgeCircleBorder');
+          mapRef.current.removeSource('surgeCircle');
+        }
+      } else {
+        alert(data.message || 'Save failed');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Server error. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="h-screen bg-gray-100 p-4">
-      <div className="h-full bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-        <div className="bg-blue-600 text-white p-4">
-          <h1 className="text-xl font-bold">⚡ Surge Area Selector</h1>
-        </div>
+    <div className="surge-area-container">
+      <div className="map-container">
+        <div ref={mapContainerRef} className="map" />
         
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
-          <div className="w-64 bg-gray-50 p-4 border-r overflow-y-auto">
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold mb-2">Search Location</h3>
-                <div className="flex">
-                  <input
-                    type="text"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="Enter city"
-                    className="flex-1 border p-2 rounded-l"
-                  />
-                  <button 
-                    onClick={searchLocation}
-                    className="bg-blue-500 text-white px-3 rounded-r"
-                  >
-                    🔍
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Drawing Tools</h3>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => startDrawing('circle')}
-                    className={`w-full p-2 rounded ${drawingMode === 'circle' ? 'bg-blue-100 border-blue-500 border' : 'bg-gray-100'}`}
-                  >
-                    ⭕ Draw Circle
-                  </button>
-                  <button
-                    onClick={() => startDrawing('rectangle')}
-                    className={`w-full p-2 rounded ${drawingMode === 'rectangle' ? 'bg-blue-100 border-blue-500 border' : 'bg-gray-100'}`}
-                  >
-                    ▭ Draw Rectangle
-                  </button>
-                  <button
-                    onClick={clearAllZones}
-                    className="w-full p-2 bg-red-100 text-red-600 rounded"
-                  >
-                    🗑️ Clear All
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Surge Settings</h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm mb-1">Multiplier</label>
-                    <input
-                      type="number"
-                      min="1.0"
-                      max="5.0"
-                      step="0.1"
-                      value={surgeMultiplier}
-                      onChange={(e) => setSurgeMultiplier(parseFloat(e.target.value))}
-                      className="w-full border p-2 rounded"
-                    />
-                  </div>
-                  <div>
-
-
-   <div>
-                    <label className="block text-sm mb-1">Surge reson</label>
-                    <input
-                      type="text"
-
-                      
-                      className="w-full border p-2 rounded"
-                    />
-                  </div>
-                  <div>
-
-                    
-                  </div>
-
-                 
-                  </div>
-                </div>
-              </div>
-
-              {surgeZones.length > 0 && (
-                <div>
-                  <h3 className="font-semibold mb-2">Active Zones ({surgeZones.length})</h3>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {surgeZones.map((zone, i) => (
-                      <div key={zone.id} className="p-2 border rounded text-sm">
-                        <div className="flex justify-between">
-                          <span>Zone {i + 1}</span>
-                          <span className="font-bold">{zone.multiplier}x</span>
-                        </div>
-                        <div className="text-xs text-gray-500">{zone.type}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+        <div className="map-controls">
+          <div className="radius-control">
+            <label>Radius: {radius}m</label>
+            <input
+              type="range"
+              min="100"
+              max="5000"
+              value={radius}
+              step="50"
+              onChange={(e) => setRadius(Number(e.target.value))}
+            />
           </div>
-
-          {/* Map */}
-          <div className="flex-1 relative">
-            <div 
-              ref={mapRef} 
-              className="w-full h-full"
-              style={{ minHeight: '400px' }}
+          
+          <div className="action-buttons">
+            <button 
+              onClick={handleAddCircle} 
+              className="btn btn-primary"
             >
-              {!mapLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto mb-2"></div>
-                    <p>Loading map...</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {isDrawing && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
-                <p className="text-sm">Drawing {drawingMode}...</p>
-              </div>
-            )}
+              <i className="icon">➕</i> Add/Move Zone
+            </button>
           </div>
         </div>
       </div>
+
+      <div className="form-container">
+        <h2 className="form-title">Surge Area Details</h2>
+        
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Name*</label>
+            <input 
+              type="text" 
+              placeholder="Area name" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Reason*</label>
+            <input 
+              type="text" 
+              placeholder="Reason for surge" 
+              value={reason} 
+              onChange={(e) => setReason(e.target.value)} 
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Surge Type*</label>
+            <select 
+              value={surgeType} 
+              onChange={(e) => setSurgeType(e.target.value)}
+            >
+              <option value="fixed">Fixed Amount (₹)</option>
+              <option value="percentage">Percentage (%)</option>
+            </select>
+          </div>
+          
+          <div className="form-group">
+            <label>Surge Value*</label>
+            <input 
+              type="number" 
+              placeholder={surgeType === 'fixed' ? 'Amount in ₹' : 'Percentage'} 
+              value={surgeValue} 
+              onChange={(e) => setSurgeValue(e.target.value)} 
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Start Time*</label>
+            <input 
+              type="datetime-local" 
+              value={startTime} 
+              onChange={(e) => setStartTime(e.target.value)} 
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>End Time*</label>
+            <input 
+              type="datetime-local" 
+              value={endTime} 
+              onChange={(e) => setEndTime(e.target.value)} 
+            />
+          </div>
+        </div>
+        
+        <div className="form-footer">
+          <button 
+            onClick={handleSave} 
+            className="btn btn-success"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Saving...' : '💾 Save Surge Area'}
+          </button>
+          
+          {center && (
+            <div className="coordinates-info">
+              <span>Location: {center[1].toFixed(4)}, {center[0].toFixed(4)}</span>
+              <span>Radius: {radius}m</span>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <style jsx>{`
+        .surge-area-container {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          background: #f5f7fa;
+        }
+        
+        .map-container {
+          position: relative;
+          flex: 1;
+          min-height: 400px;
+        }
+        
+        .map {
+          height: 100%;
+          width: 100%;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .map-controls {
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          z-index: 1;
+          background: white;
+          padding: 15px;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          width: 300px;
+        }
+        
+        .radius-control {
+          margin-bottom: 15px;
+        }
+        
+        .radius-control label {
+          display: block;
+          margin-bottom: 5px;
+          font-weight: 500;
+          color: #333;
+        }
+        
+        .radius-control input {
+          width: 100%;
+        }
+        
+        .action-buttons {
+          display: flex;
+          gap: 10px;
+        }
+        
+        .form-container {
+          background: white;
+          padding: 25px;
+          border-top: 1px solid #e1e5eb;
+          box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .form-title {
+          margin-top: 0;
+          margin-bottom: 20px;
+          color: #2c3e50;
+        }
+        
+        .form-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 20px;
+          margin-bottom: 20px;
+        }
+        
+        .form-group {
+          margin-bottom: 0;
+        }
+        
+        .form-group label {
+          display: block;
+          margin-bottom: 8px;
+          font-weight: 500;
+          color: #555;
+        }
+        
+        .form-group input,
+        .form-group select {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 14px;
+        }
+        
+        .form-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 20px;
+        }
+        
+        .coordinates-info {
+          display: flex;
+          gap: 15px;
+          font-size: 14px;
+          color: #666;
+        }
+        
+        .btn {
+          padding: 10px 20px;
+          border: none;
+          border-radius: 4px;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.2s;
+        }
+        
+        .btn-primary {
+          background: #3f51b5;
+          color: white;
+        }
+        
+        .btn-primary:hover {
+          background: #303f9f;
+        }
+        
+        .btn-success {
+          background: #4caf50;
+          color: white;
+        }
+        
+        .btn-success:hover {
+          background: #388e3c;
+        }
+        
+        .btn-success:disabled {
+          background: #a5d6a7;
+          cursor: not-allowed;
+        }
+        
+        @media (max-width: 768px) {
+          .map-controls {
+            width: calc(100% - 40px);
+          }
+          
+          .form-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
-export default SurgeAreaSelector;
+export default SurgeAreaMap;

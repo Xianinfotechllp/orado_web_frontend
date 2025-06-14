@@ -64,7 +64,7 @@ function CreateOffer({ onOfferCreated }) {
         throw new Error("No authentication token found");
       }
 
-      await axios.post("http://localhost:5000/admin/offer", {
+      await apiClient.post("/admin/offer", {
         title,
         description: description || null,
         type,
@@ -77,7 +77,7 @@ function CreateOffer({ onOfferCreated }) {
         totalUsageLimit: totalUsageLimit ? parseInt(totalUsageLimit) : null
       })
 
-      await axios.post("http://localhost:5000/admin/offer", offerData, {
+      await apiClient.post("/admin/offer", offerData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

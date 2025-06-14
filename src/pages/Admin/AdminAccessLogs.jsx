@@ -66,8 +66,8 @@ const AccessLogs = () => {
       setSearchQuery('');
       
       const endpoint = activeTab === 'all-logs' 
-        ? `http://localhost:5000/admin/access-logs?page=${pagination.page}&limit=${pagination.limit}`
-        : `http://localhost:5000/admin/access-logs/me?page=${pagination.page}&limit=${pagination.limit}`;
+        ? `https://orado.work.gd/api/admin/access-logs?page=${pagination.page}&limit=${pagination.limit}`
+        : `https://orado.work.gd/api/admin/access-logs/me?page=${pagination.page}&limit=${pagination.limit}`;
       
       const response = await fetch(endpoint, {
         method: 'GET',
