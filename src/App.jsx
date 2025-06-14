@@ -45,6 +45,7 @@ import CreateOffer from "./pages/Admin/Offer/CreateOffer";
 import AssignOffer from "./pages/Admin/Offer/AssignOffer";
 import RestaurantListForOrders from "./pages/Admin/RestaurantListForOrders";
 import SurgeAreaSelector from "./pages/Admin/Surge/SurgeAreaSelector";
+import AdminNotificationSender from "./pages/Admin/notifications/AdminNotificationSender";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -72,6 +73,7 @@ function App() {
         {/* Admin-Side */}
         <Route path="admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />}>
+
 
           <Route index element={<Dashboard />} />
           {/* restaurant-section */}
@@ -103,7 +105,8 @@ function App() {
           <Route path="customer/:userId/orders" element={<AdminCustomerOrderPage />} />
           <Route path="order/refund" element={<RefundComponent />} />
           <Route path="refund/transactions" element={<RefundTransactionsPage />} />
-
+        
+          <Route path="notification-sender"  element={<AdminNotificationSender/>} />
 
           {/* Add more nested routes as needed */}
         </Route>

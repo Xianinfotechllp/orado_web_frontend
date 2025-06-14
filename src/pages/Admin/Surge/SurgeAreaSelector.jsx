@@ -308,18 +308,23 @@ const SurgeAreaSelector = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm mb-1">Type</label>
-                    <select
-                      value={surgeType}
-                      onChange={(e) => setSurgeType(e.target.value)}
+
+
+   <div>
+                    <label className="block text-sm mb-1">Surge reson</label>
+                    <input
+                      type="text"
+
+                      
                       className="w-full border p-2 rounded"
-                    >
-                      {Object.keys(surgeColors).map(type => (
-                        <option key={type} value={type}>
-                          {type.replace('-', ' ')}
-                        </option>
-                      ))}
-                    </select>
+                    />
+                  </div>
+                  <div>
+
+                    
+                  </div>
+
+                 
                   </div>
                 </div>
               </div>
