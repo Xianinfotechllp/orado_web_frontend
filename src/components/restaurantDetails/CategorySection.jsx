@@ -25,17 +25,20 @@ function CategorySection({ category, restaurantId }) {
     rating: "all"
   });
 
-  const getProductQuantity = (productId) => {
-    if (cartItems[productId] !== undefined) {
-      return cartItems[productId];
-    }
-    const item = cartFromRedux.find(item => {
-      const id = item.product?._id || item.productId?._id;
-      return id === productId;
-    });
-    return item ? item.quantity : 0;
-  };
+ const getProductQuantity = (productId) => {
+  if (cartItems[productId] !== undefined) {
+    return cartItems[productId];
+  }
 
+  if (!Array.isArray(cartFromRedux)) return 0;
+
+  const item = cartFromRedux.find(item => {
+    const id = item.product?._id || item.productId?._id;
+    return id === productId;
+  });
+  
+  return item ? item.quantity : 0;
+};
   // Calculate category statistics
   useEffect(() => {
     if (category?.items) {
