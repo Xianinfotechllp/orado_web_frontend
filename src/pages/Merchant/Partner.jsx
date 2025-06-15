@@ -1,30 +1,45 @@
 import React, { useState, useEffect } from "react";
 import {
-  Utensils,
   CheckCircle,
   User,
   Lock,
   Mail,
   Phone,
   ArrowRight,
+  AlertCircle,
 } from "lucide-react";
-import RegisterModal from "../../components/merchant/RegisterModal";
+import RegisterModal from "../../components/merchant/Authentication/RegisterModal";
+import { loginMerchant} from "../../apis/restaurantApi";
+import { useNavigate } from "react-router-dom";
+import logo from "../../assets/oradoLogo.png";
+import { setUser } from "../../slices/authSlice";
+import { useDispatch } from "react-redux";
 
 const Partner = () => {
+  const dispatch = useDispatch()
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [loginData, setLoginData] = useState({
+    identifier: "",
+    password: "",
+  });
+  const [identifierType, setIdentifierType] = useState("email"); // 'email' or 'phone'
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState(null);
+  const navigate = useNavigate();
 
   const slidingContent = [
     {
       title: "Boost Your Revenue",
       description:
-        "Increase your restaurant's reach and earn more with our delivery platform",
+        "Increase your business's reach and earn more with our platform",
       icon: "💰",
     },
     {
       title: "Easy Management",
       description:
-        "Simple dashboard to manage orders, menu, and track your business growth",
+        "Simple dashboard to manage orders, products, and track your business growth",
       icon: "📊",
     },
     {
@@ -42,6 +57,84 @@ const Partner = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setLoginData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: null,
+      }));
+    }
+    if (apiError) setApiError(null);
+  };
+
+  const toggleIdentifierType = () => {
+    setIdentifierType(prev => prev === "email" ? "phone" : "email");
+    setLoginData(prev => ({ ...prev, identifier: "" }));
+    setErrors(prev => ({ ...prev, identifier: null }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!loginData.identifier) {
+      newErrors.identifier = `${identifierType === "email" ? "Email" : "Phone number"} is required`;
+    }
+    
+    if (!loginData.password) {
+      newErrors.password = "Password is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setApiError(null);
+
+    try {
+      const response = await loginMerchant({
+        identifier: loginData.identifier,
+        password: loginData.password
+      });
+
+      // Assuming the response contains token and user data similar to the example
+      dispatch(setUser({ 
+        token: response.token, 
+        user: response.user 
+      }));
+      navigate("/merchant");
+    } catch (error) {
+      console.error("Login error:", error);
+
+      if (error.response?.data) {
+        const { message } = error.response.data;
+
+        if (message === "Merchant not found.") {
+          setErrors({ identifier: "Account not found" });
+        } else if (message === "Invalid password.") {
+          setErrors({ password: "Invalid password" });
+        } else {
+          setApiError(message || "Login failed. Please try again.");
+        }
+      } else {
+        setApiError(error.message || "Network error. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,10 +154,8 @@ const Partner = () => {
           {/* Left Side - Sliding Content */}
           <div className="flex-1 flex items-center justify-center p-8">
             <div className="text-center text-white max-w-md">
-              <div className="flex items-center justify-center mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg mr-3">
-                  <Utensils className="w-8 h-8 text-white" />
-                </div>
+              <div className="flex items-center gap-3 justify-center mb-6">
+                <img src={logo} alt="Orado Logo" className="h-10 w-auto" />
                 <span className="text-4xl font-bold">Orado</span>
               </div>
 
@@ -101,20 +192,55 @@ const Partner = () => {
             <div className="w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden">
               <div className="p-6">
                 <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-                  Partner Login
+                  Merchant Login
                 </h2>
-                <div className="space-y-4">
+
+                {apiError && (
+                  <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md flex items-start">
+                    <AlertCircle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>{apiError}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Email
-                    </label>
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm font-medium text-gray-700">
+                        {identifierType === "email" ? "Email" : "Phone Number"}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={toggleIdentifierType}
+                        className="text-xs text-orange-600 hover:text-orange-700"
+                      >
+                        Use {identifierType === "email" ? "Phone" : "Email"} instead
+                      </button>
+                    </div>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      {identifierType === "email" ? (
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      ) : (
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      )}
                       <input
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Enter your email"
-                        type="email"
+                        name="identifier"
+                        value={loginData.identifier}
+                        onChange={handleInputChange}
+                        className={`flex h-10 w-full rounded-md border ${
+                          errors.identifier ? "border-red-500" : "border-input"
+                        } bg-background px-3 py-2 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}
+                        placeholder={
+                          identifierType === "email" 
+                            ? "Enter your email" 
+                            : "Enter your phone number"
+                        }
+                        type={identifierType === "email" ? "email" : "tel"}
                       />
+                      {errors.identifier && (
+                        <p className="text-xs text-red-500 mt-1">
+                          {errors.identifier}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -125,16 +251,30 @@ const Partner = () => {
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        name="password"
+                        value={loginData.password}
+                        onChange={handleInputChange}
+                        className={`flex h-10 w-full rounded-md border ${
+                          errors.password ? "border-red-500" : "border-input"
+                        } bg-background px-3 py-2 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}
                         placeholder="Enter your password"
                         type="password"
                       />
+                      {errors.password && (
+                        <p className="text-xs text-red-500 mt-1">
+                          {errors.password}
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white h-10 px-4 py-2 w-full">
-                    Login
-                    <ArrowRight className="ml-2 w-4 h-4" />
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white h-10 px-4 py-2 w-full"
+                  >
+                    {isLoading ? "Logging in..." : "Login"}
+                    {!isLoading && <ArrowRight className="ml-2 w-4 h-4" />}
                   </button>
 
                   <div className="text-center">
@@ -142,13 +282,14 @@ const Partner = () => {
                       Don't have an account?{" "}
                     </span>
                     <button
+                      type="button"
                       onClick={() => setIsRegisterModalOpen(true)}
                       className="text-sm text-orange-600 hover:text-orange-700 font-medium"
                     >
                       Register here
                     </button>
                   </div>
-                </div>
+                </form>
               </div>
             </div>
           </div>
@@ -164,7 +305,7 @@ const Partner = () => {
               <div className="mb-4">
                 <p className="text-gray-600 text-sm">In just 3 easy steps</p>
                 <h3 className="text-xl font-bold text-gray-800">
-                  Get your restaurant delivery-ready in 24hrs!
+                  Get your business ready in 24hrs!
                 </h3>
                 <div className="w-12 h-1 bg-orange-500 mt-2"></div>
               </div>
@@ -178,7 +319,7 @@ const Partner = () => {
                     <div>
                       <span className="text-xs text-gray-600">STEP 1</span>
                       <p className="font-semibold text-gray-800">
-                        Install the Orado Owner App
+                        Install the Orado Merchant App
                       </p>
                     </div>
                   </div>
@@ -192,7 +333,7 @@ const Partner = () => {
                     <div>
                       <span className="text-xs text-gray-600">STEP 2</span>
                       <p className="font-semibold text-gray-800">
-                        Login/Register using your phone number
+                        Login/Register using your phone number or email
                       </p>
                     </div>
                   </div>
@@ -206,7 +347,7 @@ const Partner = () => {
                     <div>
                       <span className="text-xs text-gray-600">STEP 3</span>
                       <p className="font-semibold text-gray-800">
-                        Enter restaurant details
+                        Enter business details
                       </p>
                     </div>
                   </div>
@@ -230,20 +371,20 @@ const Partner = () => {
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
                     <span className="text-sm text-gray-700">
-                      FSSAI License copy
+                      Business license copy
                     </span>
                   </div>
 
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
                     <span className="text-sm text-gray-700">
-                      GSTIN certificate
+                      Tax identification
                     </span>
                   </div>
 
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
-                    <span className="text-sm text-gray-700">PAN card copy</span>
+                    <span className="text-sm text-gray-700">ID proof</span>
                   </div>
                 </div>
               </div>

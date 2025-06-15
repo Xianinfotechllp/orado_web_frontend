@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MapPin, X } from "lucide-react";
-import LocationPicker from "../../map/LocationPicker";
+import LocationPicker from "../../../map/LocationPicker";
 
 const LocationInput = ({ onLocationSelect }) => {
   const [showMapModal, setShowMapModal] = useState(false);
@@ -120,12 +120,11 @@ const LocationInput = ({ onLocationSelect }) => {
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-gray-700">Location*</label>
       <div className="relative" ref={dropdownRef}>
         <div className="flex items-center">
           <input
             ref={inputRef}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
             placeholder="Search for a location in India or click the map icon"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
