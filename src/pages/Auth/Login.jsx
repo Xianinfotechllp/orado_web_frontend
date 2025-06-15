@@ -6,28 +6,24 @@ import { setUser } from "../../slices/authSlice";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../apis/authApi";
 function Login() {
-
-    const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const dispatch = useDispatch()
-  const handleLogin  = async() =>
-  {
+  const dispatch = useDispatch();
+  const handleLogin = async () => {
     try {
       const res = await loginUser(email,password)
            console.log(res);
            dispatch(setUser({ token: res.token, user: res.user}))
           navigate("/");
+
     } catch (error) {
-         console.error("Login error", error);
-           setMessage(error.message || "Login failed");  // error message from backend
-
+      console.error("Login error", error);
+      setMessage(error.message || "Login failed"); // error message from backend
     }
-  }
-
-
+  };
 
   return (
     <div>
@@ -52,16 +48,16 @@ function Login() {
               <input
                 type="text"
                 placeholder="Email"
-                 value={email}
-  onChange={(e) => setEmail(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="border border-gray-300 p-3 rounded outline-none w-full focus:border-l-4 focus:border-[#EA4424]"
               />
 
               <input
                 type="password"
                 placeholder="Password"
-                  value={password}
-  onChange={(e) => setPassword(e.target.value)}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="border border-gray-300 p-3 rounded outline-none w-full focus:border-l-4 focus:border-[#EA4424]"
               />
 
@@ -80,22 +76,25 @@ function Login() {
               </div>
             </div>
             <div className="flex  gap-5 mt-8">
-              <button className="bg-[#EA4424] px-8 py-2 text-white"  onClick={handleLogin} >
+              <button
+                className="bg-[#EA4424] px-8 py-2 text-white"
+                onClick={handleLogin}
+              >
                 Login
               </button>
               <Link to="/signup">
-              <button className="px-8 py-2 border-[#EA4424] border text-[#EA4424]">
-                Signup
-              </button>
-               </Link>
+                <button className="px-8 py-2 border-[#EA4424] border text-[#EA4424]">
+                  Signup
+                </button>
+              </Link>
             </div>
             {message && (
-  <div className="mt-4 text-center text-[#EA4424] font-semibold">
-    {message}
-  </div>
-)}
+              <div className="mt-4 text-center text-[#EA4424] font-semibold">
+                {message}
+              </div>
+            )}
           </div>
-           
+
           <div className="hidden md:block w-1/2 bg-[#FDFCDB] h-screen">
             <img src={deliveryBoy} alt="" />
           </div>

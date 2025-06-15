@@ -1,7 +1,7 @@
 
 import { MapPin, Truck, Utensils, Pizza } from "lucide-react";
 import { Link } from "react-router-dom";
-
+import logo from "../../assets/oradoLogo.png"; 
 export default function About() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50">
@@ -9,15 +9,14 @@ export default function About() {
       <header className="bg-white/80 backdrop-blur-sm border-b border-orange-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg rotate-12 hover:rotate-0 transition-transform duration-300">
-                <Utensils className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+            
+             <div className="flex items-center gap-3">
+                    <img src={logo} alt="Orado Logo" className="h-10 w-auto" />
+                    {/* <span className="text-2xl font-semibold text-gray-800">Orado</span> */}
+                    <span className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                 Orado
               </span>
-            </div>
+                  </div>
           </div>
         </div>
       </header>
