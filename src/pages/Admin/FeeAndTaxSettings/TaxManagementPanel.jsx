@@ -1,19 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search, Filter, RefreshCw } from 'lucide-react';
+import { addTax, deleteTax, editTax, getAllTaxes, toggleTaxStatus } from '../../../apis/adminApis/taxApi';
 
 const TaxManagementPanel = () => {
-  const [taxes, setTaxes] = useState([
-    { id: 1, name: 'Food GST', percentage: 5, applicableFor: 'food', status: 'active', createdAt: '2024-01-15' },
-    { id: 2, name: 'Beverage Tax', percentage: 12, applicableFor: 'beverages', status: 'active', createdAt: '2024-01-16' },
-    { id: 3, name: 'Delivery Charge Tax', percentage: 18, applicableFor: 'deliveryFee', status: 'inactive', createdAt: '2024-01-17' },
-  ]);
-  
+  const [taxes, setTaxes] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTax, setEditingTax] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [apiError, setApiError] = useState(null);
 
+ useEffect(() => {
+  const loadTaxes = async () => {
+    try {
+      setIsLoading(true);
+      const response = await getAllTaxes();
+      const formattedTaxes = response.data.map(tax => ({
+        _id: tax._id,
+        name: tax.name || 'Unnamed Tax',
+        percentage: tax.rate || tax.percentage || 0,
+        applicableFor: tax.category || tax.applicableFor || 'other',
+        active: tax.isActive !== undefined ? tax.isActive : tax.active || false, // Ensure proper fallback
+        createdAt: tax.createdAt || new Date().toISOString()
+      }));
+      setTaxes(formattedTaxes);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error loading taxes:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  loadTaxes();
+}, []);
   const categories = [
     { value: 'food', label: 'Food Items', color: 'bg-green-100 text-green-800' },
     { value: 'beverages', label: 'Beverages', color: 'bg-blue-100 text-blue-800' },
@@ -27,10 +51,21 @@ const TaxManagementPanel = () => {
   const getCategoryInfo = (value) => categories.find(cat => cat.value === value) || { label: value, color: 'bg-gray-100 text-gray-800' };
 
   const filteredTaxes = taxes.filter(tax => {
-    const matchesSearch = tax.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         getCategoryInfo(tax.applicableFor).label.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || tax.status === filterStatus;
+    if (!tax) return false;
+    
+    const taxName = tax.name?.toLowerCase() || '';
+    const categoryLabel = getCategoryInfo(tax.applicableFor).label?.toLowerCase() || '';
+    const searchTermLower = searchTerm.toLowerCase();
+
+    const matchesSearch = taxName.includes(searchTermLower) || 
+                         categoryLabel.includes(searchTermLower);
+    
+    const matchesStatus = filterStatus === 'all' || 
+                         (filterStatus === 'active' && tax.active) || 
+                         (filterStatus === 'inactive' && !tax.active);
+    
     const matchesCategory = filterCategory === 'all' || tax.applicableFor === filterCategory;
+    
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
@@ -44,19 +79,81 @@ const TaxManagementPanel = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteTax = (id) => {
+  const handleDeleteTax = async (id) => {
     if (window.confirm('Are you sure you want to delete this tax?')) {
-      setTaxes(taxes.filter(tax => tax.id !== id));
+      try {
+        await deleteTax(id);
+        setTaxes(prevTaxes => prevTaxes.filter(tax => tax._id !== id));
+      } catch (error) {
+        console.error('Error deleting tax:', error);
+        alert('Failed to delete tax. Please try again.');
+      }
     }
   };
 
-  const handleToggleStatus = (id) => {
+const handleToggleStatus = async (taxId) => {
+  try {
+    const { data } = await toggleTaxStatus(taxId); // Destructure the response
+    console.log("Updated tax data:", data); // Verify the structure
+    
     setTaxes(taxes.map(tax => 
-      tax.id === id 
-        ? { ...tax, status: tax.status === 'active' ? 'inactive' : 'active' }
+      tax._id === taxId 
+        ? { ...tax, active: data.active } // Use data.active from response
         : tax
     ));
-  };
+  } catch (error) {
+    console.error('Error toggling tax status:', error);
+    alert('Failed to toggle tax status. Please try again.');
+  }
+};
+const handleSaveTax = async (taxData) => {
+  try {
+    setApiError(null);
+    if (taxData._id) {
+      // Editing existing tax
+      console.log("Editing tax with data:", taxData);
+      const updatedTax = await editTax({
+        _id: taxData._id,
+        name: taxData.name,
+        applicableFor: taxData.applicableFor,
+        percentage: taxData.percentage
+      });
+      
+      setTaxes(taxes.map(tax => 
+        tax._id === taxData._id 
+          ? { 
+              ...tax, 
+              name: updatedTax.data.name,
+              applicableFor: updatedTax.data.applicableFor,
+              percentage: updatedTax.data.percentage
+            }
+          : tax
+      ));
+    } else {
+      // Adding new tax
+      console.log("Adding new tax with data:", taxData);
+      const response = await addTax({
+        name: taxData.name,
+        applicableFor: taxData.applicableFor,
+        percentage: taxData.percentage
+      });
+      
+      setTaxes([...taxes, {
+        _id: response.data._id,
+        name: response.data.name,
+        applicableFor: response.data.applicableFor,
+        percentage: response.data.percentage,
+        active: true,
+        createdAt: new Date().toISOString()
+      }]);
+    }
+    setIsModalOpen(false);
+  } catch (error) {
+    console.error("Failed to save tax:", error);
+    setApiError(error.response?.data?.message || "Failed to save tax");
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -113,7 +210,10 @@ const TaxManagementPanel = () => {
               ))}
             </select>
 
-            <button className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
             </button>
@@ -142,7 +242,7 @@ const TaxManagementPanel = () => {
               <div className="ml-4">
                 <p className="text-sm text-gray-600">Active Taxes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {taxes.filter(tax => tax.status === 'active').length}
+                  {taxes.filter(tax => tax.active).length}
                 </p>
               </div>
             </div>
@@ -156,7 +256,7 @@ const TaxManagementPanel = () => {
               <div className="ml-4">
                 <p className="text-sm text-gray-600">Inactive Taxes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {taxes.filter(tax => tax.status === 'inactive').length}
+                  {taxes.filter(tax => !tax.active).length}
                 </p>
               </div>
             </div>
@@ -195,7 +295,7 @@ const TaxManagementPanel = () => {
                 {filteredTaxes.map(tax => {
                   const categoryInfo = getCategoryInfo(tax.applicableFor);
                   return (
-                    <tr key={tax.id} className="hover:bg-gray-50">
+                    <tr key={tax._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div className="font-medium text-gray-900">{tax.name}</div>
                       </td>
@@ -207,20 +307,30 @@ const TaxManagementPanel = () => {
                           {categoryInfo.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => handleToggleStatus(tax.id)}
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                            tax.status === 'active'
-                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                              : 'bg-red-100 text-red-800 hover:bg-red-200'
-                          }`}
-                        >
-                          {tax.status === 'active' ? 'Active' : 'Inactive'}
-                        </button>
-                      </td>
+                     <td className="px-6 py-4">
+  <label htmlFor={`toggle-${tax._id}`} className="flex items-center cursor-pointer">
+    <div className="relative">
+      <input
+        type="checkbox"
+        id={`toggle-${tax._id}`}
+        className="sr-only"
+        checked={tax.active}
+        onChange={() => handleToggleStatus(tax._id)}
+      />
+      <div className={`block w-10 h-6 rounded-full transition-colors ${
+        tax.active ? 'bg-green-500' : 'bg-gray-300'
+      }`}></div>
+      <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition ${
+        tax.active ? 'transform translate-x-4' : ''
+      }`}></div>
+    </div>
+    <div className="ml-3 text-sm font-medium text-gray-700">
+      {tax.active ? 'Active' : 'Inactive'}
+    </div>
+  </label>
+</td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {tax.createdAt}
+                        {new Date(tax.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
@@ -232,7 +342,7 @@ const TaxManagementPanel = () => {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteTax(tax.id)}
+                            onClick={() => handleDeleteTax(tax._id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Delete Tax"
                           >
@@ -264,33 +374,17 @@ const TaxManagementPanel = () => {
         <TaxModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSave={(taxData) => {
-            if (editingTax) {
-              setTaxes(taxes.map(tax => 
-                tax.id === editingTax.id 
-                  ? { ...tax, ...taxData }
-                  : tax
-              ));
-            } else {
-              const newTax = {
-                ...taxData,
-                id: Math.max(...taxes.map(t => t.id)) + 1,
-                status: 'active',
-                createdAt: new Date().toISOString().split('T')[0]
-              };
-              setTaxes([...taxes, newTax]);
-            }
-            setIsModalOpen(false);
-          }}
+          onSave={handleSaveTax}
           taxToEdit={editingTax}
           categories={categories}
+          apiError={apiError}
         />
       )}
     </div>
   );
 };
 
-const TaxModal = ({ isOpen, onClose, onSave, taxToEdit, categories }) => {
+const TaxModal = ({ isOpen, onClose, onSave, taxToEdit, categories, apiError }) => {
   const [formData, setFormData] = useState({
     name: '',
     percentage: '',
@@ -332,17 +426,18 @@ const TaxModal = ({ isOpen, onClose, onSave, taxToEdit, categories }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      onSave({
-        name: formData.name.trim(),
-        percentage: parseFloat(formData.percentage),
-        applicableFor: formData.applicableFor
-      });
-    }
-  };
-
+ const handleSubmit = (e) => {
+  e.preventDefault();
+  if (validateForm()) {
+    onSave({
+      // Include _id when editing
+      ...(taxToEdit && { _id: taxToEdit._id }),
+      name: formData.name.trim(),
+      applicableFor: formData.applicableFor,
+      percentage: parseFloat(formData.percentage)
+    });
+  }
+};
   if (!isOpen) return null;
 
   return (
@@ -363,6 +458,12 @@ const TaxModal = ({ isOpen, onClose, onSave, taxToEdit, categories }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {apiError && (
+            <div className="p-3 bg-red-100 text-red-700 rounded-lg">
+              {apiError}
+            </div>
+          )}
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tax Name
@@ -387,7 +488,7 @@ const TaxModal = ({ isOpen, onClose, onSave, taxToEdit, categories }) => {
               type="number"
               step="0.01"
               min="0"
-              max="100"
+              max="100" 
               value={formData.percentage}
               onChange={(e) => setFormData({ ...formData, percentage: e.target.value })}
               placeholder="0.00"
