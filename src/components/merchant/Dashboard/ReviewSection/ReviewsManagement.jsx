@@ -3,6 +3,8 @@ import { useSelector } from "react-redux";
 import {
   getRestaurantReviews,
   replyToFeedback,
+  getRestaurantProductReviews,
+  replyToProductReview,
 } from "../../../../apis/restaurantApi";
 import { Star, MessageCircle, Reply, Clock, User } from "lucide-react";
 import { toast } from "react-toastify";
@@ -14,6 +16,7 @@ const ReviewsManagement = () => {
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [selectedRestaurantIndex, setSelectedRestaurantIndex] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [productReviews, setProductReviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [replying, setReplying] = useState(false);
   const [error, setError] = useState(null);
@@ -32,7 +35,11 @@ const ReviewsManagement = () => {
     setSelectedRestaurant(restaurant);
     setSelectedRestaurantIndex(index);
     if (restaurant?.id) {
-      await fetchRestaurantReviews(restaurant.id);
+      if (activeTab === "Restaurant") {
+        await fetchRestaurantReviews(restaurant.id);
+      } else {
+        await fetchProductReviews(restaurant.id);
+      }
     }
   };
 
@@ -72,6 +79,44 @@ const ReviewsManagement = () => {
     }
   };
 
+  const fetchProductReviews = async (restaurantId) => {
+    if (!restaurantId) {
+      setError("Restaurant ID is required");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await getRestaurantProductReviews(restaurantId);
+      if (response?.data) {
+        const transformedReviews = response.data.map((review) => ({
+          id: review.reviewId,
+          customerName: review.user?.name || "Anonymous",
+          profileImage: null, // Add if available in your data
+          rating: review.rating,
+          comment: review.comment || "",
+          date: new Date(review.createdAt).toLocaleDateString(),
+          reply: review.reply || null,
+          repliedAt: review.repliedAt || null,
+          product: review.product, // Include product details
+          status: review.reply ? "replied" : "pending",
+        }));
+        setProductReviews(transformedReviews);
+        setError(null);
+      }
+    } catch (err) {
+      console.error("Failed to load product reviews:", err);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to load product reviews"
+      );
+      toast.error("Failed to load product reviews");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleReply = async (reviewId) => {
     if (!replyText[reviewId]?.trim()) {
       toast.error("Reply message is required");
@@ -86,22 +131,45 @@ const ReviewsManagement = () => {
     try {
       setReplying(true);
 
-      // Call the API to submit the reply
-      await replyToFeedback(currentRestaurantId, reviewId, replyText[reviewId]);
+      if (activeTab === "Restaurant") {
+        // Call the API to submit the reply for restaurant review
+        await replyToFeedback(
+          currentRestaurantId,
+          reviewId,
+          replyText[reviewId]
+        );
 
-      // Update local state if API call succeeds
-      setReviews(
-        reviews.map((review) =>
-          review.id === reviewId
-            ? {
-                ...review,
-                reply: replyText[reviewId],
-                status: "replied",
-                repliedAt: new Date().toISOString(),
-              }
-            : review
-        )
-      );
+        // Update local state if API call succeeds
+        setReviews(
+          reviews.map((review) =>
+            review.id === reviewId
+              ? {
+                  ...review,
+                  reply: replyText[reviewId],
+                  status: "replied",
+                  repliedAt: new Date().toISOString(),
+                }
+              : review
+          )
+        );
+      } else {
+        // Call the API to submit the reply for product review
+        await replyToProductReview(reviewId, replyText[reviewId]);
+
+        // Update local state if API call succeeds
+        setProductReviews(
+          productReviews.map((review) =>
+            review.id === reviewId
+              ? {
+                  ...review,
+                  reply: replyText[reviewId],
+                  status: "replied",
+                  repliedAt: new Date().toISOString(),
+                }
+              : review
+          )
+        );
+      }
 
       setReplyText({ ...replyText, [reviewId]: "" });
       toast.success("Reply submitted successfully");
@@ -117,10 +185,27 @@ const ReviewsManagement = () => {
     setReplyText({ ...replyText, [reviewId]: text });
   };
 
+  // Handle tab change
+  const handleTabChange = async (tab) => {
+    setActiveTab(tab);
+    if (selectedRestaurant?.id) {
+      if (tab === "Restaurant") {
+        await fetchRestaurantReviews(selectedRestaurant.id);
+      } else {
+        await fetchProductReviews(selectedRestaurant.id);
+      }
+    }
+  };
+
+  // Get the current reviews based on active tab
+  const currentReviews = activeTab === "Restaurant" ? reviews : productReviews;
+
   const filteredReviews =
     filterRating === "all"
-      ? reviews
-      : reviews.filter((review) => review.rating === parseInt(filterRating));
+      ? currentReviews
+      : currentReviews.filter(
+          (review) => review.rating === parseInt(filterRating)
+        );
 
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -134,14 +219,17 @@ const ReviewsManagement = () => {
   };
 
   const getAverageRating = () => {
-    if (reviews.length === 0) return 0;
-    const total = reviews.reduce((sum, review) => sum + review.rating, 0);
-    return (total / reviews.length).toFixed(1);
+    if (currentReviews.length === 0) return 0;
+    const total = currentReviews.reduce(
+      (sum, review) => sum + review.rating,
+      0
+    );
+    return (total / currentReviews.length).toFixed(1);
   };
 
   const getRatingCounts = () => {
     const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    reviews.forEach((review) => {
+    currentReviews.forEach((review) => {
       counts[review.rating]++;
     });
     return counts;
@@ -151,26 +239,29 @@ const ReviewsManagement = () => {
 
   return (
     <div className="space-y-6 pb-20">
-      <button
-        onClick={() => setActiveTab("Restaurant")}
-        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-          activeTab === "Restaurant" // Changed from "restaurant" to "Restaurant"
-            ? "bg-orange-500 text-white"
-            : "bg-white text-gray-700 hover:bg-gray-100"
-        }`}
-      >
-        Restaurant reviews
-      </button>
-      <button
-        onClick={() => setActiveTab("Product")}
-        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-          activeTab === "Product" // Changed from "assignable" to "Product"
-            ? "bg-orange-500 text-white"
-            : "bg-white text-gray-700 hover:bg-gray-100"
-        }`}
-      >
-        Product Reviews
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={() => handleTabChange("Restaurant")}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === "Restaurant"
+              ? "bg-orange-500 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+          }`}
+        >
+          Restaurant reviews
+        </button>
+        <button
+          onClick={() => handleTabChange("Product")}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === "Product"
+              ? "bg-orange-500 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+          }`}
+        >
+          Product Reviews
+        </button>
+      </div>
+
       {/* Restaurant Slider Component */}
       <RestaurantSlider
         onRestaurantSelect={handleRestaurantSelect}
@@ -197,7 +288,7 @@ const ReviewsManagement = () => {
                     Total Reviews
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {reviews.length}
+                    {currentReviews.length}
                   </p>
                 </div>
                 <MessageCircle className="w-8 h-8 text-blue-500" />
@@ -230,7 +321,7 @@ const ReviewsManagement = () => {
                     Pending Replies
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {reviews.filter((r) => !r.reply).length}
+                    {currentReviews.filter((r) => !r.reply).length}
                   </p>
                 </div>
                 <Clock className="w-8 h-8 text-orange-500" />
@@ -244,10 +335,10 @@ const ReviewsManagement = () => {
                     Response Rate
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {reviews.length > 0
+                    {currentReviews.length > 0
                       ? Math.round(
-                          (reviews.filter((r) => r.reply).length /
-                            reviews.length) *
+                          (currentReviews.filter((r) => r.reply).length /
+                            currentReviews.length) *
                             100
                         )
                       : 0}
@@ -274,8 +365,9 @@ const ReviewsManagement = () => {
                       className="bg-yellow-400 h-2 rounded-full"
                       style={{
                         width: `${
-                          reviews.length > 0
-                            ? (ratingCounts[rating] / reviews.length) * 100
+                          currentReviews.length > 0
+                            ? (ratingCounts[rating] / currentReviews.length) *
+                              100
                             : 0
                         }%`,
                       }}
@@ -346,10 +438,23 @@ const ReviewsManagement = () => {
                     </div>
                   </div>
 
+                  {activeTab === "Product" && review.product && (
+                    <div className="mb-3">
+                      <p className="text-sm font-medium text-gray-800">
+                        Product: {review.product.name}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Price: ${review.product.price}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="mb-3">
-                    <p className="text-sm text-gray-600 mb-1">
-                      Order: {review.orderItem || "Not specified"}
-                    </p>
+                    {activeTab === "Restaurant" && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        Order: {review.orderItem || "Not specified"}
+                      </p>
+                    )}
                     <p className="text-gray-800">{review.comment}</p>
                   </div>
 
@@ -402,8 +507,8 @@ const ReviewsManagement = () => {
               <div className="text-center py-12">
                 <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">
-                  {reviews.length === 0
-                    ? "No reviews found for this restaurant."
+                  {currentReviews.length === 0
+                    ? `No ${activeTab.toLowerCase()} reviews found for this restaurant.`
                     : "No reviews found for the selected rating."}
                 </p>
               </div>

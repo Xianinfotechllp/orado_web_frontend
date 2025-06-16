@@ -237,6 +237,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                   placeholder={
                     formData.type === "percentage" ? "e.g. 20" : "e.g. 100"
                   }
+                   onWheel={(e) => e.target.blur()} 
                 />
                 <span className="absolute right-3 top-2.5 text-gray-500">
                   {formData.type === "percentage" ? "%" : "₹"}
@@ -264,6 +265,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                   errors.maxDiscount ? "border-red-500" : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-orange-500`}
                 placeholder="e.g. 200"
+                 onWheel={(e) => e.target.blur()} 
               />
               {errors.maxDiscount && (
                 <p className="mt-1 text-sm text-red-600">
@@ -290,6 +292,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                 errors.minOrderValue ? "border-red-500" : "border-gray-300"
               } focus:outline-none focus:ring-2 focus:ring-orange-500`}
               placeholder="e.g. 500"
+               onWheel={(e) => e.target.blur()} 
             />
             {errors.minOrderValue && (
               <p className="mt-1 text-sm text-red-600">
@@ -358,6 +361,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                     : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-orange-500`}
                 placeholder="No limit if empty"
+                 onWheel={(e) => e.target.blur()} 
               />
               {errors.usageLimitPerUser && (
                 <p className="mt-1 text-sm text-red-600">
@@ -379,6 +383,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                   errors.totalUsageLimit ? "border-red-500" : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-orange-500`}
                 placeholder="No limit if empty"
+                 onWheel={(e) => e.target.blur()} 
               />
               {errors.totalUsageLimit && (
                 <p className="mt-1 text-sm text-red-600">

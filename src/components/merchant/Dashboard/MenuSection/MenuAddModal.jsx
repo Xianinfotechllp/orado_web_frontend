@@ -159,6 +159,8 @@ const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
                 type="number"
                 step="0.01"
                 className="w-full p-2 border rounded"
+                 onWheel={(e) => e.target.blur()} 
+
               />
               {errors.price && (
                 <p className="text-red-500 text-xs mt-1">{errors.price}</p>
@@ -235,6 +237,7 @@ const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
                   type="number"
                   min="0"
                   className="w-full p-2 border rounded"
+                   onWheel={(e) => e.target.blur()} 
                 />
               </div>
 
@@ -249,6 +252,7 @@ const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
                   type="number"
                   min="0"
                   className="w-full p-2 border rounded"
+                   onWheel={(e) => e.target.blur()} 
                 />
               </div>
             </div>

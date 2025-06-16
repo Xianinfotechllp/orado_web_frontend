@@ -311,6 +311,9 @@ const CategoryManagement = () => {
         showAddModal={showAddModal}
         setShowAddModal={setShowAddModal}
         restaurantId={selectedRestaurantId}
+        onCategoryAdded={(newCategory) => {
+          setCategories((prev) => [...prev, newCategory]);
+        }}
       />
 
       {/* Edit Category Modal */}

@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import AddServiceModal from "./AddServiceModal";
 import RestaurantSlider from "../Slider/RestaurantSlider";
 import { getServiceAreas } from "../../../../apis/restaurantApi";
+import PolygonMap from "./PolygonMap";
 
 // Set Mapbox access token
-mapboxgl.accessToken =
-  "pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w";
+mapboxgl.accessToken = "pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w";
 
 const ServiceAreaManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,126 +15,7 @@ const ServiceAreaManagement = () => {
   const [restaurants, setRestaurants] = useState([]);
   const [serviceAreas, setServiceAreas] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [mapLoaded, setMapLoaded] = useState(false);
-
-  const mapContainer = useRef(null);
-  const map = useRef(null);
-
-  useEffect(() => {
-    if (!mapContainer.current || map.current) return;
-
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v11",
-      center: [76.32, 10.0],
-      zoom: 12,
-    });
-
-    map.current.on("load", () => {
-      setMapLoaded(true);
-    });
-
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!mapLoaded || !map.current) return;
-
-    // Clear existing layers and sources
-    const existingLayers = map.current.getStyle().layers || [];
-    existingLayers.forEach((layer) => {
-      if (layer.id.startsWith("service-area-")) {
-        map.current.removeLayer(layer.id);
-      }
-    });
-
-    const existingSources = Object.keys(map.current.getStyle().sources);
-    existingSources.forEach((source) => {
-      if (source.startsWith("service-area-")) {
-        map.current.removeSource(source);
-      }
-    });
-
-    if (serviceAreas.length === 0) return;
-
-    const bounds = new mapboxgl.LngLatBounds();
-    let hasBounds = false;
-
-    serviceAreas.forEach((area, index) => {
-      try {
-        const sourceId = `service-area-${index}`;
-        const layerId = `service-area-layer-${index}`;
-
-        // Handle both possible data structures
-        const coordinates = area.geometry?.coordinates || area.coordinates;
-        const properties = area.properties || {};
-
-        if (!coordinates || !Array.isArray(coordinates)) {
-          console.error("Invalid coordinates format:", coordinates);
-          return;
-        }
-
-        map.current.addSource(sourceId, {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            geometry: {
-              type: "Polygon",
-              coordinates: coordinates,
-            },
-            properties: properties,
-          },
-        });
-
-        map.current.addLayer({
-          id: layerId,
-          type: "fill",
-          source: sourceId,
-          layout: {},
-          paint: {
-            "fill-color": "#0080ff",
-            "fill-opacity": 0.3,
-          },
-        });
-
-        map.current.addLayer({
-          id: `${layerId}-outline`,
-          type: "line",
-          source: sourceId,
-          layout: {},
-          paint: {
-            "line-color": "#0080ff",
-            "line-width": 2,
-          },
-        });
-
-        coordinates[0].forEach((coord) => {
-          bounds.extend(coord);
-          hasBounds = true;
-        });
-      } catch (error) {
-        console.error("Error rendering service area:", error);
-      }
-    });
-
-    if (hasBounds) {
-      map.current.fitBounds(bounds, {
-        padding: 50,
-        maxZoom: 14,
-      });
-    }
-  }, [serviceAreas, mapLoaded]);
-
-  useEffect(() => {
-    if (selectedRestaurant?.id) {
-      fetchServiceAreas();
-    }
-  }, [selectedRestaurant]);
+  const [selectedArea, setSelectedArea] = useState(null);
 
   const fetchServiceAreas = async () => {
     if (!selectedRestaurant?.id) return;
@@ -143,24 +24,7 @@ const ServiceAreaManagement = () => {
     try {
       const response = await getServiceAreas(selectedRestaurant.id);
       if (response.messageType === "success") {
-        // Normalize the data structure
-        const normalizedAreas =
-          response.data?.map((area) => {
-            if (area.geometry) return area;
-            return {
-              geometry: {
-                type: "Polygon",
-                coordinates: area.coordinates,
-              },
-              properties: {
-                name: area.name,
-                description: area.description,
-                ...(area.properties || {}),
-              },
-            };
-          }) || [];
-
-        setServiceAreas(normalizedAreas);
+        setServiceAreas(response.data || []);
       }
     } catch (error) {
       console.error("Error fetching service areas:", error);
@@ -169,6 +33,12 @@ const ServiceAreaManagement = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (selectedRestaurant?.id) {
+      fetchServiceAreas();
+    }
+  }, [selectedRestaurant]);
 
   const handleAddService = () => {
     if (!selectedRestaurant) {
@@ -180,6 +50,7 @@ const ServiceAreaManagement = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setSelectedArea(null);
   };
 
   const handleServiceAdded = () => {
@@ -189,6 +60,7 @@ const ServiceAreaManagement = () => {
 
   const handleRestaurantSelect = (restaurant) => {
     setSelectedRestaurant(restaurant);
+    setSelectedArea(null);
   };
 
   const handleRestaurantsLoad = (restaurantList) => {
@@ -196,12 +68,19 @@ const ServiceAreaManagement = () => {
   };
 
   const handleEdit = (serviceArea) => {
-    console.log("Edit service area:", serviceArea);
+    setSelectedArea(serviceArea);
+    setIsModalOpen(true);
   };
 
-  const handleDelete = (serviceAreaId) => {
+  const handleDelete = async (serviceAreaId) => {
     if (window.confirm("Are you sure you want to delete this service area?")) {
-      console.log("Delete service area:", serviceAreaId);
+      try {
+        // TODO: Add delete API call here
+        console.log("Delete service area:", serviceAreaId);
+        await fetchServiceAreas();
+      } catch (error) {
+        console.error("Error deleting service area:", error);
+      }
     }
   };
 
@@ -278,101 +157,86 @@ const ServiceAreaManagement = () => {
     }
 
     return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center mb-4">
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold text-gray-800">Service Areas</h3>
-          <span className="text-sm text-gray-600">
-            {serviceAreas.length} area{serviceAreas.length !== 1 ? "s" : ""}{" "}
-            found
-          </span>
-        </div>
-        {serviceAreas.length > 0 && (
-          <div
-            ref={mapContainer}
-            className="w-full h-96 rounded-lg border border-gray-200 mb-4"
-          >
-            {!mapLoaded && (
-              <div className="flex items-center justify-center h-full bg-gray-50">
-                <div className="text-gray-500">Loading map...</div>
-              </div>
-            )}
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">
+              {serviceAreas.length} area{serviceAreas.length !== 1 ? "s" : ""} found
+            </span>
+            <button
+              onClick={handleAddService}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+            >
+              Add New Area
+            </button>
           </div>
-        )}
+        </div>
 
-        {serviceAreas.map((area, index) => (
-          <div
-            key={area._id || index}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
-          >
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h4 className="font-medium text-gray-800 mb-2">
-                  {area.name || `Service Area ${index + 1}`}
-                </h4>
-                {area.description && (
-                  <p className="text-gray-600 text-sm mb-2">
-                    {area.description}
-                  </p>
-                )}
-                {area.radius && (
-                  <p className="text-gray-500 text-sm">
-                    Radius: {area.radius} km
-                  </p>
-                )}
-                {area.areas && area.areas.length > 0 && (
-                  <div className="mt-2">
-                    <span className="text-sm text-gray-500">Areas: </span>
-                    <span className="text-sm text-gray-700">
-                      {area.areas.join(", ")}
-                    </span>
-                  </div>
-                )}
+        <div className="grid grid-cols-1 gap-6">
+          {serviceAreas.map((area, index) => (
+            <div
+              key={area._id || index}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+            >
+              <div className="h-64">
+                <PolygonMap polygonCoordinates={area.coordinates} />
               </div>
-
-              <div className="flex gap-2 ml-4">
-                <button
-                  onClick={() => handleEdit(area)}
-                  className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                  title="Edit service area"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                </button>
-
-                <button
-                  onClick={() => handleDelete(area._id)}
-                  className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
-                  title="Delete service area"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                </button>
+              <div className="p-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-gray-800 mb-1">
+                      {area.name || `Service Area ${index + 1}`}
+                    </h4>
+                    <p className="text-gray-500 text-sm">
+                      ID: {area._id || 'N/A'}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(area)}
+                      className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors duration-200"
+                      title="Edit service area"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(area._id)}
+                      className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors duration-200"
+                      title="Delete service area"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   };
@@ -394,6 +258,7 @@ const ServiceAreaManagement = () => {
           onClose={handleCloseModal}
           restaurantId={selectedRestaurant?.id}
           onServiceAdded={handleServiceAdded}
+          initialData={selectedArea}
         />
       </div>
     </>

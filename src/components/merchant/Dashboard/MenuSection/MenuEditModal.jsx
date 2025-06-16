@@ -21,7 +21,9 @@ const MenuEditModal = ({
     unit: "piece",
   });
   const [errors, setErrors] = useState({});
-  const [images, setImages] = useState([]);
+  const [newImages, setNewImages] = useState([]);
+  const [imagesToDelete, setImagesToDelete] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -33,14 +35,13 @@ const MenuEditModal = ({
         description: initialData.description || "",
         foodType: initialData.foodType || "",
         categoryId: initialData.categoryId || "",
-        stock:
-          initialData.stock !== undefined ? initialData.stock.toString() : "",
-        reorderLevel:
-          initialData.reorderLevel !== undefined
-            ? initialData.reorderLevel.toString()
-            : "",
+        stock: initialData.stock !== undefined ? initialData.stock.toString() : "",
+        reorderLevel: initialData.reorderLevel !== undefined
+          ? initialData.reorderLevel.toString()
+          : "",
         unit: initialData.unit || "piece",
       });
+      setExistingImages(initialData.images || []);
     }
   }, [initialData]);
 
@@ -81,8 +82,17 @@ const MenuEditModal = ({
   const handleImageChange = (e) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
-      setImages(filesArray);
+      setNewImages(filesArray);
     }
+  };
+
+  const handleDeleteExistingImage = (index) => {
+    setImagesToDelete(prev => [...prev, index]);
+    setExistingImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveNewImage = (index) => {
+    setNewImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -93,6 +103,7 @@ const MenuEditModal = ({
       setIsSubmitting(true);
       setError(null);
 
+      // Prepare the update payload
       const updatePayload = {
         ...formData,
         price: parseFloat(formData.price),
@@ -100,47 +111,61 @@ const MenuEditModal = ({
         reorderLevel: formData.reorderLevel
           ? parseInt(formData.reorderLevel, 10)
           : undefined,
-        images: images, 
+        newImages,
+        imagesToDelete,
+        replaceAll: newImages.length > 0 && imagesToDelete.length > 0
       };
 
+      // Optimistic update
+      const optimisticUpdate = {
+        ...initialData,
+        ...formData,
+        price: parseFloat(formData.price),
+        stock: formData.stock ? parseInt(formData.stock, 10) : undefined,
+        reorderLevel: formData.reorderLevel
+          ? parseInt(formData.reorderLevel, 10)
+          : undefined,
+        images: [
+          ...existingImages,
+          ...newImages.map(file => URL.createObjectURL(file))
+        ],
+        categoryName: categories.find(c => c._id === formData.categoryId)?.name || initialData.categoryName,
+      };
+      
+      onUpdateSuccess(optimisticUpdate);
+
+      // Send the actual API request
       const response = await updateProduct(initialData._id, updatePayload);
 
       if (response.product) {
+        // Final update with server response
+        onUpdateSuccess({
+          ...response.product,
+          categoryName: response.product.categoryName || optimisticUpdate.categoryName,
+        });
         toast.success(response.message || "Product updated successfully");
-        onUpdateSuccess(response.product);
-        setTimeout(() => {
-          onClose();
-        }, 100);
-      } else if (response.message) {
-        if (response.message.includes("permission")) {
-          toast.info(response.message);
-        } else {
-          toast.success(response.message);
-        }
-        onClose();
       } else {
-        const errorMessage = "Unexpected response format";
-        setError(errorMessage);
-        toast.error(errorMessage);
+        toast.success("Product updated successfully");
       }
+
+      // Close the modal after a slight delay for smoother UX
+      setTimeout(() => {
+        onClose();
+      }, 100);
     } catch (err) {
       console.error("Update error:", err);
+      
+      // Revert optimistic update on error
+      onUpdateSuccess(initialData);
 
-      if (err.response) {
-        const errorMessage =
-          err.response.data?.message ||
-          err.response.data?.error ||
-          "Failed to update product";
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.error || 
+                          err.message || 
+                          "Failed to update product";
 
-        if (err.response.status === 403) {
-          toast.info(errorMessage);
-          onClose();
-        } else {
-          setError(errorMessage);
-          toast.error(errorMessage);
-        }
+      if (err.response?.status === 403) {
+        toast.info(errorMessage);
       } else {
-        const errorMessage = err.message || "An unexpected error occurred";
         setError(errorMessage);
         toast.error(errorMessage);
       }
@@ -151,8 +176,9 @@ const MenuEditModal = ({
 
   return (
     <div 
-    style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}
-    className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+      style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}
+      className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
+    >
       <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] flex flex-col">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Edit Menu Item</h2>
@@ -199,6 +225,7 @@ const MenuEditModal = ({
                 type="number"
                 step="0.01"
                 className="w-full p-2 border rounded"
+                 onWheel={(e) => e.target.blur()} 
               />
               {errors.price && (
                 <p className="text-red-500 text-xs mt-1">{errors.price}</p>
@@ -218,9 +245,37 @@ const MenuEditModal = ({
               />
             </div>
 
+            {/* Existing Images */}
+            {existingImages.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Current Images
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {existingImages.map((img, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={img} 
+                        alt={`Product ${index}`} 
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteExistingImage(index)}
+                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* New Images */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Update Image
+                Add New Images
               </label>
               <input
                 type="file"
@@ -229,7 +284,26 @@ const MenuEditModal = ({
                 className="w-full p-2 border rounded"
                 accept="image/*"
               />
-              
+              {newImages.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {newImages.map((file, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`New image ${index}`}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveNewImage(index)}
+                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
@@ -278,6 +352,7 @@ const MenuEditModal = ({
                   type="number"
                   min="0"
                   className="w-full p-2 border rounded"
+                   onWheel={(e) => e.target.blur()} 
                 />
               </div>
 
@@ -292,6 +367,7 @@ const MenuEditModal = ({
                   type="number"
                   min="0"
                   className="w-full p-2 border rounded"
+                   onWheel={(e) => e.target.blur()} 
                 />
               </div>
             </div>

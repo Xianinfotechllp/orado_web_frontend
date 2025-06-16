@@ -203,6 +203,15 @@ export const logoutMerchant = async () => {
   }
 };
 
+export const changePassword = async (data) => {
+  try {
+    const response = await apiClient.post('/merchant/change-password', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getMerchantDetails = async (merchantId) => {
   try {
     const response = await apiClient.get(`/restaurants/${merchantId}`);
@@ -281,18 +290,24 @@ export const updateProduct = async (productId, productData) => {
   try {
     const formData = new FormData();
     
-    // Append all product data to formData
+    // Append all non-file fields
     Object.keys(productData).forEach(key => {
-      if (key === 'newImages' && productData[key]) {
-        productData[key].forEach(file => {
-          formData.append('files', file);
-        });
-      } else if (key === 'imagesToDelete' && productData[key]) {
-        formData.append(key, JSON.stringify(productData[key]));
-      } else if (productData[key] !== undefined && productData[key] !== null) {
+      if (key !== 'newImages' && key !== 'imagesToDelete' && productData[key] !== undefined) {
         formData.append(key, productData[key]);
       }
     });
+
+    // Append new images
+    if (productData.newImages && productData.newImages.length > 0) {
+      productData.newImages.forEach(file => {
+        formData.append('images', file); // Note: using 'images' instead of 'files'
+      });
+    }
+
+    // Append images to delete if any
+    if (productData.imagesToDelete && productData.imagesToDelete.length > 0) {
+      formData.append('imagesToDelete', JSON.stringify(productData.imagesToDelete));
+    }
 
     const response = await apiClient.put(`/restaurants/products/${productId}`, formData, {
       headers: {
@@ -406,9 +421,7 @@ export const editRestaurantCategory = async (restaurantId, categoryId, categoryD
 
 export const deleteRestaurantCategory = async (categoryId, restaurantId) => {
   try {
-    const response = await apiClient.delete(`/restaurants/categories/${categoryId}`, {
-      data: { restaurantId } // Send restaurantId in request body as expected by backend
-    });
+    const response = await apiClient.delete(`/restaurants/${restaurantId}/categories/${categoryId}`);
     return response.data;
   } catch (error) {
     console.error("Error deleting restaurant category:", error.response?.data || error.message);
@@ -525,6 +538,35 @@ export const getRestaurantReviews = async (restaurantId) => {
     return response.data;
   } catch (error) {
     console.error("Error fetching restaurant reviews:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const replyToProductReview = async (feedbackId, reply) => {
+  try {
+    const response = await apiClient.post(
+      `/feedback/product-feedback/${feedbackId}/reply`,
+      { reply }  // Make sure this matches exactly what backend expects
+    );
+    console.log("Product review reply submitted:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error submitting product review reply:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+
+export const getRestaurantProductReviews = async (restaurantId) => {
+  try {
+    const response = await apiClient.get(`/feedback/product/restaurants/${restaurantId}`);
+    console.log("Fetched restaurant product reviews:----------", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching restaurant product reviews:", error.response?.data || error.message);
     throw error;
   }
 };

@@ -11,6 +11,7 @@ const RestaurantSlider = ({
 }) => {
   const user = useSelector((state) => state.auth.user);
   const [restaurants, setRestaurants] = useState([]);
+  const [approvedRestaurants, setApprovedRestaurants] = useState([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState(selectedIndex);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -31,16 +32,20 @@ const RestaurantSlider = ({
         
         setRestaurants(restaurantData);
         
-        // If no selected restaurant and restaurants exist, select first one
-        if (selectedRestaurant === null && restaurantData.length > 0) {
+        // Filter only approved restaurants
+        const approved = restaurantData.filter(restaurant => restaurant.status === "approved");
+        setApprovedRestaurants(approved);
+        
+        // If no selected restaurant and approved restaurants exist, select first one
+        if (selectedRestaurant === null && approved.length > 0) {
           setSelectedRestaurant(0);
           // Notify parent component about restaurants load and initial selection
-          onRestaurantsLoad?.(restaurantData);
-          onRestaurantSelect?.(restaurantData[0], 0);
-        } else if (selectedRestaurant !== null && restaurantData.length > 0) {
+          onRestaurantsLoad?.(approved);
+          onRestaurantSelect?.(approved[0], 0);
+        } else if (selectedRestaurant !== null && approved.length > 0) {
           // If there's a selected index, notify parent
-          onRestaurantsLoad?.(restaurantData);
-          onRestaurantSelect?.(restaurantData[selectedRestaurant], selectedRestaurant);
+          onRestaurantsLoad?.(approved);
+          onRestaurantSelect?.(approved[selectedRestaurant], selectedRestaurant);
         }
       } catch (err) {
         setError(err.message);
@@ -69,7 +74,7 @@ const RestaurantSlider = ({
     updateUnderline();
     window.addEventListener("resize", updateUnderline);
     return () => window.removeEventListener("resize", updateUnderline);
-  }, [selectedRestaurant, restaurants]);
+  }, [selectedRestaurant, approvedRestaurants]);
 
   // Handle external selectedIndex changes
   useEffect(() => {
@@ -80,7 +85,7 @@ const RestaurantSlider = ({
 
   const handleRestaurantSelect = (index) => {
     setSelectedRestaurant(index);
-    const selectedRestaurantData = restaurants[index];
+    const selectedRestaurantData = approvedRestaurants[index];
     onRestaurantSelect?.(selectedRestaurantData, index);
   };
 
@@ -100,10 +105,10 @@ const RestaurantSlider = ({
     );
   }
 
-  if (restaurants.length === 0) {
+  if (approvedRestaurants.length === 0 && !loading) {
     return (
       <div className={`flex justify-center items-center h-16 ${className}`}>
-        <div className="text-gray-500">No restaurants found</div>
+        <div className="text-gray-500">No approved restaurants found</div>
       </div>
     );
   }
@@ -112,9 +117,9 @@ const RestaurantSlider = ({
     <div className={`flex space-x-4 ${className}`}>
       <div className="flex-1 relative">
         <div className="flex space-x-8 relative pb-4">
-          {restaurants.map((restaurant, index) => (
+          {approvedRestaurants.map((restaurant, index) => (
             <div
-              key={restaurant._id}
+              key={restaurant._id || restaurant.id}
               ref={(el) => (tabRefs.current[index] = el)}
               className={`cursor-pointer transition-all duration-300 relative restaurant-tab ${
                 index === selectedRestaurant
