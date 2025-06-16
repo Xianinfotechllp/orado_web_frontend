@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../../components/layout/Navbar";
-import HomeOrange from "../../assets/HomeOrange.png";
+import HomeOrange from "../../assets/homeOrange.png";
 import homeGirlimage from "../../assets/homeGirl.png";
 import RestaurantCard from "../../components/home/RestaurantCard";
 import { getRecommendedRestaurants, getRestaurantsByLocationAndCategory } from "../../apis/restaurantApi";
