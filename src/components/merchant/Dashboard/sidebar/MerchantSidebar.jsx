@@ -13,6 +13,7 @@ import {
 import logo from "../../../../assets/oradoLogo.png";
 import { useNavigate } from "react-router-dom";
 import { logoutMerchant } from "../../../../apis/restaurantApi";
+import { logout } from "../../../../slices/authSlice";
 
 const MerchantSidebar = ({ activeTab, setActiveTab }) => {
   const navigate = useNavigate();

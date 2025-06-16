@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
 import {
   createProduct,
   getRestaurantProducts,
@@ -11,8 +10,7 @@ import MenuAddModal from "./MenuAddModal";
 import MenuEditModal from "./MenuEditModal";
 import RestaurantSlider from "../Slider/RestaurantSlider";
 
-const MenuManagement = ({ restaurantId }) => {
-  const user = useSelector((state) => state.auth.user);
+const MenuManagement = () => {
   const [restaurants, setRestaurants] = useState([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [selectedRestaurantIndex, setSelectedRestaurantIndex] = useState(null);
@@ -35,7 +33,7 @@ const MenuManagement = ({ restaurantId }) => {
   const handleRestaurantSelect = async (restaurant, index) => {
     setSelectedRestaurant(restaurant);
     setSelectedRestaurantIndex(index);
-    
+
     if (restaurant?.id) {
       await fetchRestaurantProducts(restaurant.id);
     }
@@ -46,7 +44,7 @@ const MenuManagement = ({ restaurantId }) => {
       setLoading(true);
       const response = await getRestaurantProducts(restaurantId);
       console.log("Fetched products:-----------", response);
-      
+
       // Handle various possible response structures
       const products = Array.isArray(response?.data?.products)
         ? response.data.products
@@ -59,7 +57,7 @@ const MenuManagement = ({ restaurantId }) => {
         : [];
 
       // Keep ALL product fields instead of filtering them out
-      const validatedProducts = products.map(product => ({
+      const validatedProducts = products.map((product) => ({
         // Keep all original fields
         ...product,
         // Only add defaults for essential missing fields
@@ -70,12 +68,14 @@ const MenuManagement = ({ restaurantId }) => {
         images: Array.isArray(product?.images) ? product.images : [],
         active: product?.active !== false,
         foodType: product?.foodType || "Uncategorized",
-        // Preserve these important fields that were getting lost:
-        categoryId: product?.categoryId || "",
+        categoryId: product?.categoryId?._id || product?.categoryId || "",
+        categoryName: product?.categoryId?.name || "Uncategorized",
         stock: product?.stock ?? "",
         reorderLevel: product?.reorderLevel ?? "",
-        unit: product?.unit || "piece"
+        unit: product?.unit || "piece",
       }));
+
+      console.log("Validated products: ", validatedProducts);
 
       setMenuItems(validatedProducts);
     } catch (err) {
@@ -88,8 +88,13 @@ const MenuManagement = ({ restaurantId }) => {
     }
   };
 
+
+  
   const handleDelete = async (id) => {
-    if (!id || !window.confirm("Are you sure you want to delete this product?")) {
+    if (
+      !id ||
+      !window.confirm("Are you sure you want to delete this product?")
+    ) {
       return;
     }
 
@@ -101,32 +106,37 @@ const MenuManagement = ({ restaurantId }) => {
         toast.success("Product deleted successfully");
         setMenuItems((prev) => prev.filter((item) => item._id !== id));
       } else if (response?.message?.includes("permission")) {
-        toast.info("Your deletion request has been submitted for admin approval");
+        toast.info(
+          "Your deletion request has been submitted for admin approval"
+        );
       } else {
         throw new Error(response?.message || "Failed to delete product");
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || "Failed to delete product");
+      toast.error(
+        err.response?.data?.message || err.message || "Failed to delete product"
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleAvailability = (id) => {
-    setMenuItems((items) =>
-      items.map((item) =>
-        item._id === id ? { ...item, active: !item.active } : item
-      )
-    );
-  };
+  // const toggleAvailability = (id) => {
+  //   setMenuItems((items) =>
+  //     items.map((item) =>
+  //       item._id === id ? { ...item, active: !item.active } : item
+  //     )
+  //   );
+  // };
 
   const handleCreateProduct = async (productData) => {
     try {
       if (!currentRestaurantId) throw new Error("No restaurant selected");
-      
+
       const response = await createProduct(currentRestaurantId, productData);
-      const newProduct = response?.data?.product || response?.product || productData;
-      
+      const newProduct =
+        response?.data?.product || response?.product || productData;
+
       setMenuItems((prev) => [
         ...prev,
         {
@@ -136,15 +146,19 @@ const MenuManagement = ({ restaurantId }) => {
           price: newProduct?.price || 0,
           images: Array.isArray(newProduct?.images) ? newProduct.images : [],
           active: newProduct?.active !== false,
-          foodType: newProduct?.foodType || "Uncategorized"
-        }
+          foodType: newProduct?.foodType || "Uncategorized",
+        },
       ]);
-      
+
       setShowAddModal(false);
       toast.success("Menu item created successfully");
       return response;
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message || "Failed to create product");
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to create product"
+      );
       throw error;
     }
   };
@@ -158,22 +172,39 @@ const MenuManagement = ({ restaurantId }) => {
   };
 
   const handleUpdateSuccess = (updatedProduct) => {
-    if (!updatedProduct?._id) return;
-    
-    setMenuItems((prev) =>
-      prev.map((item) =>
-        item._id === updatedProduct._id ? {
-          ...item,
-          ...updatedProduct,
-          images: Array.isArray(updatedProduct?.images) ? updatedProduct.images : item.images,
-          active: updatedProduct?.active !== false
-        } : item
-      )
-    );
+  if (!updatedProduct?._id) return;
+
+  setMenuItems(prevItems => 
+    prevItems.map(item => 
+      item._id === updatedProduct._id
+        ? {
+            ...item,
+            ...updatedProduct,
+            // Ensure all critical fields are properly set
+            name: updatedProduct.name || item.name,
+            price: updatedProduct.price ?? item.price,
+            description: updatedProduct.description || item.description,
+            foodType: updatedProduct.foodType || item.foodType,
+            categoryId: updatedProduct.categoryId || item.categoryId,
+            categoryName: updatedProduct.categoryName || item.categoryName,
+            stock: updatedProduct.stock ?? item.stock,
+            reorderLevel: updatedProduct.reorderLevel ?? item.reorderLevel,
+            unit: updatedProduct.unit || item.unit,
+            images: Array.isArray(updatedProduct.images) 
+              ? updatedProduct.images 
+              : item.images,
+            active: updatedProduct.active !== false,
+          }
+        : item
+    )
+  );
+  
+  // Only close modal if we're not in optimistic update phase
+  if (!updatedProduct.isOptimistic) {
     setEditingProduct(null);
     setShowEditModal(false);
-    toast.success("Menu item updated successfully");
-  };
+  }
+};
 
   if (loading && restaurants.length === 0) {
     return (
@@ -200,9 +231,7 @@ const MenuManagement = ({ restaurantId }) => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
         </div>
       ) : error ? (
-        <div className="text-center py-12 text-red-500">
-          {error}
-        </div>
+        <div className="text-center py-12 text-red-500">{error}</div>
       ) : menuItems.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {menuItems.map((item) => (

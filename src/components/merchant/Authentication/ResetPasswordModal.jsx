@@ -1,18 +1,21 @@
-// components/ResetPasswordModal.jsx
+// components/ChangePasswordModal.jsx
 import React, { useState } from "react";
 import { X, Eye, EyeOff, Lock } from "lucide-react";
-import { resetPassword } from "../../../apis/restaurantApi";
+import { changePassword } from "../../../apis/restaurantApi";
 
-const ResetPasswordModal = ({ isOpen, onClose,token }) => {
-
-   const [formData, setFormData] = useState({
+const ChangePasswordModal = ({ isOpen, onClose }) => {
+  const [formData, setFormData] = useState({
+    currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+  
   const [showPasswords, setShowPasswords] = useState({
+    current: false,
     new: false,
     confirm: false,
   });
+  
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -41,6 +44,10 @@ const ResetPasswordModal = ({ isOpen, onClose,token }) => {
   const validateForm = () => {
     const newErrors = {};
 
+    if (!formData.currentPassword) {
+      newErrors.currentPassword = "Current password is required";
+    }
+
     if (!formData.newPassword) {
       newErrors.newPassword = "New password is required";
     } else if (formData.newPassword.length < 8) {
@@ -51,6 +58,11 @@ const ResetPasswordModal = ({ isOpen, onClose,token }) => {
       newErrors.confirmPassword = "Please confirm your new password";
     } else if (formData.newPassword !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    if (formData.currentPassword && formData.newPassword && 
+        formData.currentPassword === formData.newPassword) {
+      newErrors.newPassword = "New password must be different from current password";
     }
 
     setErrors(newErrors);
@@ -64,23 +76,22 @@ const ResetPasswordModal = ({ isOpen, onClose,token }) => {
 
     setLoading(true);
     try {
-      // Ensure token is properly passed
-      if (!token) {
-        throw new Error("Reset token is missing");
-      }
+      await changePassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+        confirmPassword: formData.confirmPassword
+      });
       
-      // Ensure the payload is properly structured
-      await resetPassword(token, { newPassword: formData.newPassword });
-      setSuccessMessage("Password has been reset successfully!");
+      setSuccessMessage("Password changed successfully!");
       setTimeout(() => {
         handleClose();
       }, 2000);
     } catch (error) {
       setErrors({
-        server:
+        server: 
           error.response?.data?.message ||
           error.message ||
-          "Failed to reset password. Please try again.",
+          "Failed to change password. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -89,11 +100,13 @@ const ResetPasswordModal = ({ isOpen, onClose,token }) => {
 
   const handleClose = () => {
     setFormData({
+      currentPassword: "",
       newPassword: "",
       confirmPassword: "",
     });
     setErrors({});
     setShowPasswords({
+      current: false,
       new: false,
       confirm: false,
     });
@@ -113,7 +126,7 @@ const ResetPasswordModal = ({ isOpen, onClose,token }) => {
               <Lock className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900">
-              Reset Password
+              Change Password
             </h2>
           </div>
           <button
@@ -133,6 +146,44 @@ const ResetPasswordModal = ({ isOpen, onClose,token }) => {
             </div>
           ) : (
             <>
+              {/* Current Password */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Current Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPasswords.current ? "text" : "password"}
+                    value={formData.currentPassword}
+                    onChange={(e) =>
+                      handleInputChange("currentPassword", e.target.value)
+                    }
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent pr-10 ${
+                      errors.currentPassword ? "border-red-300" : "border-gray-300"
+                    }`}
+                    placeholder="Enter your current password"
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility("current")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    disabled={loading}
+                  >
+                    {showPasswords.current ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {errors.currentPassword && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.currentPassword}
+                  </p>
+                )}
+              </div>
+
               {/* New Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -227,6 +278,17 @@ const ResetPasswordModal = ({ isOpen, onClose,token }) => {
                     ></span>
                     <span>At least 8 characters long</span>
                   </li>
+                  <li className="flex items-center space-x-1">
+                    <span
+                      className={`w-1 h-1 rounded-full ${
+                        formData.newPassword && 
+                        formData.currentPassword !== formData.newPassword
+                          ? "bg-green-500"
+                          : "bg-gray-300"
+                      }`}
+                    ></span>
+                    <span>Different from current password</span>
+                  </li>
                 </ul>
               </div>
 
@@ -257,7 +319,7 @@ const ResetPasswordModal = ({ isOpen, onClose,token }) => {
                       <span>Updating...</span>
                     </div>
                   ) : (
-                    "Reset Password"
+                    "Change Password"
                   )}
                 </button>
               </div>
@@ -269,4 +331,4 @@ const ResetPasswordModal = ({ isOpen, onClose,token }) => {
   );
 };
 
-export default ResetPasswordModal;
+export default ChangePasswordModal;

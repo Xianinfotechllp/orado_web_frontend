@@ -514,6 +514,7 @@ const RestaurantRegistration = ({ onBack, onComplete }) => {
                     className="w-full pl-8 px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
                     placeholder="100"
                     min="0"
+                     onWheel={(e) => e.target.blur()} 
                   />
                 </div>
               </div>

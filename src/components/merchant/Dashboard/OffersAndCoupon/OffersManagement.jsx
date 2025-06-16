@@ -43,14 +43,15 @@ const OffersManagement = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [editingOffer, setEditingOffer] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedOfferForAssignment, setSelectedOfferForAssignment] = useState(null);
+  const [selectedOfferForAssignment, setSelectedOfferForAssignment] =
+    useState(null);
   const [assignmentLoading, setAssignmentLoading] = useState({});
 
   useEffect(() => {
     const fetchAssignableOffers = async () => {
       try {
         const response = await getAssignableOffers();
-        
+
         if (response.success) {
           setAssignableOffers(response.offers || []);
         }
@@ -101,7 +102,9 @@ const OffersManagement = () => {
     try {
       await deleteRestaurantOffer(offerId, currentRestaurantId);
       toast.success("Offer deleted successfully!");
-      setRestaurantOffers(prev => prev.filter(offer => offer._id !== offerId));
+      setRestaurantOffers((prev) =>
+        prev.filter((offer) => offer._id !== offerId)
+      );
     } catch (error) {
       console.error("Error deleting offer:", error);
       toast.error(error.response?.data?.message || "Failed to delete offer");
@@ -173,50 +176,62 @@ const OffersManagement = () => {
       toast.error("Invalid offer selected");
       return;
     }
-    
+
     if (!restaurantId) {
       toast.error("Invalid restaurant ID");
       return;
     }
-    
+
     // Use the restaurant ID as key for loading state
-    const loadingKey = `${selectedOfferForAssignment._id || selectedOfferForAssignment.id}-${restaurantId}`;
-    
+    const loadingKey = `${
+      selectedOfferForAssignment._id || selectedOfferForAssignment.id
+    }-${restaurantId}`;
+
     try {
-      setAssignmentLoading(prev => ({ ...prev, [loadingKey]: true }));
-      
+      setAssignmentLoading((prev) => ({ ...prev, [loadingKey]: true }));
+
       // Use the correct offer ID (_id or id)
-      const offerId = selectedOfferForAssignment._id || selectedOfferForAssignment.id;
-      
-      console.log('Toggling assignment:', { offerId, restaurantId }); // Debug log
-      
+      const offerId =
+        selectedOfferForAssignment._id || selectedOfferForAssignment.id;
+
+      console.log("Toggling assignment:", { offerId, restaurantId }); // Debug log
+
       const response = await toggleOfferAssignment(offerId, restaurantId);
-      
+
       if (response.success) {
         // Update the assignable offers list
-        setAssignableOffers(prev => 
-          prev.map(offer => 
-            (offer._id === offerId || offer.id === offerId)
-              ? { ...offer, applicableRestaurants: response.offer?.applicableRestaurants || response.applicableRestaurants }
+        setAssignableOffers((prev) =>
+          prev.map((offer) =>
+            offer._id === offerId || offer.id === offerId
+              ? {
+                  ...offer,
+                  applicableRestaurants:
+                    response.offer?.applicableRestaurants ||
+                    response.applicableRestaurants,
+                }
               : offer
           )
         );
-        
+
         // Update the selected offer for assignment to reflect the change immediately
-        setSelectedOfferForAssignment(prev => ({
+        setSelectedOfferForAssignment((prev) => ({
           ...prev,
-          applicableRestaurants: response.offer?.applicableRestaurants || response.applicableRestaurants
+          applicableRestaurants:
+            response.offer?.applicableRestaurants ||
+            response.applicableRestaurants,
         }));
-        
+
         // If the current restaurant is affected, update restaurant offers too
         if (restaurantId === currentRestaurantId) {
-          const isNowAssigned = response.isAssigned ?? response.offer?.applicableRestaurants?.includes(restaurantId);
-          
+          const isNowAssigned =
+            response.isAssigned ??
+            response.offer?.applicableRestaurants?.includes(restaurantId);
+
           if (isNowAssigned) {
             // Check if offer already exists in restaurant offers to avoid duplicates
-            setRestaurantOffers(prev => {
-              const exists = prev.some(offer => 
-                (offer._id === offerId || offer.id === offerId)
+            setRestaurantOffers((prev) => {
+              const exists = prev.some(
+                (offer) => offer._id === offerId || offer.id === offerId
               );
               if (!exists) {
                 return [...prev, response.offer || selectedOfferForAssignment];
@@ -224,26 +239,34 @@ const OffersManagement = () => {
               return prev;
             });
           } else {
-            setRestaurantOffers(prev => 
-              prev.filter(offer => 
-                offer._id !== offerId && offer.id !== offerId
+            setRestaurantOffers((prev) =>
+              prev.filter(
+                (offer) => offer._id !== offerId && offer.id !== offerId
               )
             );
           }
         }
-        
-        const actionText = response.isAssigned ? 'assigned to' : 'unassigned from';
-        const restaurantName = restaurants.find(r => r._id === restaurantId || r.id === restaurantId)?.name || 'restaurant';
+
+        const actionText = response.isAssigned
+          ? "assigned to"
+          : "unassigned from";
+        const restaurantName =
+          restaurants.find(
+            (r) => r._id === restaurantId || r.id === restaurantId
+          )?.name || "restaurant";
         toast.success(`Offer ${actionText} ${restaurantName} successfully`);
       } else {
         toast.error(response.message || "Failed to toggle assignment");
       }
     } catch (error) {
       console.error("Error toggling offer assignment:", error);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to toggle assignment";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to toggle assignment";
       toast.error(errorMessage);
     } finally {
-      setAssignmentLoading(prev => {
+      setAssignmentLoading((prev) => {
         const newState = { ...prev };
         delete newState[loadingKey];
         return newState;
@@ -253,15 +276,18 @@ const OffersManagement = () => {
 
   const isRestaurantAssigned = (restaurantId) => {
     if (!selectedOfferForAssignment) return false;
-    const applicableRestaurants = selectedOfferForAssignment.applicableRestaurants || [];
+    const applicableRestaurants =
+      selectedOfferForAssignment.applicableRestaurants || [];
     return applicableRestaurants.some(
-      id => id.toString() === restaurantId.toString()
+      (id) => id.toString() === restaurantId.toString()
     );
   };
 
   return (
     <>
-      <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="p-6 bg-gray-50 min-h-screen pb-20">
+        {" "}
+        {/* Added pb-20 to prevent content from being hidden behind fixed button */}
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div className="flex space-x-4">
@@ -286,17 +312,6 @@ const OffersManagement = () => {
                 Available Offers
               </button>
             </div>
-
-            {activeTab === "restaurant" && (
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 flex items-center gap-2"
-                disabled={!currentRestaurantId}
-              >
-                <Plus className="w-5 h-5" />
-                Create Offer
-              </button>
-            )}
           </div>
 
           {/* Use RestaurantSlider component for restaurant selection when on restaurant tab */}
@@ -491,12 +506,24 @@ const OffersManagement = () => {
         </div>
       </div>
 
+      {/* Fixed Create Offer Button */}
+      {activeTab === "restaurant" && (
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="fixed bottom-6 right-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white p-4 rounded-full font-medium transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center z-50"
+          disabled={!currentRestaurantId}
+        >
+          <Tag className="w-6 h-6 mr-2" />
+          <span>Create Offer</span>
+        </button>
+      )}
+
       {showCreateModal && currentRestaurantId && (
         <OfferModal
           restaurantId={currentRestaurantId}
           onClose={() => setShowCreateModal(false)}
           onSuccess={(newOffer) => {
-            setRestaurantOffers(prev => [...prev, newOffer]);
+            setRestaurantOffers((prev) => [...prev, newOffer]);
             setShowCreateModal(false);
           }}
         />
@@ -508,7 +535,7 @@ const OffersManagement = () => {
           restaurantId={currentRestaurantId}
           onClose={() => setEditingOffer(null)}
           onUpdate={(updatedOffer) => {
-            setRestaurantOffers(prev =>
+            setRestaurantOffers((prev) =>
               prev.map((o) => (o._id === updatedOffer._id ? updatedOffer : o))
             );
             setEditingOffer(null);
@@ -538,7 +565,12 @@ const OffersManagement = () => {
                   {selectedOfferForAssignment.title}
                 </h4>
                 <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>Code: <span className="font-mono font-medium">{selectedOfferForAssignment.code}</span></span>
+                  <span>
+                    Code:{" "}
+                    <span className="font-mono font-medium">
+                      {selectedOfferForAssignment.code}
+                    </span>
+                  </span>
                   <span className="font-medium text-orange-600">
                     {calculateDiscountText(selectedOfferForAssignment)}
                   </span>
@@ -549,9 +581,12 @@ const OffersManagement = () => {
                 {restaurants.map((restaurant) => {
                   const restaurantId = restaurant._id || restaurant.id;
                   const isAssigned = isRestaurantAssigned(restaurantId);
-                  const loadingKey = `${selectedOfferForAssignment._id || selectedOfferForAssignment.id}-${restaurantId}`;
+                  const loadingKey = `${
+                    selectedOfferForAssignment._id ||
+                    selectedOfferForAssignment.id
+                  }-${restaurantId}`;
                   const isLoading = assignmentLoading[loadingKey];
-                  
+
                   return (
                     <div
                       key={restaurantId}
@@ -559,20 +594,27 @@ const OffersManagement = () => {
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-orange-400"></div>
-                        <span className="font-medium text-gray-900">{restaurant.name}</span>
+                        <span className="font-medium text-gray-900">
+                          {restaurant.name}
+                        </span>
                       </div>
-                      
+
                       <button
                         onClick={() => handleToggleAssignment(restaurantId)}
                         disabled={isLoading}
                         className={`
                           relative inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
                           transition-all duration-200 min-w-[100px] justify-center
-                          ${isAssigned
-                            ? 'bg-green-500 text-white hover:bg-green-600 shadow-sm'
-                            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                          ${
+                            isAssigned
+                              ? "bg-green-500 text-white hover:bg-green-600 shadow-sm"
+                              : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                           }
-                          ${isLoading ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'}
+                          ${
+                            isLoading
+                              ? "opacity-75 cursor-not-allowed"
+                              : "cursor-pointer"
+                          }
                         `}
                       >
                         {isLoading ? (

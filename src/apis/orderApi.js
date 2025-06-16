@@ -87,3 +87,24 @@ export const updateOrderStatus = async (orderId, newStatus) => {
     throw error;
   }
 };
+
+
+export const sendOrderDelayReason = async (orderId, delayReason, preparationTime = null) => {
+  try {
+    const requestBody = { delayReason };
+    
+    // Only include preparationTime if it's provided and valid
+    if (preparationTime !== null && typeof preparationTime === 'number' && preparationTime > 0) {
+      requestBody.preparationTime = preparationTime;
+    }
+
+    const response = await apiClient.patch(`/order/${orderId}/delay-reason`, requestBody);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "sendOrderDelayReason error:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
