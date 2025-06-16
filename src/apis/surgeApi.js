@@ -15,3 +15,20 @@ export const createSurgeArea = async (surgeData) => {
     throw error;
   }
 };
+
+
+
+
+
+export const getAllSurgeAreas = async () => {
+  try {
+    const response = await axios.get('http://localhost:5000/admin/surge-list');
+
+    return response.data;
+
+  } catch (error) {
+    console.error('Error in createSurgeArea API:', error);
+    throw error;
+  }
+};
+

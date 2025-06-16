@@ -47,6 +47,10 @@ import RestaurantEarningsTable from "./pages/Admin/RestaurantEarningsTable";
 import RestaurantListForOrders from "./pages/Admin/RestaurantListForOrders";
 import SurgeAreaSelector from "./pages/Admin/Surge/SurgeAreaSelector";
 import AdminNotificationSender from "./pages/Admin/notifications/AdminNotificationSender";
+import SurgeAreaList from "./pages/Admin/Surge/SurgeAreaList";
+import TaxManagementPanel from "./pages/Admin/FeeAndTaxSettings/TaxManagementPanel";
+import DeliveryFeeSettings from "./pages/Admin/FeeAndTaxSettings/DeliveryFeeSettings";
+
 
 function App() {
   const [count, setCount] = useState(0);
@@ -100,6 +104,14 @@ function App() {
           <Route path="admin-ticket" element={<Ticket />} />
           <Route path="access-logs" element={<AccessLogs />} />
           <Route path="admin-surge" element={<SurgeAreaSelector />} />
+          <Route path="admin-surge-list" element={<SurgeAreaList/>}    />
+
+          
+
+          <Route path="admin-tax-management" element={<TaxManagementPanel />}    />
+          <Route path="admin-deliveryfee-management" element={<DeliveryFeeSettings />}    />
+
+
 
           {/* admin-customer section */}
           <Route path="admin-customer-chat" element={<AdminCustomerChatDashboard />} />
