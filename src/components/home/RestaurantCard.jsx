@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Clock, IndianRupee, MapPin, ChefHat } from 'lucide-react';
+import { Star, Clock, IndianRupee, MapPin, ChefHat, Tag } from 'lucide-react';
 
 const RestaurantCard = ({ restaurant }) => {
   return (
@@ -29,24 +29,33 @@ const RestaurantCard = ({ restaurant }) => {
             <ChefHat className="w-3 h-3 text-white" />
             <span className="text-xs font-medium text-white">{restaurant.foodType}</span>
           </div>
+
+        {restaurant.offers && restaurant.offers.length > 0 && (
+  <div className="absolute bottom-4 left-4 bg-green-600/90 backdrop-blur-sm rounded-lg px-3 py-1.5 flex items-center space-x-1 shadow-lg">
+    <Tag className="w-3 h-3 text-white" />
+    <span className="text-xs font-medium text-white">
+      {restaurant.offers[0].title} {/* Display first offer */}
+      {restaurant.offers.length > 1 && (
+        <p>More offers</p>
+      )}
+    </span>
+  </div>
+)}
         </div>
 
-        {/* Content Section */}
+        {/* Rest of your component remains the same */}
         <div className="p-6">
-          {/* Restaurant Name */}
           <h3 className="text-xl font-bold text-gray-900 mb-3 truncate group-hover:text-orange-600 transition-colors duration-300">
             {restaurant.name}
           </h3>
 
-          {/* Info Grid */}
           <div className="space-y-3">
-            {/* Opening Hours */}
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-full flex items-center justify-center">
                 <Clock className="w-4 h-4 text-orange-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm text-gray-700">
+                {/* <div className="text-sm text-gray-700">
                   {restaurant.openingHours && restaurant.openingHours.length > 0 ? (
                     <div className="space-y-1">
                       {restaurant.openingHours.slice(0, 2).map(({ day, openingTime, closingTime, isClosed }) => {
@@ -73,13 +82,11 @@ const RestaurantCard = ({ restaurant }) => {
                   ) : (
                     <span className="text-gray-600">10 AM - 10 PM</span>
                   )}
-                </div>
+                </div> */}
               </div>
             </div>
 
-            {/* Bottom Row - Min Order & Distance */}
             <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-              {/* Min Order */}
               <div className="flex items-center space-x-2">
                 <div className="w-6 h-6 bg-green-50 rounded-full flex items-center justify-center">
                   <IndianRupee className="w-3 h-3 text-green-600" />
@@ -90,7 +97,6 @@ const RestaurantCard = ({ restaurant }) => {
                 </span>
               </div>
 
-              {/* Distance */}
               <div className="flex items-center space-x-2">
                 <div className="w-6 h-6 bg-blue-50 rounded-full flex items-center justify-center">
                   <MapPin className="w-3 h-3 text-blue-600" />
@@ -103,7 +109,6 @@ const RestaurantCard = ({ restaurant }) => {
           </div>
         </div>
 
-        {/* Hover Effect Border */}
         <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-orange-200 transition-colors duration-300 pointer-events-none"></div>
       </div>
     </Link>

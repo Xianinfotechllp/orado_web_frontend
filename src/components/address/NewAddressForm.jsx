@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import LocationPicker from "../map/LocationPicker";
 
-
 export default function NewAddressForm({ userId, onClose, onAdd }) {
   const [form, setForm] = useState({
     type: "Other",
@@ -14,6 +13,8 @@ export default function NewAddressForm({ userId, onClose, onAdd }) {
       longitude: "",
     },
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -33,98 +34,171 @@ export default function NewAddressForm({ userId, onClose, onAdd }) {
     }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
     try {
       const newAddress = {
         addressId: "",
         ...form,
       };
-
-      onAdd(newAddress); // send new address back to parent
+      onAdd(newAddress);
       onClose();
     } catch (error) {
       console.error("Failed to add new address", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const addressTypes = [
+    { value: "Home", label: "🏠 Home" },
+    { value: "Work", label: "💼 Work" },
+    { value: "Other", label: "📍 Other" },
+  ];
+
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-      style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-    >
-      <div className="bg-white w-[90%] max-w-5xl h-[90%] rounded-lg shadow-lg flex flex-col relative p-6 overflow-auto">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-2xl"
-        >
-          ✕
-        </button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 border-b">
+          <h2 className="text-xl font-semibold text-gray-800">Add New Address</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+            aria-label="Close"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
-        <h2 className="text-xl font-semibold mb-4">Add New Address</h2>
-
-        <div className="flex flex-1 gap-6">
-          {/* Left: Map */}
-          <div className="flex-1 border rounded-lg overflow-hidden">
-            <LocationPicker onSelectLocation={handleLocationSelect} />
+        {/* Content */}
+        <div className="flex flex-col md:flex-row flex-1 overflow-auto">
+          {/* Map Section */}
+          <div className="w-full md:w-1/2 p-4 border-b md:border-b-0 md:border-r">
+            <div className="h-64 md:h-full rounded-lg overflow-hidden">
+              <LocationPicker onSelectLocation={handleLocationSelect} />
+            </div>
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600">
+                {form.street ? (
+                  <>
+                    <span className="font-medium">Selected Location:</span> {form.street}, {form.city}
+                  </>
+                ) : (
+                  "Search and select a location on the map"
+                )}
+              </p>
+            </div>
           </div>
 
-          {/* Right: Form */}
-          <div className="flex-1 flex flex-col gap-4">
-            <select
-              name="type"
-              value={form.type}
-              onChange={handleChange}
-              className="border p-2 rounded"
-            >
-              <option value="Home">Home</option>
-              <option value="Work">Work</option>
-              <option value="Other">Other</option>
-            </select>
+          {/* Form Section */}
+          <div className="w-full md:w-1/2 p-6 overflow-y-auto">
+            <form onSubmit={handleSubmit}>
+              {/* Address Type */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Address Type
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {addressTypes.map((type) => (
+                    <button
+                      key={type.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, type: type.value })}
+                      className={`py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                        form.type === type.value
+                          ? "bg-blue-100 text-blue-700 border border-blue-300"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-            <input
-              type="text"
-              name="street"
-              placeholder="Street"
-              value={form.street}
-              onChange={handleChange}
-              className="border p-2 rounded"
-            />
-            <input
-              type="text"
-              name="city"
-              placeholder="City"
-              value={form.city}
-              onChange={handleChange}
-              className="border p-2 rounded"
-            />
-            <input
-              type="text"
-              name="state"
-              placeholder="State"
-              value={form.state}
-              onChange={handleChange}
-              className="border p-2 rounded"
-            />
-            <input
-              type="text"
-              name="zip"
-              placeholder="ZIP Code"
-              value={form.zip}
-              onChange={handleChange}
-              className="border p-2 rounded"
-            />
+              {/* Address Details */}
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1">
+                    Street Address
+                  </label>
+                  <input
+                    id="street"
+                    name="street"
+                    type="text"
+                    value={form.street}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
 
-            <div className="p-2 bg-gray-100 rounded text-gray-700">
-              {form.street ? `${form.street}, ${form.city}` : "No location selected"}
-            </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                      City
+                    </label>
+                    <input
+                      id="city"
+                      name="city"
+                      type="text"
+                      value={form.city}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+                      State/Province
+                    </label>
+                    <input
+                      id="state"
+                      name="state"
+                      type="text"
+                      value={form.state}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                </div>
 
-            <button
-              onClick={handleSubmit}
-              className="bg-orange-600 text-white p-2 rounded mt-auto"
-            >
-              Save
-            </button>
+                <div>
+                  <label htmlFor="zip" className="block text-sm font-medium text-gray-700 mb-1">
+                    ZIP/Postal Code
+                  </label>
+                  <input
+                    id="zip"
+                    name="zip"
+                    type="text"
+                    value={form.zip}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="mt-8">
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !form.street || !form.city || !form.state || !form.zip}
+                  className={`w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                    isSubmitting || !form.street || !form.city || !form.state || !form.zip
+                      ? "opacity-70 cursor-not-allowed"
+                      : ""
+                  }`}
+                >
+                  {isSubmitting ? "Saving..." : "Save Address"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

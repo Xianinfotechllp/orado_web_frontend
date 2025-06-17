@@ -37,6 +37,7 @@ import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDet
 import About from "./pages/Merchant/AboutMerchant";
 import Partner from "./pages/Merchant/Partner";
 import MerchantDashboard from "./pages/Merchant/MerchantDashboard";
+import TicketSystemPage from "./pages/UserProfile/TicketSytemPage";
 
 
 function App() {
@@ -120,6 +121,9 @@ function App() {
           />
           {/* Add more nested routes as needed */}
         </Route>
+        <Route path="/my-account/tickets" element={
+          <ProtectedRoute><TicketSystemPage /></ProtectedRoute>
+        } />
       </Routes>
       <ToastContainer />
     </>

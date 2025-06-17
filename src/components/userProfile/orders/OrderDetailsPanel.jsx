@@ -124,7 +124,7 @@ const OrderDetailsPanel = ({ order, onClose }) => {
               {/* Header */}
               <div className="px-4 py-3 border-b border-gray-200 bg-white">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base font-medium text-gray-900">Order #{order._id.slice(-12)}</h2>
+                  <h2 className="text-base font-medium text-gray-900">Order #{order._id}</h2>
                   <button 
                     onClick={onClose} 
                     className="text-gray-400 hover:text-gray-500"

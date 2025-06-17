@@ -8,6 +8,7 @@ const sidebarItems = [
   { name: 'Favourites', path: '/my-account/favourites' },
   // { name: 'Payments', path: '/payments' },
   { name: 'Addresses', path: '/my-account/address' },
+  { name: 'Tickets', path: '/my-account/tickets' },
   { name: 'Settings', path: '/my-account/settings' },
   { name: 'Log Out', path: '/my-account/logout' }
 ];
