@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @plugin 'tailwind-scrollbar';
 
-
+@import 'mapbox-gl/dist/mapbox-gl.css';
   .bgOp {
     background-color: rgba(14, 13, 13, 0.5);
   }

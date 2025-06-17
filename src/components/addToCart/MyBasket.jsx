@@ -6,7 +6,8 @@ import {
   Delete,
   RefreshCw,
   Trash2,
-  Zap, Tag
+  Zap,
+  Tag,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { getBillSummary } from "../../apis/orderApi";
@@ -18,7 +19,7 @@ import {
   updateCart,
 } from "../../apis/cartApi";
 import { setCart, clearCart } from "../../slices/cartSlice";
-
+ import toast from "react-hot-toast";
 export default function MyBasket({ useWallet, setUseWallet }) {
   const [items, setItems] = useState([]);
   const [cartDetails, setCartDetails] = useState({});
@@ -27,28 +28,34 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   const [buttonLoading, setButtonLoading] = useState(null);
   const [walletBalance, setWalletBalance] = useState(0);
   const [walletLoading, setWalletLoading] = useState(false);
+  const [billLoading, setBillLoading] = useState(false);
 
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
 
   // Fetch bill summary
-  const fetchBill = async (cartId) => {
-    if (!cartId || !selectedAddress) return;
-    try {
-      const billRes = await getBillSummary({
-        userId: user._id,
-        longitude: selectedAddress.location.longitude,
-        latitude: selectedAddress.location.latitude,
-        cartId: cartId,
-        useWallet: useWallet,
-      });
-      setBill(billRes.data);
-    } catch (err) {
-      console.error("Error fetching bill summary", err);
-    }
-  };
-
+const fetchBill = async (cartId) => {
+  if (!cartId || !selectedAddress) return;
+  try {
+    console.log("de",selectedAddress)
+    setBillLoading(true);
+    const billRes = await getBillSummary({
+      userId: user._id,
+      longitude: selectedAddress.location.longitude,
+      latitude: selectedAddress.location.latitude,
+      cartId: cartId,
+      useWallet: useWallet,
+    });
+    setBill(billRes.data);
+  } catch (err) {
+    console.error("Error fetching bill summary", err);
+    const errorMsg = err.message || "Failed to fetch bill summary.";
+    toast.error(errorMsg)
+  } finally {
+    setBillLoading(false);
+  }
+};
   // Fetch cart data
   const fetchCartData = async () => {
     if (!user?._id) return;
@@ -264,7 +271,15 @@ export default function MyBasket({ useWallet, setUseWallet }) {
         )}
       </div>
 
-      {items.length > 0 && (
+      {billLoading ? (
+        <div className="p-4 space-y-3 animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+        </div>
+      ) : items.length > 0 ? (
         <div className="p-4 space-y-2 border-t">
           <div className="flex justify-between text-sm sm:text-base">
             <span className="font-medium">Sub Total:</span>
@@ -279,47 +294,30 @@ export default function MyBasket({ useWallet, setUseWallet }) {
               <div className="font-medium text-[#ea4525]">
                 - ₹{(bill?.discount || 0).toFixed(2)}
               </div>
-              {bill?.offersApplied?.length > 0 && (
-                <div className="text-xs text-gray-600 mt-1">
-                  {bill.offersApplied.map((offer, index) => (
-                    <div key={index}>• {offer}</div>
-                  ))}
-                </div>
-              )}
             </div>
-
-
-
-               {bill?.offersApplied?.length > 0 && (
-      <div className="space-y-2 animate-fadeIn">
-        <div className="flex items-center gap-2 text-sm font-medium text-green-600">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-          </svg>
-          Applied Offers:
-        </div>
-       {bill?.offersApplied?.length > 0 && (
-  <div className="space-y-2 animate-fadeIn">
-    <div className="flex items-center gap-2 text-sm font-medium text-green-600">
-      <Tag size={14} /> Applied Offers:
-    </div>
-    {bill.offersApplied.map((offer, index) => (
-      <div 
-        key={index} 
-        className="flex justify-between text-xs sm:text-sm pl-6 animate-slideIn"
-        style={{ animationDelay: `${index * 0.1}s` }}
-      >
-        <span className="text-green-600">{offer?.name || 'Offer'}</span>
-        <span className="text-green-600">
-          - ₹{(offer?.discountValue || 0).toFixed(2)}
-        </span>
-      </div>
-    ))}
-  </div>
-)}
-      </div>
-    )}
           </div>
+
+          {bill?.offersApplied?.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-green-600">
+                <Tag size={14} /> Applied Offers:
+              </div>
+              {bill.offersApplied.map((offer, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between text-xs sm:text-sm pl-6"
+                >
+                  <span className="text-green-600">
+                    {offer?.name || "Offer"}
+                  </span>
+                  <span className="text-green-600">
+                    - ₹{(offer?.discountValue || 0).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="flex justify-between text-sm sm:text-base">
             <span className="font-medium">Tax:</span>
             <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
@@ -330,26 +328,23 @@ export default function MyBasket({ useWallet, setUseWallet }) {
               ₹{(bill?.deliveryFee || 0).toFixed(2)}
             </span>
           </div>
-          {/* Show Surge Fee if applicable */}
-        {bill?.isSurge && (
-  <div className="flex justify-between text-sm sm:text-base animate-pulseOnce">
-    <span className="font-medium flex items-center gap-1">
-      <svg 
-        className="w-4 h-4 text-yellow-500 animate-bounce" 
-        fill="none" 
-        stroke="currentColor" 
-        viewBox="0 0 24 24"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-      Surge Fee
-      {bill?.surgeReason && (
-        <span className="text-xs text-gray-500">({bill.surgeReason})</span>
-      )}
-    </span>
-    <span className="font-medium text-yellow-600">₹{(bill?.surgeFee || 0).toFixed(2)}</span>
-  </div>
-)}
+
+          {bill?.isSurge && (
+            <div className="flex justify-between text-sm sm:text-base animate-pulseOnce">
+              <span className="font-medium flex items-center gap-1">
+                <Zap size={14} className="text-yellow-500 animate-bounce" />
+                Surge Fee
+                {bill?.surgeReason && (
+                  <span className="text-xs text-gray-500">
+                    ({bill.surgeReason})
+                  </span>
+                )}
+              </span>
+              <span className="font-medium text-yellow-600">
+                ₹{(bill?.surgeFee || 0).toFixed(2)}
+              </span>
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-sm sm:text-base pt-2">
             <label className="font-medium flex items-center gap-2">
@@ -362,6 +357,7 @@ export default function MyBasket({ useWallet, setUseWallet }) {
               Use Wallet (₹{walletBalance.toFixed(2)} available)
             </label>
           </div>
+
           {bill?.walletUsed > 0 && (
             <div className="flex justify-between text-sm sm:text-base mb-2">
               <span className="font-medium text-green-600">Wallet Used:</span>
@@ -370,12 +366,13 @@ export default function MyBasket({ useWallet, setUseWallet }) {
               </span>
             </div>
           )}
+
           <div className="flex justify-between text-sm sm:text-base font-semibold border-t pt-2">
             <span>Payable Now:</span>
             <span>₹{(bill?.payable ?? bill?.total ?? 0).toFixed(2)}</span>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

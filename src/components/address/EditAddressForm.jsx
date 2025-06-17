@@ -19,6 +19,7 @@ export default function EditAddressForm({ address, onClose, onUpdate }) {
   };
 
   const handleLocationSelect = (location) => {
+  
     setForm((prev) => ({
       ...prev,
       street: location.street,
@@ -33,6 +34,8 @@ export default function EditAddressForm({ address, onClose, onUpdate }) {
 
   const handleSubmit = async () => {
     try {
+      console.log("fomrt",form)
+    
       onUpdate(form); // send updated form back to parent
       onClose();
     } catch (error) {

@@ -30,14 +30,15 @@ import WalletTopUpPage from "./pages/UserProfile/WalletTopUpPage";
 
 import AdminLogin from "./pages/Admin/AdminLogin";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
-import { ToastContainer } from "react-toastify";
+import { Toaster, toast } from "react-hot-toast";
+
 import RestaurantApprovalsPage from "./pages/Admin/RestaurantApprovalsPage";
 import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDetails";
 
 import About from "./pages/Merchant/AboutMerchant";
 import Partner from "./pages/Merchant/Partner";
 import MerchantDashboard from "./pages/Merchant/MerchantDashboard";
-
+import 'react-toastify/dist/ReactToastify.css';
 function App() {
   const [count, setCount] = useState(0);
 
@@ -120,7 +121,48 @@ function App() {
           {/* Add more nested routes as needed */}
         </Route>
       </Routes>
-      <ToastContainer />
+
+
+
+
+     <Toaster 
+  position="top-center"
+  toastOptions={{
+    duration: 2000,
+    style: {
+      background: '#363636',
+      color: '#fff',
+      fontSize: '18px',        // Extra large font size
+      padding: '20px 32px',    // Even more padding
+      minWidth: '450px',       // Extra wide
+      borderRadius: '16px',    // More rounded
+      lineHeight: '1.6',       // Better text spacing
+    },
+    success: {
+      duration: 3000,
+      style: {
+        background: '#4BB543',
+        fontSize: '18px',
+        padding: '20px 32px',
+        minWidth: '450px',
+        borderRadius: '16px',
+        lineHeight: '1.6',
+      },
+    },
+    error: {
+      duration: 4000,
+      style: {
+        background: '#FF3333',
+        fontSize: '18px',
+        padding: '20px 32px',
+        minWidth: '450px',
+        borderRadius: '16px',
+        lineHeight: '1.6',
+      },
+    },
+  }}
+/>
+
     </>
   );
 }

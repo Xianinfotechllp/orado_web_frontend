@@ -21,6 +21,7 @@ export default function NewAddressForm({ userId, onClose, onAdd }) {
   };
 
   const handleLocationSelect = (location) => {
+    console.log(location)
     setForm((prev) => ({
       ...prev,
       street: location.street,

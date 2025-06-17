@@ -6,8 +6,9 @@ export const getBillSummary = async (data) => {
     console.log("Fetched bill summary:", response.data);
     return response.data;
   } catch (error) {
-    console.error("Error fetching bill summary:", error.response?.data || error.message);
-    throw error;
+    const errorMessage = error.response?.data?.error || "Something went wrong while fetching bill summary.";
+    console.error("Error fetching bill summary:", errorMessage);
+    throw new Error(errorMessage);
   }
 };
 

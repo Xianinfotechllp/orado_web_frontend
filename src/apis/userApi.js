@@ -25,9 +25,11 @@ export const updateAddress = async ( addressId, updatedAddress) => {
 
 
 
-export const addAddress = async ( addressData) => {
+export const addAddress = async (userId,addressData) => {
   try {
+    console.log(addressData,"addddddresdata in pai")
     const response = await apiClient.post("/user/address", {
+      userId:userId,
       type: addressData.type,
       street: addressData.street,
       city: addressData.city,

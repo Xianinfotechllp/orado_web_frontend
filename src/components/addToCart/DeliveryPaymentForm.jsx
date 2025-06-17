@@ -282,7 +282,9 @@ export default function DeliveryPaymentForm({ useWallet }) {
             error={error.addressAdd}
             onClose={() => setShowNewAddressForm(false)}
             onAdd={async (newAddress) => {
+              console.log(newAddress,"new addres sform")
               try {
+                console.log(newAddress,"addess")
                 setLoading(prev => ({...prev, addingAddress: true}));
                 setError(prev => ({...prev, addressAdd: null}));
                 const res = await addAddress(user._id, newAddress);
