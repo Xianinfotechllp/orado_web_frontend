@@ -99,7 +99,6 @@ function Signup() {
   return (
     <div>
       <Navbar />
-
       <div className="mt-18">
         <div className="flex flex-1 flex-col md:flex-row h-screen">
           {/* Left side */}
@@ -200,6 +199,7 @@ function Signup() {
               {errors.termsAccepted && (
                 <p className="text-red-500 text-sm">{errors.termsAccepted}</p>
               )}
+
 
               <div className="flex gap-5 mt-8">
                 <button

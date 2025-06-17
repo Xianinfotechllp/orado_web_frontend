@@ -11,6 +11,9 @@ import axios from "axios";
 import logo from "../../assets/oradoLogo.png";
 import { useDispatch, useSelector } from "react-redux";
 import { setLocation } from "../../slices/locationSlice";
+
+import { selectCartItemCount } from "../../slices/cartSlice";
+
 import { Link } from "react-router-dom";
 import { VscAccount } from "react-icons/vsc";
 import { useNavigate } from "react-router-dom";
@@ -30,12 +33,17 @@ function Navbar() {
   const [foodSearchQuery, setFoodSearchQuery] = useState("");
   // Get current location from Redux store or use default
   const location = useSelector((state) => state.location.location);
-  console.log("Navbar location:", location);
+
   
   
   const user = useSelector((state) => state.auth.user);
-  const cartItems = useSelector((state) => state.cart.items);
-  const cartItemsCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+    const cart = useSelector((state) => state.cart);
+
+ 
+ 
+
+  const cartItemsCount = useSelector(selectCartItemCount)
+ 
   const locationRef = useRef(null);
   const foodSearchRef = useRef(null);
   const navigate = useNavigate()
@@ -51,6 +59,7 @@ function Navbar() {
       const res = await axios.get(
         `https://nominatim.openstreetmap.org/search?q=${searchText}&format=json&addressdetails=1`
       );
+      console.log(res.data)
       setSuggestions(res.data);
     } catch (error) {
       console.error("Error fetching location suggestions:", error);
@@ -152,7 +161,7 @@ function Navbar() {
     };
   }, [query]);
 
-  console.log("Navbar user:", user);
+
 
   return (
     <div className={`w-full fixed top-0 z-50 transition-all duration-300 ${

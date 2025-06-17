@@ -13,21 +13,22 @@ const NotificationsPage = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        setLoading(true);
-        const data = await getNotifications();
-        setNotifications(data.notifications || []);
-      } catch (err) {
-        setError(err.message || 'Failed to fetch notifications');
-      } finally {
-        setLoading(false);
-      }
-    };
+useEffect(() => {
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const data = await getNotifications();
+      setNotifications(Array.isArray(data) ? data : data.notifications || []);
+    } catch (err) {
+      setError(err.message || 'Failed to fetch notifications');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchNotifications();
-  }, []);
+  fetchNotifications();
+}, []);
+
   const notificationTypes = [
     { key: 'all', label: 'All', icon: Bell, count: notifications.length },
     { key: 'orderUpdates', label: 'Order Updates', icon: Package, count: notifications.filter(n => n.type === 'orderUpdates').length },
