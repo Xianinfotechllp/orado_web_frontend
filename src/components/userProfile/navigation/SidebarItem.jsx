@@ -8,7 +8,8 @@ import {
   MapPin, 
   Settings,
   LogOut,
-  Wallet 
+  Wallet,
+  Ticket 
 } from 'lucide-react';
 
 const SidebarItem = ({ name, path }) => {
@@ -28,6 +29,8 @@ const SidebarItem = ({ name, path }) => {
         return <CreditCard className={iconClass} />;
       case 'addresses':
         return <MapPin className={iconClass} />;
+      case 'tickets':
+        return <Ticket className={iconClass} />;
       case 'settings':
         return <Settings className={iconClass} />;
       default:

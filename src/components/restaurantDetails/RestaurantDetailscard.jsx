@@ -52,13 +52,13 @@ function RestaurantDetailscard({ restaurant }) {
         <p className="text-sm text-orange-100">Open until 3:00 AM</p>
 
         {/* Rating card */}
-        <div className="absolute bottom-6 right-6 bg-white rounded-lg shadow-lg p-3 text-black text-center hidden md:block">
+        {/* <div className="absolute bottom-6 right-6 bg-white rounded-lg shadow-lg p-3 text-black text-center hidden md:block">
           <div className="flex items-center justify-center gap-1 mb-1">
             <span className="text-orange-500 text-xl font-bold">4.2</span>
             <span className="text-orange-500">★</span>
           </div>
           <h4 className="text-xs text-gray-600 font-medium">1,360 reviews</h4>
-        </div>
+        </div> */}
       </div>
     </div>
   );

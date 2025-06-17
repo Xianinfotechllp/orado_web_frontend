@@ -12,16 +12,13 @@ import TypingIndicator from './TypingIndicator';
 import store from "../../../store/store";
 
 const ChatPage = ({ orderId, onBack, chatType = 'admin', user, restaurantId }) => {  
-  console.log('ChatPage props:', { orderId, onBack, chatType, user, restaurantId });
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [socket, setSocket] = useState(null);
   const inputRef = useRef(null);
   const messagesEndRef = useRef(null);
-
-  // TODO: Replace with actual admin ID from context or props
-  // const adminId = 'admin-id-here';
+  const messagesContainerRef = useRef(null);
 
   const chatInfo = {
     admin: {
@@ -32,7 +29,7 @@ const ChatPage = ({ orderId, onBack, chatType = 'admin', user, restaurantId }) =
         getChat: getCustomerAdminChat,
         sendMessage: sendCustomerToAdminMessage
       },
-      receiverId: null, // Admin chat doesn't require a specific receiver ID
+      receiverId: null,
       receiverModel: 'admin'
     },
     restaurant: {
@@ -49,49 +46,56 @@ const ChatPage = ({ orderId, onBack, chatType = 'admin', user, restaurantId }) =
   };
 
   const currentChat = chatInfo[chatType] || chatInfo.admin;
-  console.log('currentChat', currentChat);
-  
+
+  // Function to scroll to bottom
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Scroll to bottom on initial load and when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Scroll to bottom when component mounts
+  useEffect(() => {
+    scrollToBottom();
+  }, []);
 
   useEffect(() => {
-  const token = store.getState().auth.token;
-  if (!token) return; // skip if not logged in
+    const token = store.getState().auth.token;
+    if (!token) return;
 
-  const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
-  console.log("Connecting to socket at:", socketUrl);
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+    const socketInstance = io(socketUrl, {
+      withCredentials: true,
+      auth: { token },
+    });
 
-  const socketInstance = io(socketUrl, {
-    withCredentials: true,
-    auth: { token },
-  });
+    socketInstance.on("connect", () => {
+      console.log("Socket connected:", socketInstance.id);
+    });
 
-  socketInstance.on("connect", () => {
-    console.log("Socket connected:", socketInstance.id);
-  });
+    socketInstance.on("connect_error", (err) => {
+      console.error("Socket connection error:", err);
+    });
 
-  socketInstance.on("connect_error", (err) => {
-    console.error("Socket connection error:", err);
-  });
+    setSocket(socketInstance);
 
-  setSocket(socketInstance);
+    return () => {
+      socketInstance.disconnect();
+    };
+  }, [user]);
 
-  // Existing event listeners...
-  
-  return () => {
-    socketInstance.disconnect();
-  };
-}, [user]);
-
-  // Join chat room and load messages
   useEffect(() => {
     if (!socket || !user) return;
 
     const loadChat = async () => {
       try {
-        console.log('Loading chat for:', currentChat.receiverId);
         const chatData = currentChat.receiverId
           ? await currentChat.api.getChat(currentChat.receiverId)
           : await currentChat.api.getChat();
-        console.log('Chat data:', chatData);
+        
         setMessages(chatData.data.messages.map(msg => ({
           id: msg._id,
           text: msg.content,
@@ -125,21 +129,14 @@ const ChatPage = ({ orderId, onBack, chatType = 'admin', user, restaurantId }) =
     };
   }, [socket, user, chatType, currentChat.receiverId]);
 
-  // Handle sending messages
   const handleSendMessage = async () => {
-    console.log("handleSendMessage called");
-    console.log(newMessage);    
-    console.log(socket);    
-    console.log(user);    
     if (!newMessage.trim() || !socket || !user) return;
-    console.log("handleSendMessage called after if");
 
-    // Prepare optimistic UI message
     const tempId = Date.now().toString();
     const optimisticMessage = {
       id: tempId,
       text: newMessage.trim(),
-      sender: 'user', // senderModel
+      sender: 'user',
       timestamp: new Date(),
       isRead: true
     };
@@ -148,8 +145,6 @@ const ChatPage = ({ orderId, onBack, chatType = 'admin', user, restaurantId }) =
     setNewMessage('');
     inputRef.current?.focus();
 
-    console.log("Sending message:", optimisticMessage);
-    // Emit to backend via socket with correct fields
     socket.emit("sendMessage", {
       senderId: user._id,
       senderModel: 'user',
@@ -160,7 +155,6 @@ const ChatPage = ({ orderId, onBack, chatType = 'admin', user, restaurantId }) =
     });
 
     try {
-      // Send message via API to persist
       const messageData = {
         content: optimisticMessage.text,
         attachments: []
@@ -173,10 +167,7 @@ const ChatPage = ({ orderId, onBack, chatType = 'admin', user, restaurantId }) =
       } else {
         response = await currentChat.api.sendMessage(messageData);
       }
-      console.log('response', response);
-      
 
-      // Replace optimistic message with server response
       setMessages(prev => prev.map(msg => 
         msg.id === tempId ? {
           id: response.data._id,
@@ -188,12 +179,10 @@ const ChatPage = ({ orderId, onBack, chatType = 'admin', user, restaurantId }) =
       ));
     } catch (error) {
       console.error('Failed to send message:', error);
-      // Remove optimistic message on failure
       setMessages(prev => prev.filter(msg => msg.id !== tempId));
     }
   };
 
-  // Handle typing indicators
   const handleTyping = (isTyping) => {
     if (!socket || !user) return;
 
@@ -234,18 +223,13 @@ const ChatPage = ({ orderId, onBack, chatType = 'admin', user, restaurantId }) =
             </div>
           </div>
         </div>
-        {/* <div className="flex items-center space-x-2">
-          <button className="hover:bg-opacity-20 hover:bg-white p-2 rounded">
-            <Phone size={18} />
-          </button>
-          <button className="hover:bg-opacity-20 hover:bg-white p-2 rounded">
-            <MoreVertical size={18} />
-          </button>
-        </div> */}
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50">
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50"
+      >
         <div className="max-w-4xl mx-auto">
           {messages.map((message) => (
             <Message 

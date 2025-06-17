@@ -25,6 +25,7 @@ import CategoryRestaurants from "./components/home/CategoryRestruants";
 import RestaurantSearchPage from "./pages/Search/RestaurantSearchPage";
 import ProtectedRoute from "./components/protectedRoutes/ProtectedRoutes";
 import WalletTopUpPage from "./pages/UserProfile/WalletTopUpPage";
+import TicketSystemPage from "./pages/UserProfile/TicketSytemPage";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -79,6 +80,9 @@ function App() {
         } />
         <Route path="/my-account/wallet" element={
           <ProtectedRoute><WalletTopUpPage /></ProtectedRoute>
+        } />
+        <Route path="/my-account/tickets" element={
+          <ProtectedRoute><TicketSystemPage /></ProtectedRoute>
         } />
       </Routes>
     </>

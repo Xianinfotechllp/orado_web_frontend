@@ -18,7 +18,7 @@ const NotificationsPage = () => {
       try {
         setLoading(true);
         const data = await getNotifications();
-        setNotifications(data);
+        setNotifications(data.notifications || []);
       } catch (err) {
         setError(err.message || 'Failed to fetch notifications');
       } finally {
@@ -28,7 +28,6 @@ const NotificationsPage = () => {
 
     fetchNotifications();
   }, []);
-
   const notificationTypes = [
     { key: 'all', label: 'All', icon: Bell, count: notifications.length },
     { key: 'orderUpdates', label: 'Order Updates', icon: Package, count: notifications.filter(n => n.type === 'orderUpdates').length },
