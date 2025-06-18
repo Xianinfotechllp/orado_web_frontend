@@ -68,13 +68,14 @@ export default function DeliveryPaymentForm({ useWallet }) {
       setLoading(prev => ({...prev, updatingAddress: true}));
       setError(prev => ({...prev, addressUpdate: null}));
       
+    
       await updateAddress(updatedAddress.addressId, updatedAddress);
       setAddresses((prev) =>
         prev.map((addr) =>
           addr.addressId === updatedAddress.addressId ? updatedAddress : addr
         )
       );
-      
+    
       if (localSelectedAddress?.addressId === updatedAddress.addressId) {
         setLocalSelectedAddress(updatedAddress);
         dispatch(setSelectedAddress(updatedAddress));
@@ -274,6 +275,7 @@ export default function DeliveryPaymentForm({ useWallet }) {
             }}
           />
         )}
+              handleAddressUpdate(form);
 
         {showNewAddressForm && (
           <NewAddressForm
@@ -284,7 +286,7 @@ export default function DeliveryPaymentForm({ useWallet }) {
             onAdd={async (newAddress) => {
               console.log(newAddress,"new addres sform")
               try {
-                console.log(newAddress,"addess")
+            
                 setLoading(prev => ({...prev, addingAddress: true}));
                 setError(prev => ({...prev, addressAdd: null}));
                 const res = await addAddress(user._id, newAddress);

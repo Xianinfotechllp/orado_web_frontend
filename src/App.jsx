@@ -38,7 +38,12 @@ import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDet
 import About from "./pages/Merchant/AboutMerchant";
 import Partner from "./pages/Merchant/Partner";
 import MerchantDashboard from "./pages/Merchant/MerchantDashboard";
+
 import 'react-toastify/dist/ReactToastify.css';
+
+import TicketSystemPage from "./pages/UserProfile/TicketSytemPage";
+
+
 function App() {
   const [count, setCount] = useState(0);
 
@@ -120,6 +125,9 @@ function App() {
           />
           {/* Add more nested routes as needed */}
         </Route>
+        <Route path="/my-account/tickets" element={
+          <ProtectedRoute><TicketSystemPage /></ProtectedRoute>
+        } />
       </Routes>
 
 

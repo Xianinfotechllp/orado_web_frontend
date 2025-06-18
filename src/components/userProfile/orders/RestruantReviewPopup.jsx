@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Star, X, Camera, Upload, Utensils, Clock, MapPin } from 'lucide-react';
+import { submitRestaurantFeedback } from '../../../apis/feedbackApi';
 
 export default function RestaurantReviewPopup({ restaurant, onClose }) {
   const [rating, setRating] = useState(0);
@@ -12,37 +13,45 @@ export default function RestaurantReviewPopup({ restaurant, onClose }) {
   };
 
   const handlePhotoUpload = (event) => {
-    const files = Array.from(event.target.files);
+    const files = Array.from(event.target.files); 
+
     const newPhotos = files.map(file => ({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
-      url: URL.createObjectURL(file)
+      url: URL.createObjectURL(file),
+      file: file 
     }));
-    setPhotos([...photos, ...newPhotos]);
+
+    setPhotos((prev) => [...prev, ...newPhotos]);
   };
+
+
 
   const removePhoto = (photoId) => {
     setPhotos(photos.filter(photo => photo.id !== photoId));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (rating === 0) {
       alert('Please select a rating');
       return;
     }
-    
-    const reviewData = {
-      restaurantId: restaurant._id,
-      restaurantName: restaurant.name,
-      rating,
-      reviewText,
-      photos: photos.length,
-      timestamp: new Date().toISOString()
-    };
-    
-    console.log('Review submitted:', reviewData);
-    alert('Thank you for your review!');
-    onClose();
+
+    try {
+      const fileList = photos.map(photo => photo.file); // store actual files too
+      await submitRestaurantFeedback({
+        restaurantId: restaurant._id,
+        rating,
+        comment: reviewText,
+        images: fileList
+      });
+
+      alert('Thank you for your review!');
+      onClose();
+    } catch (err) {
+      console.error('Failed to submit review:', err);
+      alert('Something went wrong while submitting your review.');
+    }
   };
 
   return (

@@ -113,9 +113,9 @@ function CategoryRestaurants() {
               We couldn't find any {categoryName.toLowerCase()} restaurants in your area. 
               Try selecting a different location or browse other categories.
             </p>
-            <button className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-full font-medium transition-colors duration-300 shadow-lg hover:shadow-xl">
+            {/* <button className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-full font-medium transition-colors duration-300 shadow-lg hover:shadow-xl">
               Browse All Categories
-            </button>
+            </button> */}
           </div>
         )}
       </div>

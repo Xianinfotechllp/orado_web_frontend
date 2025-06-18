@@ -182,17 +182,15 @@ function RestaurantDetailscard({ restaurant }) {
         </p> */}
 
         {/* Rating card */}
-        <div className="absolute bottom-6 right-6 bg-white rounded-lg shadow-lg p-3 text-black text-center hidden md:block">
+        {/* <div className="absolute bottom-6 right-6 bg-white rounded-lg shadow-lg p-3 text-black text-center hidden md:block">
           <div className="flex items-center justify-center gap-1 mb-1">
             <span className="text-orange-500 text-xl font-bold">
               {restaurant.rating?.toFixed(1) || "New"}
             </span>
             <Star className="w-4 h-4 text-orange-500 fill-current" />
           </div>
-          <h4 className="text-xs text-gray-600 font-medium">
-            {restaurant.ratingCount ? `${restaurant.ratingCount.toLocaleString()} reviews` : "No reviews"}
-          </h4>
-        </div>
+          <h4 className="text-xs text-gray-600 font-medium">1,360 reviews</h4>
+        </div> */}
       </div>
     </div>
   );

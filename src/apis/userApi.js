@@ -25,27 +25,29 @@ export const updateAddress = async ( addressId, updatedAddress) => {
 
 
 
-export const addAddress = async (userId,addressData) => {
+export const addAddress = async (userId, addressData) => {
   try {
-    console.log(addressData,"addddddresdata in pai")
-    const response = await apiClient.post("/user/address", {
-      userId:userId,
-      type: addressData.type,
-      street: addressData.street,
-      city: addressData.city,
-      state: addressData.state,
-      zip: addressData.zip,
-      longitude: addressData.location.longitude,
-      latitude: addressData.location.latitude,
-    });
+    // Prepare the request payload matching backend expectations
+    const payload = {
+      type: addressData.type || "Other",
+      street: addressData.street || "",
+      area: addressData.area || "", // Add area field
+      landmark: addressData.landmark || "", // Add landmark field
+      city: addressData.city || "",
+      state: addressData.state || "",
+      zip: addressData.zip || "",
+      country: addressData.country || "India", // Add country with default
+      longitude: addressData.longitude || addressData.location?.longitude || 0,
+      latitude: addressData.latitude || addressData.location?.latitude || 0,
+    };
 
+    const response = await apiClient.post("/user/address", payload); // Note plural endpoint
     return response.data;
   } catch (error) {
     console.error("Failed to add address:", error);
     throw error;
   }
 };
-
 export const deleteAddress = async (addressId) => {
   try {
     const response = await apiClient.delete(`/user/delete/${addressId}`);

@@ -33,12 +33,15 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
-
+ 
   // Fetch bill summary
-const fetchBill = async (cartId) => {
-  if (!cartId || !selectedAddress) return;
+  const fetchBill = async (cartId) => {
+  if (!cartId || !selectedAddress || !selectedAddress?.location) {
+    toast.error("Please select a delivery address first");
+    return;
+  }
+  
   try {
-    console.log("de",selectedAddress)
     setBillLoading(true);
     const billRes = await getBillSummary({
       userId: user._id,
@@ -51,7 +54,7 @@ const fetchBill = async (cartId) => {
   } catch (err) {
     console.error("Error fetching bill summary", err);
     const errorMsg = err.message || "Failed to fetch bill summary.";
-    toast.error(errorMsg)
+    toast.error(errorMsg);
   } finally {
     setBillLoading(false);
   }
@@ -103,12 +106,11 @@ const fetchBill = async (cartId) => {
   useEffect(() => {
     fetchCartData();
   }, [user?._id]);
-
-  useEffect(() => {
-    if (cartDetails._id && selectedAddress) {
-      fetchBill(cartDetails._id);
-    }
-  }, [cartDetails._id, selectedAddress, useWallet]);
+useEffect(() => {
+  if (cartDetails._id && selectedAddress?.location) {
+    fetchBill(cartDetails._id);
+  }
+}, [cartDetails._id, selectedAddress, useWallet]);
 
   const updateQuantity = async (productId, change) => {
     try {

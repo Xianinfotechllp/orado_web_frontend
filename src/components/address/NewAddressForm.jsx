@@ -2,18 +2,20 @@ import React, { useState } from "react";
 import LocationPicker from "../map/LocationPicker";
 
 export default function NewAddressForm({ userId, onClose, onAdd }) {
-  const [form, setForm] = useState({
-    type: "Other",
-    street: "",
-    city: "",
-    state: "",
-    zip: "",
-    location: {
-      latitude: "",
-      longitude: "",
-    },
-  });
-
+ const [form, setForm] = useState({
+  type: "Other",
+  street: "",
+  area: "", // Add this
+  landmark: "", // Add this
+  city: "",
+  state: "",
+  zip: "",
+  country: "India", // Add this
+  location: {
+    latitude: "",
+    longitude: "",
+  },
+});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
@@ -34,23 +36,35 @@ export default function NewAddressForm({ userId, onClose, onAdd }) {
       },
     }));
   };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  
+  try {
+    const newAddress = {
+      // Prepare data matching backend expectations
+      type: form.type,
+      street: form.street,
+      area: form.area,
+      landmark: form.landmark,
+      city: form.city,
+      state: form.state,
+      zip: form.zip,
+      country: form.country,
+      longitude: form.location.longitude,
+      latitude: form.location.latitude,
+    };
+    
+    await onAdd(newAddress);  // Calls parent's handler
+    onClose();               // Closes the modal
+  } catch (error) {
+    console.error("Failed to add new address", error);
+    // Optionally show error to user
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      const newAddress = {
-        addressId: "",
-        ...form,
-      };
-      onAdd(newAddress);
-      onClose();
-    } catch (error) {
-      console.error("Failed to add new address", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const addressTypes = [
     { value: "Home", label: "🏠 Home" },
