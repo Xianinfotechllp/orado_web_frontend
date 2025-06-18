@@ -300,7 +300,7 @@ export const updateProduct = async (productId, productData) => {
     // Append new images
     if (productData.newImages && productData.newImages.length > 0) {
       productData.newImages.forEach(file => {
-        formData.append('images', file); // Note: using 'images' instead of 'files'
+        formData.append('images', file);
       });
     }
 
@@ -316,10 +316,21 @@ export const updateProduct = async (productId, productData) => {
     });
     return response.data;
   } catch (error) {
+   
     console.error("Product update error:", error.response?.data || error.message);
-    throw error;
+    
+    // Extract the error message to show in toast
+    const errorMessage = error.response?.data?.message || 
+                        "Failed to update product. Please try again.";
+    
+    // Throw an object containing both the error and the message
+    throw {
+      error,
+      message: errorMessage
+    };
   }
 };
+
 
 export const deleteProduct = async (productId) => {
   try {

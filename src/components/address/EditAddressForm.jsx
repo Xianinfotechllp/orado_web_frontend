@@ -33,6 +33,7 @@ export default function EditAddressForm({ address, onClose, onUpdate }) {
 
   const handleSubmit = async () => {
     try {
+      
       onUpdate(form); // send updated form back to parent
       onClose();
     } catch (error) {
