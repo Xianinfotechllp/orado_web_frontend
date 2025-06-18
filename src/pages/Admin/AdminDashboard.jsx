@@ -267,6 +267,11 @@ function AdminDashboard() {
             >
               Surge Selecter
             </Link>
+             <Link  to="admin-surge-list"    className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+              List Surge
+             </Link>
+
+
           </SidebarItem>
           <SidebarItem
             title="Agents"
@@ -354,6 +359,39 @@ function AdminDashboard() {
               Refunds
             </Link>
           </SidebarItem>
+
+
+
+
+
+   <SidebarItem
+            title="Tax & Delivery Fee Settings"
+            icon={<FiSettings size={18} />}
+            hasPermission={true} // Always show settings
+            closeSidebar={closeSidebar}
+          >
+            <Link
+              to="admin-tax-management"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Tax Settings
+            </Link>
+            <Link
+              to="admin-deliveryfee-management"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+            Delivery Fee Settings
+            </Link>
+           
+          </SidebarItem>
+
+
+
+
+
+
+
+
 
           <SidebarItem
             title="Settings"

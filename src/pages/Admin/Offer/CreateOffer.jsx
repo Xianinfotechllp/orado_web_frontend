@@ -26,87 +26,89 @@ function CreateOffer({ onOfferCreated }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+const handleSubmit = async () => {
+  setSuccess("");
+  setError("");
+  setIsLoading(true);
 
-  const handleSubmit = async () => {
-    setSuccess("");
-    setError("");
-    setIsLoading(true);
+  // Validate required fields
+  const requiredFields = {
+    title: "Title is required",
+    discountValue: "Discount value is required",
+    validFrom: "Valid from date is required",
+    validTill: "Valid till date is required",
+    minOrderValue: "Minimum order value is required"
+  };
 
-    // Validate required fields
-    const requiredFields = {
-      title: "Title is required",
-      discountValue: "Discount value is required",
-      validFrom: "Valid from date is required",
-      validTill: "Valid till date is required",
-      minOrderValue: "Minimum order value is required"
+  const missingFields = Object.entries(requiredFields)
+    .filter(([field]) => !eval(field))
+    .map(([_, message]) => message);
+
+  if (missingFields.length > 0) {
+    setError(missingFields.join(", "));
+    setIsLoading(false);
+    return;
+  }
+
+  // Validate dates
+  if (new Date(validFrom) >= new Date(validTill)) {
+    setError("Valid till date must be after valid from date");
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const token = sessionStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    // Create the request data object
+    const requestData = {
+      title,
+      description: description || null,
+      type,
+      discountValue: parseFloat(discountValue),
+      maxDiscount: maxDiscount ? parseFloat(maxDiscount) : null,
+      minOrderValue: parseFloat(minOrderValue),
+      validFrom: new Date(validFrom),
+      validTill: new Date(validTill),
+      usageLimitPerUser: usageLimitPerUser ? parseInt(usageLimitPerUser) : null,
+      totalUsageLimit: totalUsageLimit ? parseInt(totalUsageLimit) : null
     };
 
-    const missingFields = Object.entries(requiredFields)
-      .filter(([field]) => !eval(field))
-      .map(([_, message]) => message);
-
-    if (missingFields.length > 0) {
-      setError(missingFields.join(", "));
-      setIsLoading(false);
-      return;
-    }
-
-    // Validate dates
-    if (new Date(validFrom) >= new Date(validTill)) {
-      setError("Valid till date must be after valid from date");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const token = sessionStorage.getItem('adminToken');
-      if (!token) {
-        throw new Error("No authentication token found");
+    // Make a single API call
+    await apiClient.post("/admin/offer", requestData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
+    });
 
-      await axios.post("http://localhost:5000/admin/offer", {
-        title,
-        description: description || null,
-        type,
-        discountValue: parseFloat(discountValue),
-        maxDiscount: maxDiscount ? parseFloat(maxDiscount) : null,
-        minOrderValue: parseFloat(minOrderValue),
-        validFrom: new Date(validFrom),
-        validTill: new Date(validTill),
-        usageLimitPerUser: usageLimitPerUser ? parseInt(usageLimitPerUser) : null,
-        totalUsageLimit: totalUsageLimit ? parseInt(totalUsageLimit) : null
-      })
+    setSuccess("Offer created successfully");
+    // Reset all fields
+    setTitle("");
+    setDescription("");
+    setDiscountValue("");
+    setMaxDiscount("");
+    setMinOrderValue("");
+    setValidFrom("");
+    setValidTill("");
+    setUsageLimitPerUser("");
+    setTotalUsageLimit("");
+    
+    if (onOfferCreated) onOfferCreated();
+  } catch (err) {
+    console.error("Error creating offer:", err);
+    const errorMessage = err.response?.data?.message || 
+                       err.message || 
+                       "Failed to create offer";
+    setError(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-      await axios.post("http://localhost:5000/admin/offer", offerData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      setSuccess("Offer created successfully");
-      // Reset all fields
-      setTitle("");
-      setDescription("");
-      setDiscountValue("");
-      setMaxDiscount("");
-      setMinOrderValue("");
-      setValidFrom("");
-      setValidTill("");
-      setUsageLimitPerUser("");
-      setTotalUsageLimit("");
-      
-      if (onOfferCreated) onOfferCreated();
-    } catch (err) {
-      console.error("Error creating offer:", err);
-      const errorMessage = err.response?.data?.message || 
-                         err.message || 
-                         "Failed to create offer";
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200 mb-8 overflow-hidden">

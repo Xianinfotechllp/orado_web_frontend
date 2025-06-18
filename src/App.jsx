@@ -46,6 +46,11 @@ import AssignOffer from "./pages/Admin/Offer/AssignOffer";
 import RestaurantEarningsTable from "./pages/Admin/RestaurantEarningsTable";
 import RestaurantListForOrders from "./pages/Admin/RestaurantListForOrders";
 import SurgeAreaSelector from "./pages/Admin/Surge/SurgeAreaSelector";
+import AdminNotificationSender from "./pages/Admin/notifications/AdminNotificationSender";
+import SurgeAreaList from "./pages/Admin/Surge/SurgeAreaList";
+import TaxManagementPanel from "./pages/Admin/FeeAndTaxSettings/TaxManagementPanel";
+import DeliveryFeeSettings from "./pages/Admin/FeeAndTaxSettings/DeliveryFeeSettings";
+
 import AdminRestaurantChatDashboard from "./pages/Admin/RestaurantChats/AdminRestaurantChatDashboard";
 
 function App() {
@@ -75,6 +80,7 @@ function App() {
         <Route path="admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />}>
 
+
           <Route index element={<Dashboard />} />
           {/* restaurant-section */}
           <Route path="restaurant-approvals" element={<RestaurantApprovalsPage />} />
@@ -100,6 +106,14 @@ function App() {
           <Route path="admin-ticket" element={<Ticket />} />
           <Route path="access-logs" element={<AccessLogs />} />
           <Route path="admin-surge" element={<SurgeAreaSelector />} />
+          <Route path="admin-surge-list" element={<SurgeAreaList/>}    />
+
+          
+
+          <Route path="admin-tax-management" element={<TaxManagementPanel />}    />
+          <Route path="admin-deliveryfee-management" element={<DeliveryFeeSettings />}    />
+
+
 
           {/* admin-customer section */}
           <Route path="admin-customer-chat" element={<AdminCustomerChatDashboard />} />
@@ -107,7 +121,8 @@ function App() {
           <Route path="customer/:userId/orders" element={<AdminCustomerOrderPage />} />
           <Route path="order/refund" element={<RefundComponent />} />
           <Route path="refund/transactions" element={<RefundTransactionsPage />} />
-
+        
+          <Route path="notification-sender"  element={<AdminNotificationSender/>} />
 
           {/* Add more nested routes as needed */}
         </Route>

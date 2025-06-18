@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react';
+import apiClient from '../../apis/apiClient/apiClient';
 
 const RefundTransactionsPage = () => {
   const [transactions, setTransactions] = useState([]);
@@ -88,13 +89,9 @@ const RefundTransactionsPage = () => {
       setError('');
       setIsRefreshing(true);
       
-      const response = await fetch('http://localhost:5000/admin/refund/transactions', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await apiClient.get('/admin/refund/transactions', 
+      
+       );
 
       if (!response.ok) {
         const errorData = await response.json();

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../../components/layout/Navbar";
-import HomeOrange from "../../assets/HomeOrange.png";
+import HomeOrange from "../../assets/homeOrange.png";
 import homeGirlimage from "../../assets/homeGirl.png";
-import Categorylist from "../../components/home/Categorylist";
+import Categorylist from "../../components/home/CategoryList"
 import catgoryImage from "../../assets/category1.png";
 import categoryImage1 from "../../assets/category2.png";
 import categoryImage2 from "../../assets/category3.png";

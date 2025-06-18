@@ -20,12 +20,11 @@ import {
 
 import axios from "axios";
 import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
-import apiClient from "../../apis/apiClient/apiClient";
 
 export const fetchOrderStats = async () => {
   try {
-    const response = await apiClient.get(
-      "/admin/order/order-stats"
+    const response = await axios.get(
+      "https://orado.work.gd/api/admin/order/order-stats"
     );
     return response.data;
   } catch (error) {

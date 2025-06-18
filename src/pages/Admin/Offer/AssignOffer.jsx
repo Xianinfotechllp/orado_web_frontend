@@ -20,7 +20,7 @@ function AssignOffer({ onAssignmentSuccess }) {
   const fetchRestaurants = async () => {
     try {
       setLoading(prev => ({ ...prev, restaurants: true }));
-      const res = await axios.get("http://localhost:5000/restaurants/all-restaurants");
+      const res = await apiClient.get("/restaurants/all-restaurants");
       setRestaurants(res.data.restaurants || []);
     } catch (err) {
       console.error("Error fetching restaurants:", err);
@@ -33,7 +33,7 @@ function AssignOffer({ onAssignmentSuccess }) {
   const fetchOffers = async () => {
     try {
       setLoading(prev => ({ ...prev, offers: true }));
-      const res = await axios.get("http://localhost:5000/admin/offer");
+      const res = await apiClient.get("/admin/offer");
       setOffers(res.data.offers || []);
     } catch (err) {
       console.error("Error fetching offers:", err);
@@ -62,8 +62,8 @@ function AssignOffer({ onAssignmentSuccess }) {
 
       const token = sessionStorage.getItem('adminToken');
 
-      const response = await axios.put(
-        `http://localhost:5000/merchant/restaurants/${selectedRestaurant}/offer/${selectedOffer}`,
+      const response = await apiClient.put(
+        `/merchant/restaurants/${selectedRestaurant}/offer/${selectedOffer}`,
         {},
         {
           headers: {
