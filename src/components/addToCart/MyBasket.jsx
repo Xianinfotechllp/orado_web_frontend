@@ -8,6 +8,7 @@ import {
   Trash2,
   Zap,
   Tag,
+  AlertCircle,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { getBillSummary } from "../../apis/orderApi";
@@ -19,7 +20,7 @@ import {
   updateCart,
 } from "../../apis/cartApi";
 import { setCart, clearCart } from "../../slices/cartSlice";
- import toast from "react-hot-toast";
+
 export default function MyBasket({ useWallet, setUseWallet }) {
   const [items, setItems] = useState([]);
   const [cartDetails, setCartDetails] = useState({});
@@ -29,40 +30,43 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   const [walletBalance, setWalletBalance] = useState(0);
   const [walletLoading, setWalletLoading] = useState(false);
   const [billLoading, setBillLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
- 
+
   // Fetch bill summary
   const fetchBill = async (cartId) => {
-  if (!cartId || !selectedAddress || !selectedAddress?.location) {
-    toast.error("Please select a delivery address first");
-    return;
-  }
-  
-  try {
-    setBillLoading(true);
-    const billRes = await getBillSummary({
-      userId: user._id,
-      longitude: selectedAddress.location.longitude,
-      latitude: selectedAddress.location.latitude,
-      cartId: cartId,
-      useWallet: useWallet,
-    });
-    setBill(billRes.data);
-  } catch (err) {
-    console.error("Error fetching bill summary", err);
-    const errorMsg = err.message || "Failed to fetch bill summary.";
-    toast.error(errorMsg);
-  } finally {
-    setBillLoading(false);
-  }
-};
+    if (!cartId || !selectedAddress || !selectedAddress?.location) {
+      setError("Please select a delivery address first");
+      return;
+    }
+    
+    try {
+      setError(null);
+      setBillLoading(true);
+      const billRes = await getBillSummary({
+        userId: user._id,
+        longitude: selectedAddress.location.longitude,
+        latitude: selectedAddress.location.latitude,
+        cartId: cartId,
+        useWallet: useWallet,
+      });
+      setBill(billRes.data);
+    } catch (err) {
+      console.error("Error fetching bill summary", err);
+      setError(err.message || "Failed to fetch bill summary. Please try again.");
+    } finally {
+      setBillLoading(false);
+    }
+  };
+
   // Fetch cart data
   const fetchCartData = async () => {
     if (!user?._id) return;
     try {
+      setError(null);
       setLoading(true);
       const cart = await getCart();
       if (cart?._id) {
@@ -78,6 +82,7 @@ export default function MyBasket({ useWallet, setUseWallet }) {
       }
     } catch (error) {
       console.error("Error fetching cart:", error);
+      setError("Failed to load your cart. Please try again.");
       dispatch(clearCart());
       setItems([]);
       setCartDetails({});
@@ -89,6 +94,8 @@ export default function MyBasket({ useWallet, setUseWallet }) {
 
   const fetchWalletBalance = async () => {
     try {
+      setError(null);
+      setWalletLoading(true);
       const res = await getWalletBalance();
       setWalletBalance(res.walletBalance);
       if (res.walletBalance <= 0) {
@@ -96,6 +103,9 @@ export default function MyBasket({ useWallet, setUseWallet }) {
       }
     } catch (err) {
       console.error("Failed to load wallet balance:", err);
+      setError("Failed to load wallet balance.");
+    } finally {
+      setWalletLoading(false);
     }
   };
 
@@ -106,11 +116,12 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   useEffect(() => {
     fetchCartData();
   }, [user?._id]);
-useEffect(() => {
-  if (cartDetails._id && selectedAddress?.location) {
-    fetchBill(cartDetails._id);
-  }
-}, [cartDetails._id, selectedAddress, useWallet]);
+
+  useEffect(() => {
+    if (cartDetails._id && selectedAddress?.location) {
+      fetchBill(cartDetails._id);
+    }
+  }, [cartDetails._id, selectedAddress, useWallet]);
 
   const updateQuantity = async (productId, change) => {
     try {
@@ -128,6 +139,7 @@ useEffect(() => {
       await fetchCartData();
     } catch (error) {
       console.error("Failed to update quantity", error);
+      setError("Failed to update item quantity. Please try again.");
     } finally {
       setButtonLoading(null);
     }
@@ -140,6 +152,7 @@ useEffect(() => {
       await fetchCartData();
     } catch (error) {
       console.error("Failed to remove item", error);
+      setError("Failed to remove item from cart. Please try again.");
     } finally {
       setButtonLoading(null);
     }
@@ -158,6 +171,7 @@ useEffect(() => {
       }
     } catch (error) {
       console.error("Failed to clear cart", error);
+      setError("Failed to clear your cart. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -179,6 +193,21 @@ useEffect(() => {
 
   return (
     <div className="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden sm:max-w-md md:max-w-lg">
+      {/* Error Message Display */}
+      {error && (
+        <div className="bg-red-50 border-b border-red-100 p-3 flex items-start gap-2">
+          <AlertCircle size={18} className="mt-0.5 flex-shrink-0 text-red-500" />
+          <div className="flex-1 text-sm text-red-600">{error}</div>
+          <button 
+            onClick={() => setError(null)} 
+            className="text-red-400 hover:text-red-600 text-lg"
+            aria-label="Dismiss error"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
       <div className="text-white p-4 flex items-center gap-3 bg-[#ea4525]">
         <div className="relative">
           <ShoppingBasket size={24} />
@@ -204,16 +233,16 @@ useEffect(() => {
             <p>Your basket is empty.</p>
             <button
               onClick={fetchCartData}
-              className="flex items-center gap-2 bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300 transition"
+              className="flex items-center gap-2 bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300 transition mx-auto"
             >
-              <RefreshCw size={16} /> Retry
+              <RefreshCw size={16} /> Refresh Basket
             </button>
           </div>
         ) : (
           items.map((item) => (
             <div
               key={item.productId._id}
-              className="bg-white rounded-lg p-3 sm:p-4"
+              className="bg-white rounded-lg p-3 sm:p-4 shadow-sm"
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1 min-w-0">
@@ -299,31 +328,51 @@ useEffect(() => {
             </div>
           </div>
 
-          {bill?.offersApplied?.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-green-600">
-                <Tag size={14} /> Applied Offers:
-              </div>
-              {bill.offersApplied.map((offer, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between text-xs sm:text-sm pl-6"
-                >
-                  <span className="text-green-600">
-                    {offer?.name || "Offer"}
-                  </span>
-                  <span className="text-green-600">
-                    - ₹{(offer?.discountValue || 0).toFixed(2)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+         {bill?.offersApplied?.length > 0 && (
+  <div className="space-y-2">
+    <div className="flex items-center gap-2 text-sm font-medium text-green-600">
+      <Tag size={14} /> Applied Offers:
+    </div>
+    {bill.offersApplied.map((offer, index) => (
+      <div
+        key={index}
+        className="flex justify-between text-xs sm:text-sm pl-6"
+      >
+        <span className="text-green-600">
+          {typeof offer === 'string' ? offer : offer?.name || "Offer"}
+        </span>
+        {/* If you have discount value in the response, display it here */}
+        {/* Otherwise you might need to calculate it from the total discount */}
+        {bill?.discount > 0 && index === 0 && (
+          <span className="text-green-600">
+            - ₹{(bill?.discount || 0).toFixed(2)}
+          </span>
+        )}
+      </div>
+    ))}
+  </div>
+)}
+          <div className="space-y-1">
+  <div className="flex justify-between text-sm sm:text-base">
+    <span className="font-medium">Tax Total:</span>
+    <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
+  </div>
+  
+  {bill?.taxes?.map((taxItem, index) => (
+    <div key={index} className="flex justify-between text-xs pl-4 text-gray-600">
+      <span>
+        {taxItem.name} ({taxItem.percentage}%):
+      </span>
+      <span>₹{taxItem.amount.toFixed(2)}</span>
+    </div>
+  ))}
+</div>
 
-          <div className="flex justify-between text-sm sm:text-base">
+          {/* <div className="flex justify-between text-sm sm:text-base">
             <span className="font-medium">Tax:</span>
             <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
-          </div>
+          </div> */}
+          
           <div className="flex justify-between text-sm sm:text-base">
             <span className="font-medium">Delivery Fee:</span>
             <span className="font-medium">
@@ -349,12 +398,13 @@ useEffect(() => {
           )}
 
           <div className="flex items-center justify-between text-sm sm:text-base pt-2">
-            <label className="font-medium flex items-center gap-2">
+            <label className="font-medium flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 disabled={walletBalance <= 0 || walletLoading}
                 checked={walletBalance > 0 && useWallet}
                 onChange={handleWalletToggle}
+                className="cursor-pointer"
               />
               Use Wallet (₹{walletBalance.toFixed(2)} available)
             </label>

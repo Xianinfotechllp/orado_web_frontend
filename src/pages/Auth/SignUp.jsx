@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import Navbar from "../../components/layout/Navbar";
 import deliveryBoy from "../../assets/deliveryBoy.png";
 import { registerUser } from "../../apis/authApi"; 
-
+import { useNavigate } from "react-router-dom";
 function Signup() {
+    const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -88,6 +89,9 @@ function Signup() {
         confirmPassword: "",
         termsAccepted: false,
       });
+        setTimeout(() => {
+      navigate("/login");
+    }, 2000);
       setErrors({});
     } catch (err) {
       setErrorMsg(err.message || "Registration failed");

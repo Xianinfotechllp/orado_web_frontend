@@ -106,13 +106,25 @@ export default function OrderStatusPage() {
     socket.on("order_completed", (data) => {
       console.log("Received order completed:", data);
       if (data.orderId === orderId) {
-        setCurrentStatus("completed");
+           setCurrentStatus("delivered");
         setOrderData(prev => prev ? {
           ...prev,
-          orderStatus: "completed"
+               orderStatus: "delivered" ,
         } : null);
       }
     });
+
+
+
+    socket.on("order_delivered", (data) => {  // Updated event name
+  if (data.orderId === orderId) {
+    setCurrentStatus("delivered");       // Updated status
+    setOrderData(prev => prev ? {
+      ...prev,
+      orderStatus: "delivered"          // Updated status
+    } : null);
+  }
+});
 
     socket.on("error", (err) => {
       console.error("Socket error:", err);
@@ -197,14 +209,14 @@ export default function OrderStatusPage() {
       completed: ["arrived", "completed"].includes(currentStatus),
       active: currentStatus === "in_progress" || currentStatus === "arrived"
     },
-    { 
-      key: "completed", 
-      label: "Delivered", 
-      description: "Your order has been delivered",
-      icon: CheckCircle,
-      completed: currentStatus === "completed",
-      active: currentStatus === "completed"
-    }
+     { 
+    key: "delivered",  // Changed from "completed"
+    label: "Delivered", 
+    description: "Your order has been delivered",
+    icon: CheckCircle,
+    completed: currentStatus === "delivered",  // Updated
+    active: currentStatus === "delivered"      // Updated
+  }
   ];
 
   const getStatusColor = (step) => {
