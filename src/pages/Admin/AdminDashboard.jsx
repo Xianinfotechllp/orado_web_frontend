@@ -211,6 +211,12 @@ function AdminDashboard() {
             >
               Restaurant Reviews
             </Link>
+            <Link
+              to="restaurant-chats"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
+              Restaurant Chats
+            </Link>
           </SidebarItem>
 
           <SidebarItem

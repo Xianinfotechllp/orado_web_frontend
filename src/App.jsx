@@ -46,9 +46,10 @@ import AssignOffer from "./pages/Admin/Offer/AssignOffer";
 import RestaurantEarningsTable from "./pages/Admin/RestaurantEarningsTable";
 import RestaurantListForOrders from "./pages/Admin/RestaurantListForOrders";
 import SurgeAreaSelector from "./pages/Admin/Surge/SurgeAreaSelector";
+import AdminRestaurantChatDashboard from "./pages/Admin/RestaurantChats/AdminRestaurantChatDashboard";
 
 function App() {
-  const [count, setCount] = useState(0);
+  // const [count, setCount] = useState(0);
 
   return (
     <>
@@ -85,6 +86,7 @@ function App() {
           <Route path="restaurant-order" element={<RestaurantListForOrders />} />
           <Route path="restaurant-feedback" element={<RestaurantListforReviews />} />
            <Route path="restaurant-earnings" element={<RestaurantEarningsTable />} />
+           <Route path="restaurant-chats" element={<AdminRestaurantChatDashboard />} />
 
           {/* offer section */}
           <Route path="create-offer" element={<CreateOffer />} />
