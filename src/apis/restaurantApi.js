@@ -445,7 +445,7 @@ export const deleteRestaurantCategory = async (categoryId, restaurantId) => {
 
 export const getRestaurantEarningSummary = async (restaurantId, timeFrame = '') => {
   try {
-    const response = await apiClient.get(`/restaurants/${restaurantId}/earnigs`, {
+    const response = await apiClient.get(`/restaurants/${restaurantId}/earnings`, {
       params: { 
         period: timeFrame,
         page: 1,

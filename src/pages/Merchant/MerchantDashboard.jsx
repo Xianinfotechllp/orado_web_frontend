@@ -9,7 +9,13 @@ import CategoryManagement from "../../components/merchant/Dashboard/CategorySect
 import ReviewsManagement from "../../components/merchant/Dashboard/ReviewSection/ReviewsManagement";
 import OffersManagement from "../../components/merchant/Dashboard/OffersAndCoupon/OffersManagement";
 import ServiceAreaManagement from "../../components/merchant/Dashboard/ServiceSection/ServiceAreaManagement";
+
 import RestaurantEarnings from "../../components/merchant/Dashboard/EarningsSection/RestaurantEarnings";
+
+import RestaurantChatDashboard from "../../components/merchant/CustomerChats/RestruantChatDashboard";
+import RestaurantAdminChat from "../../components/merchant/AdminRestaurantChat/RestaurantAdminChat";
+
+
 const MerchantDashboard = () => {
   const [activeTab, setActiveTab] = useState("restaurant");
 
@@ -33,6 +39,10 @@ const MerchantDashboard = () => {
         return <ReviewsManagement />;
       case "offers":
         return <OffersManagement />;
+      case "customerChat":
+        return <RestaurantChatDashboard />;
+      case "adminChat":
+        return <RestaurantAdminChat />;
       default:
         return <DashboardOverview />;
     }

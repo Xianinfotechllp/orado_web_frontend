@@ -9,6 +9,8 @@ import {
   Tag,
   MapPin,
   LogOut,
+  MessageCircle,
+  MessageCircleCode
 } from "lucide-react";
 import logo from "../../../../assets/oradoLogo.png";
 import { useNavigate } from "react-router-dom";
@@ -28,6 +30,8 @@ const MerchantSidebar = ({ activeTab, setActiveTab }) => {
     { id: "service-areas", label: "Service Areas", icon: MapPin },
     { id: "reviews", label: "Reviews", icon: Star },
     { id: "offers", label: "Offers & Coupons", icon: Tag },
+    { id: "customerChat", label: "Customer Chats", icon: MessageCircle },
+    { id: "adminChat", label: "Admin Chats", icon: MessageCircleCode },
   ];
 
   const handleLogout = async () => {
