@@ -66,7 +66,7 @@ const ChatPage = ({ orderId, onBack, chatType = 'admin', user, restaurantId }) =
     const token = store.getState().auth.token;
     if (!token) return;
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+    const socketUrl = import.meta.env.VITE_SOCKET_URL ;
     const socketInstance = io(socketUrl, {
       withCredentials: true,
       auth: { token },

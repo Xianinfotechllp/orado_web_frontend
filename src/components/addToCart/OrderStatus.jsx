@@ -46,7 +46,7 @@ export default function OrderStatusPage() {
       return;
     }
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+    const socketUrl = import.meta.env.VITE_SOCKET_URL ;
     console.log("Connecting to socket at:", socketUrl);
 
     const socketInstance = io(socketUrl, {
