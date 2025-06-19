@@ -9,7 +9,7 @@ import CategoryManagement from "../../components/merchant/Dashboard/CategorySect
 import ReviewsManagement from "../../components/merchant/Dashboard/ReviewSection/ReviewsManagement";
 import OffersManagement from "../../components/merchant/Dashboard/OffersAndCoupon/OffersManagement";
 import ServiceAreaManagement from "../../components/merchant/Dashboard/ServiceSection/ServiceAreaManagement";
-
+import RestaurantEarnings from "../../components/merchant/Dashboard/EarningsSection/RestaurantEarnings";
 const MerchantDashboard = () => {
   const [activeTab, setActiveTab] = useState("restaurant");
 
@@ -17,6 +17,8 @@ const MerchantDashboard = () => {
     switch (activeTab) {
       case "dashboard":
         return <DashboardOverview />;
+      case "earnigs":
+        return <RestaurantEarnings  />;
       case "menu":
         return <MenuManagement />;
       case "orders":
@@ -38,6 +40,7 @@ const MerchantDashboard = () => {
 
   return (
     <div className="min-h-screen flex w-full bg-gray-50 overflow-hidden">
+      
       {/* Fixed Sidebar */}
       <div className="fixed h-full">
         <MerchantSidebar activeTab={activeTab} setActiveTab={setActiveTab} />

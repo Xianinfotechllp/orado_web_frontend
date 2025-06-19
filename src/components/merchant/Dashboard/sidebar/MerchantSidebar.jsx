@@ -20,6 +20,8 @@ const MerchantSidebar = ({ activeTab, setActiveTab }) => {
   const menuItems = [
     { id: "restaurant", label: "My Restaurant", icon: Home },
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
+   { id: "earnigs", label: "Earnigs", icon: BarChart3 },
+
     { id: "menu", label: "Menu Management", icon: ShoppingBag },
     { id: "categories", label: "Category", icon: Grid3X3 },
     { id: "orders", label: "Orders", icon: ClipboardList },
