@@ -15,12 +15,14 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useSelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
+import toast, { Toaster } from 'react-hot-toast';
 import {
   getOrdersByMerchant,
   updateOrderStatus,
   sendOrderDelayReason,
 } from "../../../../apis/orderApi";
-import { toast } from "react-toastify";
+
 import RestaurantSlider from "../Slider/RestaurantSlider";
 import socket from "../../../../socket/socket";
 
@@ -544,10 +546,185 @@ const OrderManagement = () => {
   console.log("selectedRestaurant:", selectedRestaurant);
   console.log("restaurants:", restaurants);
   console.log("currentRestaurantId:", currentRestaurantId);
-  const handleNewOrder = (data) => {
-    console.log("📦 New Order Received:", data);
-    // You can update state here if needed
-  };
+const handleNewOrder = (data) => {
+  console.log("📦 New Order Received:", data);
+
+  // 🔊 Play notification sound
+  const audio = new Audio("/sounds/notificaion.mp3");
+  audio.play()
+
+  // 📣 Show browser notification
+  if (Notification.permission === "granted") {
+    new Notification("🍽️ New Order Received!", {
+      body: `Order #${data.orderNumber || data._id.substring(0, 6)} for ₹${data.totalAmount} from ${data.customerId?.name || "Customer"}`,
+      icon: "/logo.png"
+    });
+  }
+
+toast((t) => (
+  <motion.div
+    initial={{ opacity: 0, x: 300, scale: 0.8 }}
+    animate={{ 
+      opacity: 1, 
+      x: 0, 
+      scale: 1,
+      transition: { type: "spring", stiffness: 100, damping: 15 }
+    }}
+    exit={{ 
+      opacity: 0, 
+      x: 300, 
+      scale: 0.8,
+      transition: { duration: 0.3, ease: "easeInOut" }
+    }}
+    className="max-w-sm w-full bg-gradient-to-r from-orange-50 to-red-50 shadow-xl rounded-2xl pointer-events-auto ring-1 ring-orange-200 overflow-hidden"
+  >
+    {/* Success stripe */}
+    <div className="h-1 bg-gradient-to-r from-orange-400 to-red-400"></div>
+    
+    <div className="p-4">
+      <div className="flex items-start space-x-3">
+        {/* Animated icon */}
+        <motion.div
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ 
+            scale: 1, 
+            rotate: 0,
+            transition: { delay: 0.2, type: "spring", stiffness: 200 }
+          }}
+          className="flex-shrink-0"
+        >
+          <div className="relative">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-lg">
+              <ShoppingBag className="w-6 h-6 text-white" />
+            </div>
+            {/* Pulse effect */}
+            <motion.div
+              animate={{ 
+                scale: [1, 1.2, 1],
+                opacity: [0.5, 0, 0.5]
+              }}
+              transition={{ 
+                duration: 2, 
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="absolute inset-0 rounded-full bg-orange-400"
+            />
+          </div>
+        </motion.div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ 
+              opacity: 1, 
+              y: 0,
+              transition: { delay: 0.3 }
+            }}
+          >
+            <div className="flex items-center space-x-2">
+              <h3 className="text-sm font-bold text-gray-900">
+                🎉 New Order!
+              </h3>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Live
+              </span>
+            </div>
+            
+            <div className="mt-1 space-y-1">
+              <p className="text-xs text-gray-600 font-medium">
+                Order #{data.orderNumber || data._id.substring(0, 8).toUpperCase()}
+              </p>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-1">
+                  <span className="text-lg font-bold text-orange-600">
+                    ₹{data.totalAmount}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    • {data.itemCount || '3'} items
+                  </span>
+                </div>
+                
+                <div className="flex items-center space-x-1 text-xs text-gray-500">
+                  <Clock className="w-3 h-3" />
+                  <span>{data.estimatedTime || '25-30'} min</span>
+                </div>
+              </div>
+
+              {/* Customer info */}
+              <div className="flex items-center space-x-1 text-xs text-gray-600 mt-2">
+                <User className="w-3 h-3" />
+                <span className="truncate">{data.customerName || 'Customer'}</span>
+                <span className="text-gray-400">•</span>
+                <MapPin className="w-3 h-3" />
+                <span className="truncate">{data.area || 'Delivery Area'}</span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Close button */}
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ 
+            opacity: 1, 
+            scale: 1,
+            transition: { delay: 0.4 }
+          }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => toast.dismiss(t.id)}
+          className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors duration-200 group"
+        >
+          <X className="w-3 h-3 text-gray-400 group-hover:text-gray-600" />
+        </motion.button>
+      </div>
+
+      {/* Action buttons */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ 
+          opacity: 1, 
+          y: 0,
+          transition: { delay: 0.5 }
+        }}
+        className="flex space-x-2 mt-3 pt-3 border-t border-orange-100"
+      >
+      
+    
+      </motion.div>
+    </div>
+  </motion.div>
+), {
+  duration: 6000,
+  position: 'top-right'
+});
+ 
+
+  // Add animation to the new order in the list
+  setOrders(prevOrders => {
+    const exists = prevOrders.some(order => String(order._id) === String(data._id));
+    if (exists) {
+      console.log("Order already exists, skipping");
+      return prevOrders;
+    }
+
+    const formattedOrder = {
+      ...data,
+      orderTime: data.orderTime
+        ? new Date(data.orderTime).toLocaleString("en-IN")
+        : "N/A"
+    };
+
+    const updatedOrders = [formattedOrder, ...prevOrders];
+    console.log("Updated Orders Array:", updatedOrders);
+
+    return updatedOrders;
+  });
+};
+
   useEffect(() => {
     if (!currentRestaurantId) return;
 
