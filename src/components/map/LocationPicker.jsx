@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import axios from "axios";
@@ -13,48 +13,12 @@ export default function LocationPicker({ onSelectLocation }) {
   const markerRef = useRef(null);
   const geocoderRef = useRef(null);
 
-  useEffect(() => {
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: [77.5946, 12.9716], // Bangalore coordinates
-      zoom: 5,
-    });
-
-    mapRef.current = map;
-
-    // Geocoder control (India only)
-    const geocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      mapboxgl: mapboxgl,
-      placeholder: "Search location in India",
-      countries: "IN",   // Limit to India 🇮🇳
-      marker: false,
-    });
-
-    map.addControl(geocoder, 'top-left');
-    geocoderRef.current = geocoder;
-
-    geocoder.on("result", (e) => {
-      handleGeocoderResult(e.result);
-    });
-
-    // On map click
-    map.on("click", async (e) => {
-      const { lng, lat } = e.lngLat;
-      await handleLocationSelection(lng, lat);
-    });
-
-    return () => map.remove();
-  }, [onSelectLocation]);
-
-  const handleGeocoderResult = (result) => {
+  // Memoize the handler functions
+  const handleGeocoderResult = useCallback((result) => {
     const { center, place_name, context } = result;
 
-    // Remove old marker
     if (markerRef.current) markerRef.current.remove();
 
-    // Add new marker
     const marker = new mapboxgl.Marker().setLngLat(center).addTo(mapRef.current);
     markerRef.current = marker;
 
@@ -72,9 +36,9 @@ export default function LocationPicker({ onSelectLocation }) {
     });
 
     mapRef.current.flyTo({ center, zoom: 14 });
-  };
+  }, [onSelectLocation]);
 
-  const handleLocationSelection = async (lng, lat) => {
+  const handleLocationSelection = useCallback(async (lng, lat) => {
     if (markerRef.current) markerRef.current.remove();
 
     const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(mapRef.current);
@@ -99,7 +63,6 @@ export default function LocationPicker({ onSelectLocation }) {
       const state = context.find(c => c.id.includes("region"))?.text || "";
       const zip = context.find(c => c.id.includes("postcode"))?.text || "";
 
-      // Update the geocoder input with the address
       if (geocoderRef.current) {
         geocoderRef.current.setInput(address);
       }
@@ -131,9 +94,9 @@ export default function LocationPicker({ onSelectLocation }) {
         zip: "",
       });
     }
-  };
+  }, [onSelectLocation]);
 
-  const locateMe = async () => {
+  const locateMe = useCallback(async () => {
     if (!navigator.geolocation) {
       alert("Geolocation not supported by your browser.");
       return;
@@ -150,21 +113,66 @@ export default function LocationPicker({ onSelectLocation }) {
 
       const { latitude, longitude } = position.coords;
       
-      // Fly to the location
       mapRef.current.flyTo({ 
         center: [longitude, latitude], 
         zoom: 14,
         essential: true
       });
 
-      // Handle the location selection (will update marker and address)
       await handleLocationSelection(longitude, latitude);
-
     } catch (error) {
       console.error("Error getting location:", error);
       alert("Unable to retrieve your location. Please ensure location services are enabled.");
     }
+  }, [handleLocationSelection]);
+
+useEffect(() => {
+  // Initialize map only once
+  if (mapRef.current) return;
+
+  const map = new mapboxgl.Map({
+    container: mapContainerRef.current,
+    style: "mapbox://styles/mapbox/streets-v12",
+    center: [77.5946, 12.9716],
+    zoom: 5,
+  });
+
+  mapRef.current = map;
+
+  const geocoder = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    mapboxgl: mapboxgl,
+    placeholder: "Search location in India",
+    countries: "IN",
+    marker: false,
+  });
+
+  map.addControl(geocoder, 'top-left');
+  geocoderRef.current = geocoder;
+
+  // Store the current handlers in variables
+  const currentGeocoderHandler = (result) => handleGeocoderResult(result);
+  const currentClickHandler = async (e) => {
+    const { lng, lat } = e.lngLat;
+    await handleLocationSelection(lng, lat);
   };
+
+  // Use the variables in the event listeners
+  geocoder.on("result", currentGeocoderHandler);
+  map.on("click", currentClickHandler);
+
+  return () => {
+    // Clean up using the same handler references
+    if (geocoderRef.current) {
+      geocoderRef.current.off("result", currentGeocoderHandler);
+    }
+    if (mapRef.current) {
+      mapRef.current.off("click", currentClickHandler);
+      mapRef.current.remove();
+      mapRef.current = null;
+    }
+  };
+}, []); 
 
   return (
     <div className="w-full h-full rounded-lg relative">

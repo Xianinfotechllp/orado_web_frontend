@@ -31,6 +31,7 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   const [walletLoading, setWalletLoading] = useState(false);
   const [billLoading, setBillLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [deliveryAvailable, setDeliveryAvailable] = useState(true);
 
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
@@ -38,22 +39,53 @@ export default function MyBasket({ useWallet, setUseWallet }) {
 
   // Fetch bill summary
   const fetchBill = async (cartId) => {
-    if (!cartId || !selectedAddress || !selectedAddress?.location) {
-      setError("Please select a delivery address first");
+    if (!cartId) {
+      setError("Cart ID is required");
       return;
     }
+
+    if (!selectedAddress?.location) {
+      setError("Please select a valid delivery address");
+      return;
+    }
+
+    // Handle both location formats
+    let longitude, latitude;
     
+    if (selectedAddress.location.coordinates) { 
+      [longitude, latitude] = selectedAddress.location.coordinates;
+    } else {
+      longitude = selectedAddress.location.longitude;
+      latitude = selectedAddress.location.latitude;
+    }
+
     try {
       setError(null);
       setBillLoading(true);
+      setDeliveryAvailable(true);
+      
       const billRes = await getBillSummary({
         userId: user._id,
-        longitude: selectedAddress.location.longitude,
-        latitude: selectedAddress.location.latitude,
-        cartId: cartId,
-        useWallet: useWallet,
+        longitude,
+        latitude,
+        cartId,
+        useWallet: Boolean(useWallet),
       });
-      setBill(billRes.data);
+      
+      if (billRes.error) {
+        if (billRes.error.includes("do not deliver to your location")) {
+          setBill({});
+          setDeliveryAvailable(false);
+          setError("Delivery unavailable to selected location");
+        } else {
+          throw new Error(billRes.error);
+        }
+      } else if (!billRes.data) {
+        throw new Error("Invalid response from server");
+      } else {
+        setBill({ ...billRes.data, deliveryAvailable: true });
+        setDeliveryAvailable(true);
+      }
     } catch (err) {
       console.error("Error fetching bill summary", err);
       setError(err.message || "Failed to fetch bill summary. Please try again.");
@@ -194,19 +226,48 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   return (
     <div className="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden sm:max-w-md md:max-w-lg">
       {/* Error Message Display */}
-      {error && (
-        <div className="bg-red-50 border-b border-red-100 p-3 flex items-start gap-2">
-          <AlertCircle size={18} className="mt-0.5 flex-shrink-0 text-red-500" />
-          <div className="flex-1 text-sm text-red-600">{error}</div>
-          <button 
-            onClick={() => setError(null)} 
-            className="text-red-400 hover:text-red-600 text-lg"
-            aria-label="Dismiss error"
-          >
-            &times;
-          </button>
-        </div>
+   {error && (
+  <div className={`p-3 flex items-start gap-2 ${
+    error.code === "DELIVERY_UNAVAILABLE" 
+      ? "bg-yellow-50 border-l-4 border-yellow-400" 
+      : "bg-red-50 border-b border-red-100"
+  }`}>
+    <AlertCircle 
+      size={18} 
+      className={`mt-0.5 flex-shrink-0 ${
+        error.code === "DELIVERY_UNAVAILABLE" 
+          ? "text-yellow-500" 
+          : "text-red-500"
+      }`} 
+    />
+    <div className="flex-1 text-sm">
+      <p className={
+        error.code === "DELIVERY_UNAVAILABLE" 
+          ? "text-yellow-700" 
+          : "text-red-600"
+      }>
+        {error.userMessage || error.message}
+   Delivery unavailable to your selected location
+      </p>
+      {error.code === "DELIVERY_UNAVAILABLE" && (
+        <p className="text-yellow-600 text-xs mt-1">
+          Please try a different delivery address
+        </p>
       )}
+    </div>
+    <button 
+      onClick={() => setError(null)} 
+      className={`text-lg ${
+        error.code === "DELIVERY_UNAVAILABLE" 
+          ? "text-yellow-400 hover:text-yellow-600" 
+          : "text-red-400 hover:text-red-600"
+      }`}
+      aria-label="Dismiss error"
+    >
+      &times;
+    </button>
+  </div>
+)}
 
       <div className="text-white p-4 flex items-center gap-3 bg-[#ea4525]">
         <div className="relative">
@@ -310,7 +371,7 @@ export default function MyBasket({ useWallet, setUseWallet }) {
           <div className="h-4 bg-gray-200 rounded w-1/4"></div>
           <div className="h-4 bg-gray-200 rounded w-3/4"></div>
         </div>
-      ) : items.length > 0 ? (
+      ) : items.length > 0 && deliveryAvailable ? (
         <div className="p-4 space-y-2 border-t">
           <div className="flex justify-between text-sm sm:text-base">
             <span className="font-medium">Sub Total:</span>
@@ -328,50 +389,44 @@ export default function MyBasket({ useWallet, setUseWallet }) {
             </div>
           </div>
 
-         {bill?.offersApplied?.length > 0 && (
-  <div className="space-y-2">
-    <div className="flex items-center gap-2 text-sm font-medium text-green-600">
-      <Tag size={14} /> Applied Offers:
-    </div>
-    {bill.offersApplied.map((offer, index) => (
-      <div
-        key={index}
-        className="flex justify-between text-xs sm:text-sm pl-6"
-      >
-        <span className="text-green-600">
-          {typeof offer === 'string' ? offer : offer?.name || "Offer"}
-        </span>
-        {/* If you have discount value in the response, display it here */}
-        {/* Otherwise you might need to calculate it from the total discount */}
-        {bill?.discount > 0 && index === 0 && (
-          <span className="text-green-600">
-            - ₹{(bill?.discount || 0).toFixed(2)}
-          </span>
-        )}
-      </div>
-    ))}
-  </div>
-)}
-          <div className="space-y-1">
-  <div className="flex justify-between text-sm sm:text-base">
-    <span className="font-medium">Tax Total:</span>
-    <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
-  </div>
-  
-  {bill?.taxes?.map((taxItem, index) => (
-    <div key={index} className="flex justify-between text-xs pl-4 text-gray-600">
-      <span>
-        {taxItem.name} ({taxItem.percentage}%):
-      </span>
-      <span>₹{taxItem.amount.toFixed(2)}</span>
-    </div>
-  ))}
-</div>
+          {bill?.offersApplied?.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-green-600">
+                <Tag size={14} /> Applied Offers:
+              </div>
+              {bill.offersApplied.map((offer, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between text-xs sm:text-sm pl-6"
+                >
+                  <span className="text-green-600">
+                    {typeof offer === 'string' ? offer : offer?.name || "Offer"}
+                  </span>
+                  {bill?.discount > 0 && index === 0 && (
+                    <span className="text-green-600">
+                      - ₹{(bill?.discount || 0).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
-          {/* <div className="flex justify-between text-sm sm:text-base">
-            <span className="font-medium">Tax:</span>
-            <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
-          </div> */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-sm sm:text-base">
+              <span className="font-medium">Tax Total:</span>
+              <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
+            </div>
+            
+            {bill?.taxes?.map((taxItem, index) => (
+              <div key={index} className="flex justify-between text-xs pl-4 text-gray-600">
+                <span>
+                  {taxItem.name} ({taxItem.percentage}%):
+                </span>
+                <span>₹{taxItem.amount.toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
           
           <div className="flex justify-between text-sm sm:text-base">
             <span className="font-medium">Delivery Fee:</span>
@@ -425,6 +480,24 @@ export default function MyBasket({ useWallet, setUseWallet }) {
           </div>
         </div>
       ) : null}
+
+      {/* Checkout Button */}
+      {items.length > 0 && (
+        <div className="p-4">
+          <button
+            className={`w-full py-3 px-4 rounded-lg font-medium text-white ${
+              !deliveryAvailable || error
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-orange-600 hover:bg-orange-700"
+            }`}
+            disabled={!deliveryAvailable || error}
+          >
+            {!deliveryAvailable 
+              ? "Delivery Unavailable" 
+              : "Proceed to Checkout"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
