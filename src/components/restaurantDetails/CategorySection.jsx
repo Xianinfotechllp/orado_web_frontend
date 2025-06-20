@@ -224,10 +224,10 @@ function CategorySection({ category, restaurantId }) {
               <span className="font-medium">{categoryStats.totalItems} Items</span>
             </div>
 
-            <div className="flex items-center gap-2 text-gray-700">
+            {/* <div className="flex items-center gap-2 text-gray-700">
               <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
               <span className="font-medium">{categoryStats.avgRating} Rating</span>
-            </div>
+            </div> */}
 
             {categoryStats.popularItems > 0 && (
               <div className="flex items-center gap-2 text-gray-700">
