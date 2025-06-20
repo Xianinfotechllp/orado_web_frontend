@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   createProduct,
   getRestaurantProducts,
   deleteProduct,
+  exportRestaurantProducts,
+  bulkUpdateProducts,
 } from "../../../../apis/restaurantApi";
-import { Plus, Edit, Trash2, Utensils } from "lucide-react";
+import { Plus, Edit, Trash2, Utensils, Download, Upload } from "lucide-react";
 import { toast } from "react-toastify";
 import MenuAddModal from "./MenuAddModal";
 import MenuEditModal from "./MenuEditModal";
@@ -21,6 +23,9 @@ const MenuManagement = () => {
   const [categories, setCategories] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef(null);
 
   const currentRestaurantId = selectedRestaurant?.id || null;
 
@@ -43,7 +48,6 @@ const MenuManagement = () => {
     try {
       setLoading(true);
       const response = await getRestaurantProducts(restaurantId);
-      console.log("Fetched products:-----------", response);
 
       // Handle various possible response structures
       const products = Array.isArray(response?.data?.products)
@@ -75,8 +79,6 @@ const MenuManagement = () => {
         unit: product?.unit || "piece",
       }));
 
-      console.log("Validated products: ", validatedProducts);
-
       setMenuItems(validatedProducts);
     } catch (err) {
       setError(err.message);
@@ -88,13 +90,8 @@ const MenuManagement = () => {
     }
   };
 
-
-  
   const handleDelete = async (id) => {
-    if (
-      !id ||
-      !window.confirm("Are you sure you want to delete this product?")
-    ) {
+    if (!id || !window.confirm("Are you sure you want to delete this product?")) {
       return;
     }
 
@@ -106,9 +103,7 @@ const MenuManagement = () => {
         toast.success("Product deleted successfully");
         setMenuItems((prev) => prev.filter((item) => item._id !== id));
       } else if (response?.message?.includes("permission")) {
-        toast.info(
-          "Your deletion request has been submitted for admin approval"
-        );
+        toast.info("Your deletion request has been submitted for admin approval");
       } else {
         throw new Error(response?.message || "Failed to delete product");
       }
@@ -120,14 +115,6 @@ const MenuManagement = () => {
       setLoading(false);
     }
   };
-
-  // const toggleAvailability = (id) => {
-  //   setMenuItems((items) =>
-  //     items.map((item) =>
-  //       item._id === id ? { ...item, active: !item.active } : item
-  //     )
-  //   );
-  // };
 
   const handleCreateProduct = async (productData) => {
     try {
@@ -172,39 +159,110 @@ const MenuManagement = () => {
   };
 
   const handleUpdateSuccess = (updatedProduct) => {
-  if (!updatedProduct?._id) return;
+    if (!updatedProduct?._id) return;
 
-  setMenuItems(prevItems => 
-    prevItems.map(item => 
-      item._id === updatedProduct._id
-        ? {
-            ...item,
-            ...updatedProduct,
-            // Ensure all critical fields are properly set
-            name: updatedProduct.name || item.name,
-            price: updatedProduct.price ?? item.price,
-            description: updatedProduct.description || item.description,
-            foodType: updatedProduct.foodType || item.foodType,
-            categoryId: updatedProduct.categoryId || item.categoryId,
-            categoryName: updatedProduct.categoryName || item.categoryName,
-            stock: updatedProduct.stock ?? item.stock,
-            reorderLevel: updatedProduct.reorderLevel ?? item.reorderLevel,
-            unit: updatedProduct.unit || item.unit,
-            images: Array.isArray(updatedProduct.images) 
-              ? updatedProduct.images 
-              : item.images,
-            active: updatedProduct.active !== false,
-          }
-        : item
-    )
-  );
-  
-  // Only close modal if we're not in optimistic update phase
-  if (!updatedProduct.isOptimistic) {
-    setEditingProduct(null);
-    setShowEditModal(false);
-  }
-};
+    setMenuItems(prevItems => 
+      prevItems.map(item => 
+        item._id === updatedProduct._id
+          ? {
+              ...item,
+              ...updatedProduct,
+              name: updatedProduct.name || item.name,
+              price: updatedProduct.price ?? item.price,
+              description: updatedProduct.description || item.description,
+              foodType: updatedProduct.foodType || item.foodType,
+              categoryId: updatedProduct.categoryId || item.categoryId,
+              categoryName: updatedProduct.categoryName || item.categoryName,
+              stock: updatedProduct.stock ?? item.stock,
+              reorderLevel: updatedProduct.reorderLevel ?? item.reorderLevel,
+              unit: updatedProduct.unit || item.unit,
+              images: Array.isArray(updatedProduct.images) 
+                ? updatedProduct.images 
+                : item.images,
+              active: updatedProduct.active !== false,
+            }
+          : item
+      )
+    );
+    
+    if (!updatedProduct.isOptimistic) {
+      setEditingProduct(null);
+      setShowEditModal(false);
+    }
+  };
+
+  const handleExportToExcel = async () => {
+    if (!currentRestaurantId) {
+      toast.warning("Please select a restaurant first");
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      const response = await exportRestaurantProducts(currentRestaurantId);
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute(
+        'download', 
+        `products-${currentRestaurantId}-${new Date().toISOString().split('T')[0]}.xlsx`
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast.success("Products exported successfully");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to export products"
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportClick = () => {
+    if (!currentRestaurantId) {
+      toast.warning("Please select a restaurant first");
+      return;
+    }
+    fileInputRef.current.click();
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      setIsImporting(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await bulkUpdateProducts(currentRestaurantId, formData);
+      
+      if (response.success) {
+        toast.success(`Updated ${response.updatedCount} products successfully`);
+        // Refresh the product list
+        await fetchRestaurantProducts(currentRestaurantId);
+      } else {
+        throw new Error(response.message || "Bulk update failed");
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to import products"
+      );
+    } finally {
+      setIsImporting(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
 
   if (loading && restaurants.length === 0) {
     return (
@@ -216,7 +274,16 @@ const MenuManagement = () => {
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Restaurant Slider - Using the reusable component */}
+      {/* Hidden file input for bulk import */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept=".xlsx, .xls"
+        className="hidden"
+      />
+
+      {/* Restaurant Slider */}
       <RestaurantSlider
         onRestaurantSelect={handleRestaurantSelect}
         onRestaurantsLoad={handleRestaurantsLoad}
@@ -224,6 +291,39 @@ const MenuManagement = () => {
         className=""
         showError={true}
       />
+
+     <div className="flex justify-end gap-4 mb-6">
+  <button
+    onClick={handleExportToExcel}
+    disabled={!currentRestaurantId || menuItems.length === 0 || isExporting}
+    className={`flex items-center gap-2 px-4 py-2 rounded-md ${
+      !currentRestaurantId || menuItems.length === 0
+        ? 'bg-gray-300 cursor-not-allowed'
+        : 'bg-blue-500 hover:bg-blue-600 text-white'
+    }`}
+  >
+    {isExporting ? (
+      <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+    ) : (
+      <>
+        <Download className="w-5 h-5" />
+        <span>Export to Excel</span>
+      </>
+    )}
+  </button>
+
+  <button
+    onClick={handleImportClick}
+    // disabled={!currentRestaurantId || isImporting}
+    className="flex items-center gap-2 px-4 py-2 rounded-md" >
+   
+      <>
+        <Upload className="w-5 h-5" />
+        <span>Bulk Edit</span>
+      </>
+ 
+  </button>
+</div>
 
       {/* Menu Items Grid */}
       {loading && menuItems.length === 0 ? (
