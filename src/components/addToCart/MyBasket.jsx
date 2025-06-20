@@ -32,7 +32,7 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   const [billLoading, setBillLoading] = useState(false);
   const [error, setError] = useState(null);
   const [deliveryAvailable, setDeliveryAvailable] = useState(true);
-
+  const [cookingInstructions, setCookingInstructions] = useState("");
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
@@ -155,6 +155,13 @@ export default function MyBasket({ useWallet, setUseWallet }) {
     }
   }, [cartDetails._id, selectedAddress, useWallet]);
 
+
+
+
+
+
+
+
   const updateQuantity = async (productId, change) => {
     try {
       setButtonLoading(productId);
@@ -214,6 +221,19 @@ export default function MyBasket({ useWallet, setUseWallet }) {
     const newUseWallet = e.target.checked;
     setUseWallet(newUseWallet);
   };
+
+
+
+
+
+
+
+
+
+
+
+
+  
 
   if (loading) {
     return (
@@ -480,6 +500,19 @@ export default function MyBasket({ useWallet, setUseWallet }) {
           </div>
         </div>
       ) : null}
+
+      <div className="p-4 space-y-2">
+  <label className="text-sm font-medium text-gray-700">
+    Cooking Instructions (optional)
+  </label>
+  <textarea
+    value={cookingInstructions}
+    onChange={(e) => setCookingInstructions(e.target.value)}
+    placeholder="E.g. Less spicy, no onion, extra sauce..."
+    rows={3}
+    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm resize-none"
+  />
+</div>
 
       {/* Checkout Button */}
       {items.length > 0 && (
