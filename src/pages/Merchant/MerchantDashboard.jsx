@@ -9,6 +9,9 @@ import CategoryManagement from "../../components/merchant/Dashboard/CategorySect
 import ReviewsManagement from "../../components/merchant/Dashboard/ReviewSection/ReviewsManagement";
 import OffersManagement from "../../components/merchant/Dashboard/OffersAndCoupon/OffersManagement";
 import ServiceAreaManagement from "../../components/merchant/Dashboard/ServiceSection/ServiceAreaManagement";
+
+import RestaurantEarnings from "../../components/merchant/Dashboard/EarningsSection/RestaurantEarnings";
+
 import RestaurantChatDashboard from "../../components/merchant/CustomerChats/RestruantChatDashboard";
 import RestaurantAdminChat from "../../components/merchant/AdminRestaurantChat/RestaurantAdminChat";
 import { Menu } from "lucide-react";
@@ -21,6 +24,8 @@ const MerchantDashboard = () => {
     switch (activeTab) {
       case "dashboard":
         return <DashboardOverview />;
+      case "earnigs":
+        return <RestaurantEarnings  />;
       case "menu":
         return <MenuManagement />;
       case "orders":

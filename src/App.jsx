@@ -30,7 +30,7 @@ import WalletTopUpPage from "./pages/UserProfile/WalletTopUpPage";
 
 import AdminLogin from "./pages/Admin/AdminLogin";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
-import { ToastContainer } from "react-toastify";
+import { Toaster } from 'react-hot-toast';
 import RestaurantApprovalsPage from "./pages/Admin/RestaurantApprovalsPage";
 import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDetails";
 
@@ -121,7 +121,7 @@ function App() {
           {/* Add more nested routes as needed */}
         </Route>
       </Routes>
-      <ToastContainer />
+    <Toaster />
     </>
   );
 }
