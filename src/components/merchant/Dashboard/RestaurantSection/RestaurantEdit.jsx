@@ -11,7 +11,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import {
-   updateRestaurant,
+  updateRestaurant,
   getRestaurantById,
 } from "../../../../apis/restaurantApi";
 import { toast } from "react-toastify";
@@ -23,7 +23,19 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [useMapLocation, setUseMapLocation] = useState(false);
 
+  // Initialize with default opening hours for all days
+  const defaultOpeningHours = [
+    { day: "monday", openingTime: "09:00", closingTime: "21:00", isClosed: false },
+    { day: "tuesday", openingTime: "09:00", closingTime: "21:00", isClosed: false },
+    { day: "wednesday", openingTime: "09:00", closingTime: "21:00", isClosed: false },
+    { day: "thursday", openingTime: "09:00", closingTime: "21:00", isClosed: false },
+    { day: "friday", openingTime: "09:00", closingTime: "21:00", isClosed: false },
+    { day: "saturday", openingTime: "09:00", closingTime: "21:00", isClosed: false },
+    { day: "sunday", openingTime: "09:00", closingTime: "21:00", isClosed: false },
+  ];
+  
   const [formData, setFormData] = useState({
     name: "",
     foodType: "both",
@@ -35,15 +47,7 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
       longitude: "",
       latitude: "",
     },
-    openingHours: JSON.stringify([
-      { day: "monday", open: "09:00", close: "21:00" },
-      { day: "tuesday", open: "09:00", close: "21:00" },
-      { day: "wednesday", open: "09:00", close: "21:00" },
-      { day: "thursday", open: "09:00", close: "21:00" },
-      { day: "friday", open: "09:00", close: "21:00" },
-      { day: "saturday", open: "09:00", close: "21:00" },
-      { day: "sunday", open: "09:00", close: "21:00" },
-    ]),
+    openingHours: JSON.stringify(defaultOpeningHours),
     paymentMethods: ["online"],
     minOrderAmount: 100,
     fssaiNumber: "",
@@ -55,26 +59,12 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
     images: [],
   });
 
+
   const steps = [
-    {
-      id: 1,
-      title: "Basic Info",
-      icon: Store,
-      description: "Restaurant details",
-    },
-    {
-      id: 2,
-      title: "Location",
-      icon: MapPin,
-      description: "Address & coordinates",
-    },
+    { id: 1, title: "Basic Info", icon: Store, description: "Restaurant details" },
+    { id: 2, title: "Location", icon: MapPin, description: "Address & coordinates" },
     { id: 3, title: "Hours", icon: Clock, description: "Operating hours" },
-    {
-      id: 4,
-      title: "Payment",
-      icon: CreditCard,
-      description: "Payment methods",
-    },
+    { id: 4, title: "Payment", icon: CreditCard, description: "Payment methods" },
     { id: 5, title: "Documents", icon: FileText, description: "KYC documents" },
     { id: 6, title: "Images", icon: Camera, description: "Photos" },
   ];
@@ -87,7 +77,7 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
 
   const paymentOptions = [
     { value: "online", label: "Online" },
-    { value: "cod", label: "Cash on Delivery" },
+    { value: "cash", label: "Cash on Delivery" },
     { value: "wallet", label: "Wallet" },
   ];
 
@@ -98,33 +88,17 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
         const response = await getRestaurantById(restaurantId);
         const restaurant = response.data;
 
-        // Parse opening hours if it's a string
-        let openingHours = restaurant.openingHours;
-        if (typeof openingHours === "string") {
-          try {
-            openingHours = JSON.parse(openingHours);
-          } catch (e) {
-            openingHours = [
-              { day: "monday", open: "09:00", close: "21:00" },
-              { day: "tuesday", open: "09:00", close: "21:00" },
-              { day: "wednesday", open: "09:00", close: "21:00" },
-              { day: "thursday", open: "09:00", close: "21:00" },
-              { day: "friday", open: "09:00", close: "21:00" },
-              { day: "saturday", open: "09:00", close: "21:00" },
-              { day: "sunday", open: "09:00", close: "21:00" },
-            ];
-          }
-        }
+        // Handle opening hours - use default if empty
+        let openingHours = restaurant.openingHours && restaurant.openingHours.length > 0 
+          ? restaurant.openingHours 
+          : defaultOpeningHours;
 
-        // Convert coordinates if they exist
+        // Convert coordinates from backend
         let longitude = "";
         let latitude = "";
-        if (restaurant.location && restaurant.location.coordinates) {
+        if (restaurant.location?.coordinates?.length === 2) {
           longitude = restaurant.location.coordinates[0];
           latitude = restaurant.location.coordinates[1];
-        } else if (restaurant.address?.coordinates) {
-          longitude = restaurant.address.coordinates[0];
-          latitude = restaurant.address.coordinates[1];
         }
 
         setFormData({
@@ -135,15 +109,15 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
             city: restaurant.address?.city || "",
             state: restaurant.address?.state || "",
             zip: restaurant.address?.zip || "",
-            longitude: longitude,
-            latitude: latitude,
+            longitude,
+            latitude,
           },
           openingHours: JSON.stringify(openingHours),
           paymentMethods: restaurant.paymentMethods || ["online"],
           minOrderAmount: restaurant.minOrderAmount || 100,
-          fssaiNumber: restaurant.fssaiNumber || "",
-          gstNumber: restaurant.gstNumber || "",
-          aadharNumber: restaurant.aadharNumber || "",
+          fssaiNumber: restaurant.kyc?.fssaiNumber || "",
+          gstNumber: restaurant.kyc?.gstNumber || "",
+          aadharNumber: restaurant.kyc?.aadharNumber || "",
           fssaiDoc: null,
           gstDoc: null,
           aadharDoc: null,
@@ -183,45 +157,50 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
       setCurrentStep(stepId);
     }
   };
+
   const handleRemoveImage = (index) => {
     setFormData((prev) => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
     }));
   };
-  const handleImagePreview = (file) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target.result);
-      reader.readAsDataURL(file);
-    });
-  };
 
   const validateCurrentStep = () => {
     switch (currentStep) {
       case 1:
-        return formData.name.trim() !== "";
+        if (!formData.name.trim()) {
+          toast.error("Restaurant name is required");
+          return false;
+        }
+        return true;
       case 2:
-        return (
-          formData.address.street &&
-          formData.address.city &&
-          formData.address.state &&
-          formData.address.longitude &&
-          formData.address.latitude
-        );
+        if (!formData.address.street || !formData.address.city || 
+            !formData.address.state || !formData.address.longitude || 
+            !formData.address.latitude) {
+          toast.error("Please fill all required address fields");
+          return false;
+        }
+        return true;
       case 3:
         try {
           const hours = JSON.parse(formData.openingHours);
-          return hours.some((day) => day.open && day.close);
+          return hours.every(day => day.openingTime && day.closingTime);
         } catch {
+          toast.error("Invalid opening hours format");
           return false;
         }
       case 4:
-        return formData.paymentMethods.length > 0;
+        if (formData.paymentMethods.length === 0) {
+          toast.error("At least one payment method is required");
+          return false;
+        }
+        return true;
       case 5:
-        return (
-          formData.fssaiNumber && formData.gstNumber && formData.aadharNumber
-        );
+        if (!formData.fssaiNumber || !formData.gstNumber || !formData.aadharNumber) {
+          toast.error("All document numbers are required");
+          return false;
+        }
+        return true;
       case 6:
         return true;
       default:
@@ -234,7 +213,6 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
   };
 
   const handleNestedInputChange = (parentField, field, value) => {
-    // Special validation for coordinates
     if (field === "longitude" || field === "latitude") {
       if (value && isNaN(parseFloat(value))) {
         toast.error(`Please enter a valid number for ${field}`);
@@ -256,16 +234,20 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
       const hours = JSON.parse(formData.openingHours);
       const updatedHours = hours.map((h) => {
         if (h.day === day) {
-          return { ...h, [field]: value };
+          const backendField = field === 'open' ? 'openingTime' : 
+                           field === 'close' ? 'closingTime' : 
+                           field;
+          return { ...h, [backendField]: value };
         }
         return h;
       });
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
         openingHours: JSON.stringify(updatedHours),
       }));
     } catch (err) {
       console.error("Error updating business hours:", err);
+      toast.error("Failed to update business hours");
     }
   };
 
@@ -285,94 +267,73 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
   };
 
   const handleFileUpload = (field, file) => {
+    if (!file) return;
     setFormData((prev) => ({ ...prev, [field]: file }));
   };
 
   const handleMultipleFileUpload = (field, files) => {
+    if (!files || files.length === 0) return;
+    const newFiles = Array.from(files).slice(0, 10 - formData.images.length);
     setFormData((prev) => ({
       ...prev,
-      [field]: [...prev[field], ...Array.from(files)],
+      [field]: [...prev[field], ...newFiles],
     }));
   };
 
   const handleSubmit = async () => {
     try {
+      if (!validateCurrentStep()) return;
       setIsSubmitting(true);
 
-      // Create FormData object
       const formDataToSend = new FormData();
 
       // Add basic fields
       formDataToSend.append("name", formData.name);
       formDataToSend.append("foodType", formData.foodType);
-     
       formDataToSend.append("minOrderAmount", formData.minOrderAmount);
-      formDataToSend.append(
-        "paymentMethods",
-        JSON.stringify(formData.paymentMethods)
-      );
+      formDataToSend.append("paymentMethods", JSON.stringify(formData.paymentMethods));
 
       // Add address fields
       formDataToSend.append("address[street]", formData.address.street);
       formDataToSend.append("address[city]", formData.address.city);
       formDataToSend.append("address[state]", formData.address.state);
       formDataToSend.append("address[pincode]", formData.address.zip);
-      formDataToSend.append(
-        "address[coordinates]",
-        JSON.stringify([
-          parseFloat(formData.address.longitude),
-          parseFloat(formData.address.latitude),
-        ])
-      );
+      formDataToSend.append("address[coordinates]", JSON.stringify([
+        parseFloat(formData.address.longitude),
+        parseFloat(formData.address.latitude),
+      ]));
 
       // Add opening hours
       formDataToSend.append("openingHours", formData.openingHours);
-
-      // Add documents if they exist
-      if (formData.fssaiDoc)
-        formDataToSend.append("fssaiDoc", formData.fssaiDoc);
-      if (formData.gstDoc) formDataToSend.append("gstDoc", formData.gstDoc);
-      if (formData.aadharDoc)
-        formDataToSend.append("aadharDoc", formData.aadharDoc);
 
       // Add document numbers
       formDataToSend.append("fssaiNumber", formData.fssaiNumber);
       formDataToSend.append("gstNumber", formData.gstNumber);
       formDataToSend.append("aadharNumber", formData.aadharNumber);
 
+      // Add documents if they exist
+      if (formData.fssaiDoc) formDataToSend.append("fssaiDoc", formData.fssaiDoc);
+      if (formData.gstDoc) formDataToSend.append("gstDoc", formData.gstDoc);
+      if (formData.aadharDoc) formDataToSend.append("aadharDoc", formData.aadharDoc);
+
       // Add images
-      formData.images.forEach((image, index) => {
-        formDataToSend.append("images", image);
+      formData.images.forEach((image) => {
+        if (image instanceof File) {
+          formDataToSend.append("images", image);
+        }
       });
 
       // Call the API
-      const updatedRestaurant = await updateRestaurant(
-        restaurantId,
-        formDataToSend
-      );
-
+      const updatedRestaurant = await updateRestaurant(restaurantId, formDataToSend);
       toast.success("Restaurant updated successfully!");
       onComplete(updatedRestaurant);
     } catch (error) {
       console.error("Error updating restaurant:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to update restaurant"
-      );
+      toast.error(error.response?.data?.message || "Failed to update restaurant");
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading restaurant data...</p>
-        </div>
-      </div>
-    );
-  }
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -401,7 +362,7 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
                   placeholder="Enter restaurant name"
                 />
               </div>
@@ -411,10 +372,8 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                 </label>
                 <select
                   value={formData.foodType}
-                  onChange={(e) =>
-                    handleInputChange("foodType", e.target.value)
-                  }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+                  onChange={(e) => handleInputChange("foodType", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
                 >
                   {foodTypes.map((type) => (
                     <option key={type.value} value={type.value}>
@@ -424,7 +383,6 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                 </select>
               </div>
             </div>
-           
           </div>
         );
 
@@ -444,9 +402,24 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                 </p>
               </div>
             </div>
-            <div className="space-y-4">
-               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  Search Location *
+            
+            <div className="flex items-center mb-4">
+              <input
+                type="checkbox"
+                id="useMapLocation"
+                checked={useMapLocation}
+                onChange={(e) => setUseMapLocation(e.target.checked)}
+                className="mr-2"
+              />
+              <label htmlFor="useMapLocation" className="text-sm font-medium text-gray-700">
+                Update location from map
+              </label>
+            </div>
+
+            {useMapLocation ? (
+              <>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  Search Location
                 </label>
                 <LocationInput
                   onLocationSelect={(locationData) => {
@@ -454,17 +427,22 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                       setFormData((prev) => ({
                         ...prev,
                         address: {
-                          street: locationData.street || "",
-                          city: locationData.city || "",
-                          state: locationData.state || "",
-                          zip: locationData.zip || "",
-                          longitude: locationData.longitude || "",
-                          latitude: locationData.latitude || "",
+                          ...prev.address,
+                          street: locationData.street || prev.address.street,
+                          city: locationData.city || prev.address.city,
+                          state: locationData.state || prev.address.state,
+                          zip: locationData.zip || prev.address.zip,
+                          longitude: locationData.longitude || prev.address.longitude,
+                          latitude: locationData.latitude || prev.address.latitude,
                         },
                       }));
                     }
                   }}
                 />
+              </>
+            ) : null}
+
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Street Address *
@@ -475,7 +453,7 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                   onChange={(e) =>
                     handleNestedInputChange("address", "street", e.target.value)
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
                   placeholder="Enter street address"
                 />
               </div>
@@ -490,7 +468,7 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                     onChange={(e) =>
                       handleNestedInputChange("address", "city", e.target.value)
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
                     placeholder="City"
                   />
                 </div>
@@ -502,13 +480,9 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                     type="text"
                     value={formData.address.state}
                     onChange={(e) =>
-                      handleNestedInputChange(
-                        "address",
-                        "state",
-                        e.target.value
-                      )
+                      handleNestedInputChange("address", "state", e.target.value)
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
                     placeholder="State"
                   />
                 </div>
@@ -522,7 +496,7 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                     onChange={(e) =>
                       handleNestedInputChange("address", "zip", e.target.value)
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
                     placeholder="ZIP"
                   />
                 </div>
@@ -536,13 +510,9 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                     type="text"
                     value={formData.address.longitude}
                     onChange={(e) =>
-                      handleNestedInputChange(
-                        "address",
-                        "longitude",
-                        e.target.value
-                      )
+                      handleNestedInputChange("address", "longitude", e.target.value)
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
                     placeholder="Longitude"
                   />
                 </div>
@@ -554,13 +524,9 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                     type="text"
                     value={formData.address.latitude}
                     onChange={(e) =>
-                      handleNestedInputChange(
-                        "address",
-                        "latitude",
-                        e.target.value
-                      )
+                      handleNestedInputChange("address", "latitude", e.target.value)
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
                     placeholder="Latitude"
                   />
                 </div>
@@ -580,52 +546,65 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                 <h3 className="text-2xl font-bold text-gray-900">
                   Business Hours
                 </h3>
-                <p className="text-gray-600">Update your operating schedule</p>
+                <p className="text-gray-600">Set your operating hours</p>
               </div>
             </div>
+            
             <div className="space-y-4">
               {JSON.parse(formData.openingHours).map((dayObj) => {
                 const day = dayObj.day;
                 return (
                   <div key={day} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                       <div className="capitalize font-medium text-gray-700 text-lg">
                         {day.charAt(0).toUpperCase() + day.slice(1)}
                       </div>
-                      <div>
-                        <label className="block text-sm text-gray-500 mb-1">
-                          Opening Time
-                        </label>
+                      <div className="flex items-center">
                         <input
-                          type="time"
-                          value={dayObj.open}
+                          type="checkbox"
+                          id={`closed-${day}`}
+                          checked={dayObj.isClosed}
                           onChange={(e) =>
-                            handleBusinessHoursChange(
-                              day,
-                              "open",
-                              e.target.value
-                            )
+                            handleBusinessHoursChange(day, "isClosed", e.target.checked)
                           }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+                          className="mr-2"
                         />
-                      </div>
-                      <div>
-                        <label className="block text-sm text-gray-500 mb-1">
-                          Closing Time
+                        <label htmlFor={`closed-${day}`} className="text-sm text-gray-500">
+                          Closed
                         </label>
-                        <input
-                          type="time"
-                          value={dayObj.close}
-                          onChange={(e) =>
-                            handleBusinessHoursChange(
-                              day,
-                              "close",
-                              e.target.value
-                            )
-                          }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
-                        />
                       </div>
+                      {!dayObj.isClosed && (
+                        <>
+                          <div>
+                            <label className="block text-sm text-gray-500 mb-1">
+                              Opening Time
+                            </label>
+                            <input
+                              type="time"
+                              value={dayObj.openingTime}
+                              onChange={(e) =>
+                                handleBusinessHoursChange(day, "openingTime", e.target.value)
+                              }
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
+                              disabled={dayObj.isClosed}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-500 mb-1">
+                              Closing Time
+                            </label>
+                            <input
+                              type="time"
+                              value={dayObj.closingTime}
+                              onChange={(e) =>
+                                handleBusinessHoursChange(day, "closingTime", e.target.value)
+                              }
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
+                              disabled={dayObj.isClosed}
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
@@ -633,7 +612,6 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
             </div>
           </div>
         );
-
       case 4:
         return (
           <div className="space-y-6">
@@ -665,10 +643,10 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                     onChange={(e) =>
                       handleInputChange("minOrderAmount", e.target.value)
                     }
-                    className="w-full pl-8 px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+                    className="w-full pl-8 px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
                     placeholder="100"
                     min="0"
-                     onWheel={(e) => e.target.blur()} 
+                    onWheel={(e) => e.target.blur()}
                   />
                 </div>
               </div>
@@ -724,7 +702,7 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                   onChange={(e) =>
                     handleInputChange("fssaiNumber", e.target.value)
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200 mb-4"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200 mb-4"
                   placeholder="Enter FSSAI number"
                 />
                 <div>
@@ -758,7 +736,7 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                   onChange={(e) =>
                     handleInputChange("gstNumber", e.target.value)
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200 mb-4"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200 mb-4"
                   placeholder="Enter GST number"
                 />
                 <div>
@@ -792,7 +770,7 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
                   onChange={(e) =>
                     handleInputChange("aadharNumber", e.target.value)
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200 mb-4"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200 mb-4"
                   placeholder="Enter Aadhar number"
                 />
                 <div>
@@ -911,6 +889,17 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
         return null;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading restaurant data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

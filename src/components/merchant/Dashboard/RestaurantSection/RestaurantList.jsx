@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Home, Utensils } from "lucide-react";
 import RestaurantCard from "./RestaurantCard";
+import RestaurantDetailsDashboard from "./RestaurantDetailsDashboard";
 
 const RestaurantList = ({
   restaurants = [],
@@ -8,7 +9,20 @@ const RestaurantList = ({
   onAddNewClick,
   onRestaurantClick,
   onEditRestaurant,
+  onDeleteRestaurant,
 }) => {
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
+
+  const handleViewDetails = (restaurant) => {
+    setSelectedRestaurant(restaurant);
+    setShowDetails(true);
+  };
+
+  const handleCloseDetails = () => {
+    setShowDetails(false);
+  };
+
   console.log("child component:------------>>>", restaurants);
   if (restaurants.length === 0) {
     return (
@@ -58,6 +72,8 @@ const RestaurantList = ({
             }}
             onClick={() => onRestaurantClick?.(restaurant)}
             onEdit={onEditRestaurant}
+            onViewDetails={handleViewDetails}
+            onDelete={onDeleteRestaurant}
           />
         ))}
       </div>
@@ -71,6 +87,27 @@ const RestaurantList = ({
         <Home className="w-6 h-6 mr-2" />
         <span>Add Restaurant</span>
       </button>
+
+      {/* Restaurant Details Modal */}
+      {showDetails && selectedRestaurant && (
+        <div className="fixed inset-0 bgOp z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
+              <h2 className="text-xl font-bold">{selectedRestaurant.name} Details</h2>
+              <button 
+                onClick={handleCloseDetails}
+                className="p-2 text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <RestaurantDetailsDashboard 
+              restaurantData={selectedRestaurant}
+              onClose={handleCloseDetails}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

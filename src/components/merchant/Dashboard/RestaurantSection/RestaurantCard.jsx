@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Home,
   MapPin,
@@ -9,13 +9,16 @@ import {
   XCircle,
   Edit,
   Trash2,
+  Info
 } from "lucide-react";
 import { toast } from "react-toastify";
-import { deleteRestaurant } from "../../../../apis/restaurantApi";
+import { deleteRestaurant, getRestaurantById } from "../../../../apis/restaurantApi";
 
-const RestaurantCard = ({ restaurant, onClick, onEdit, onDelete }) => {
+const RestaurantCard = ({ restaurant: initialRestaurant, onClick, onEdit, onDelete, onViewDetails }) => {
+  const [restaurant, setRestaurant] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Status mapping with colors and icons
   const statusConfig = {
     active: {
@@ -50,28 +53,35 @@ const RestaurantCard = ({ restaurant, onClick, onEdit, onDelete }) => {
     },
   };
 
-  // Get first opening hours entry for display with better error handling
-  const firstOpeningHour = restaurant.openingHours?.[0] || {};
-  const openTime = firstOpeningHour.open || "Not specified";
-  const closeTime = firstOpeningHour.close || "Not specified";
+  useEffect(() => {
+    const fetchRestaurant = async () => {
+      try {
+        const response = await getRestaurantById(initialRestaurant.id);
+        setRestaurant(response.data);
+      } catch (error) {
+        console.error("Failed to fetch restaurant:", error);
+        toast.error(error.response?.data?.message || "Failed to fetch restaurant");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Use the restaurant's status directly
-  const currentStatus = restaurant.status.toLowerCase();
-  const status = statusConfig[currentStatus] || statusConfig.inactive;
+    fetchRestaurant();
+  }, [initialRestaurant.id]);
 
   const handleDelete = async (e) => {
     e.stopPropagation();
     
     // Confirm deletion
-    const confirmed = window.confirm(`Are you sure you want to delete ${restaurant.name}? This action cannot be undone.`);
+    const confirmed = window.confirm(`Are you sure you want to delete ${restaurant?.name}? This action cannot be undone.`);
     if (!confirmed) return;
 
     setIsDeleting(true);
     try {
-      await deleteRestaurant(restaurant.id);
+      await deleteRestaurant(initialRestaurant.id);
       toast.success("Restaurant deleted successfully");
       if (onDelete) {
-        onDelete(restaurant.id); // Notify parent component about the deletion
+        onDelete(initialRestaurant.id); // Notify parent component about the deletion
       }
     } catch (error) {
       console.error("Failed to delete restaurant:", error);
@@ -80,6 +90,36 @@ const RestaurantCard = ({ restaurant, onClick, onEdit, onDelete }) => {
       setIsDeleting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 flex justify-center items-center h-48">
+        <div className="animate-pulse">Loading restaurant details...</div>
+      </div>
+    );
+  }
+
+  if (!restaurant) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 flex justify-center items-center h-48">
+        <div className="text-gray-500">Failed to load restaurant details</div>
+      </div>
+    );
+  }
+
+  // Get first opening hours entry for display
+  const firstOpeningHour = restaurant.openingHours?.[0] || {};
+  const openingTime = firstOpeningHour.openingTime || "Not specified";
+  const closingTime = firstOpeningHour.closingTime || "Not specified";
+
+  // Determine status based on API response
+  let currentStatus;
+  if (restaurant.approvalStatus) {
+    currentStatus = restaurant.approvalStatus.toLowerCase();
+  } else {
+    currentStatus = restaurant.active ? "active" : "inactive";
+  }
+  const status = statusConfig[currentStatus] || statusConfig.inactive;
 
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 p-6 border border-gray-100 relative">
@@ -111,11 +151,9 @@ const RestaurantCard = ({ restaurant, onClick, onEdit, onDelete }) => {
             <MapPin className="w-4 h-4" />
             <span className="text-sm">
               {restaurant.address
-                ? typeof restaurant.address === "string"
-                  ? restaurant.address
-                  : `${restaurant.address.street || ""}, ${
-                      restaurant.address.city || ""
-                    }, ${restaurant.address.state || ""}`
+                ? `${restaurant.address.street || ""}, ${
+                    restaurant.address.city || ""
+                  }, ${restaurant.address.state || ""}`
                 : "Address not available"}
             </span>
           </div>
@@ -123,7 +161,7 @@ const RestaurantCard = ({ restaurant, onClick, onEdit, onDelete }) => {
           <div className="flex items-center gap-2 text-gray-600">
             <Clock className="w-4 h-4" />
             <span className="text-sm">
-              {openTime} - {closeTime}
+              {openingTime} - {closingTime}
             </span>
           </div>
 
@@ -139,11 +177,21 @@ const RestaurantCard = ({ restaurant, onClick, onEdit, onDelete }) => {
         </div>
       </div>
       
-      <div className=" top-4 right-4 flex gap-2">
+      <div className="top-4 right-4 flex gap-2">
         <button 
           onClick={(e) => {
             e.stopPropagation();
-            onEdit(restaurant);
+            onViewDetails(restaurant);
+          }}
+          className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="View details"
+        >
+          <Info className="w-4 h-4" />
+        </button>
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(initialRestaurant);
           }}
           className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-full transition-colors"
           aria-label="Edit restaurant"

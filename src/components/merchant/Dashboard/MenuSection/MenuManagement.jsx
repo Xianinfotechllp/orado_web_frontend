@@ -3,6 +3,7 @@ import {
   createProduct,
   getRestaurantProducts,
   deleteProduct,
+  toggleProductStatus,
 } from "../../../../apis/restaurantApi";
 import { Plus, Edit, Trash2, Utensils } from "lucide-react";
 import { toast } from "react-toastify";
@@ -23,7 +24,6 @@ const MenuManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
 
   const currentRestaurantId = selectedRestaurant?.id || null;
-
   // Handle restaurants loaded from RestaurantSlider
   const handleRestaurantsLoad = (restaurantData) => {
     setRestaurants(restaurantData);
@@ -88,7 +88,28 @@ const MenuManagement = () => {
     }
   };
 
-
+  const handleToggleAvailability = async (productId) => {
+    try {
+      setLoading(true);
+      const response = await toggleProductStatus(productId);
+      
+      if (response?.product) {
+        setMenuItems(prevItems => 
+          prevItems.map(item => 
+            item._id === productId 
+              ? { ...item, active: response.product.active } 
+              : item
+          )
+        );
+        toast.success(`Item is now ${response.product.active ? 'available' : 'unavailable'}`);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to toggle availability");
+      console.error("Toggle error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const handleDelete = async (id) => {
     if (
@@ -235,74 +256,87 @@ const MenuManagement = () => {
       ) : menuItems.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {menuItems.map((item) => (
-            <div
-              key={item._id}
-              className="bg-white rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
-            >
-              <div className="relative aspect-square">
-                <img
-                  src={item.images?.[0] || "/placeholder.svg"}
-                  alt={item.name}
-                  className="w-full h-full object-cover bg-gray-100"
-                  onError={(e) => {
-                    e.target.src = "/placeholder.svg";
-                  }}
-                />
-                <div className="absolute top-2 right-2">
+      <div
+        key={item._id}
+        className="bg-white rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
+      >
+        <div className="relative aspect-square">
+          <img
+            src={item.images?.[0] || "/placeholder.svg"}
+            alt={item.name}
+            className="w-full h-full object-cover bg-gray-100"
+            onError={(e) => {
+              e.target.src = "/placeholder.svg";
+            }}
+          />
+        </div>
+
+        <div className="p-3">
+          <div className="space-y-2">
+            <div className="flex items-start justify-between">
+              <h3 className="font-medium text-sm text-gray-900 line-clamp-1">
+                {item.name}
+              </h3>
+              <span className="text-sm font-bold text-orange-600 whitespace-nowrap">
+                ₹{item.price}
+              </span>
+            </div>
+
+            <p className="text-gray-600 text-xs line-clamp-2">
+              {item.description}
+            </p>
+
+            <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
+              {item.foodType}
+            </span>
+
+            {/* Toggle switch and action buttons container */}
+            <div className="flex items-center justify-between pt-2">
+              {/* Toggle switch */}
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-gray-500">
+                  {item.active ? 'Active' : 'Inactive'}
+                </span>
+                <button
+                  onClick={() => handleToggleAvailability(item._id)}
+                  className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
+                    item.active ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                  disabled={loading}
+                >
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      item.active
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-500 text-white"
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      item.active ? 'translate-x-5' : 'translate-x-1'
                     }`}
-                  >
-                    {item.active ? "Available" : "Unavailable"}
-                  </span>
-                </div>
+                  />
+                </button>
               </div>
 
-              <div className="p-3">
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between">
-                    <h3 className="font-medium text-sm text-gray-900 line-clamp-1">
-                      {item.name}
-                    </h3>
-                    <span className="text-sm font-bold text-orange-600 whitespace-nowrap">
-                      ₹{item.price}
-                    </span>
-                  </div>
+              {/* Action buttons */}
+              <div className="flex gap-1">
+                <button
+                  onClick={() => {
+                    setEditingProduct(item);
+                    setShowEditModal(true);
+                  }}
+                  className="border border-gray-300 px-2 py-1 text-xs rounded hover:bg-gray-50"
+                >
+                  <Edit className="w-3 h-3" />
+                </button>
 
-                  <p className="text-gray-600 text-xs line-clamp-2">
-                    {item.description}
-                  </p>
-
-                  <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
-                    {item.foodType}
-                  </span>
-
-                  <div className="flex gap-1 pt-2">
-                    <button
-                      onClick={() => {
-                        setEditingProduct(item);
-                        setShowEditModal(true);
-                      }}
-                      className="border border-gray-300 px-2 py-1 text-xs rounded hover:bg-gray-50"
-                    >
-                      <Edit className="w-3 h-3" />
-                    </button>
-
-                    <button
-                      className="border border-red-300 px-2 py-1 text-xs rounded text-red-600 hover:bg-red-50"
-                      onClick={() => handleDelete(item._id)}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
+                <button
+                  className="border border-red-300 px-2 py-1 text-xs rounded text-red-600 hover:bg-red-50"
+                  onClick={() => handleDelete(item._id)}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
               </div>
             </div>
-          ))}
+          </div>
         </div>
+      </div>
+    ))}
+  </div>
       ) : (
         <div className="text-center py-12">
           <div className="text-gray-400 text-lg mb-2">No menu items found</div>
