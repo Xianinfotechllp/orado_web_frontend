@@ -33,9 +33,9 @@ function RestaurantDetails() {
         setMenu(menuRes.data);
 
         // Select first category by default if available
-        if (menuRes.data?.length > 0) {
-          setSelectedCategory(menuRes.data[0].categoryId);
-        }
+        // if (menuRes.data?.length > 0) {
+        //   setSelectedCategory(menuRes.data[0].categoryId);
+        // }
 
       } catch (error) {
         console.error("❌ Error fetching restaurant details or menu:", error);
@@ -153,24 +153,29 @@ function RestaurantDetails() {
         </div>
 
         {/* Categories Tabs */}
-        <div className="bg-[#EA4424] w-full flex flex-row gap-2 overflow-x-auto whitespace-nowrap px-4 py-2 scrollbar-hide">
+        <div className="bg-orange-600 w-full flex flex-row gap-3 mt-5 overflow-x-auto whitespace-nowrap px-4 py-3 scrollbar-hide shadow-md">
           {menu?.length > 0 ? (
             <>
               <button
                 key="all"
                 onClick={() => setSelectedCategory(null)}
-                className={`text-white font-bold py-2 px-4 rounded-full whitespace-nowrap transition ${
-                  !selectedCategory ? 'bg-orange-700 text-[#fff]' : 'hover:bg-orange-700 hover:text-[#EA4424]'
+                className={`rounded-full font-semibold text-sm px-5 py-2 transition-all duration-200 border border-white ${
+                  !selectedCategory
+                    ? "bg-white text-orange-600 shadow-md"
+                    : "bg-orange-600 text-white hover:bg-white hover:text-orange-600"
                 }`}
               >
                 All Items
               </button>
+
               {menu.map((category) => (
                 <button
                   key={category.categoryId}
                   onClick={() => setSelectedCategory(category.categoryId)}
-                  className={`text-white font-bold py-2 px-4 rounded-full whitespace-nowrap transition ${
-                    selectedCategory === category.categoryId ? 'bg-orange-700 text-[#fff]' : 'hover:bg-orange-700 hover:text-[#EA4424]'
+                  className={`rounded-full font-semibold text-sm px-5 py-2 transition-all duration-200 border border-white ${
+                    selectedCategory === category.categoryId
+                      ? "bg-white text-orange-600 shadow-md"
+                      : "bg-orange-600 text-white hover:bg-white hover:text-orange-600"
                   }`}
                 >
                   {category.categoryName}
@@ -185,7 +190,7 @@ function RestaurantDetails() {
             )
           )}
         </div>
-      </div>
+      </div>    
 
       {/* Menu Content */}
       <div className="px-4 md:px-10 mx-auto">

@@ -24,6 +24,7 @@ export const getRecommendedRestaurants = async (latitude, longitude) => {
     const response = await apiClient.get("/location/nearby-restaurants/recommended", {
       params: { latitude, longitude },
     });
+    console.log("Recommended restaurants response:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching recommended restaurants:", error);
@@ -58,7 +59,7 @@ export const getRestaurantById = async (restaurantId) => {
 
 
 // fetch retruants by category and location
-export const getRestaurantsByLocationAndCategory = async (latitude, longitude, categoryName, distance = 5000) => {
+export const getRestaurantsByLocationAndCategory = async (latitude, longitude, categoryName, distance = 10000) => {
   try {
     const response = await apiClient.get(`/location/nearby-restaurants/category/${categoryName}`, {
       params: { latitude, longitude, distance },
