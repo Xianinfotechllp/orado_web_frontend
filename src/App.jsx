@@ -44,6 +44,7 @@ function App() {
 
   return (
     <>
+        <Toaster />
       <Routes>
 
         {/* Public Routes */}

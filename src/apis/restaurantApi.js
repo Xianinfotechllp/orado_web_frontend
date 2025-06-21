@@ -48,6 +48,7 @@ export const getNearbyCategories = async (latitude, longitude) => {
 export const getRestaurantById = async (restaurantId) => {
   try {
     const response = await apiClient.get(`/restaurants/${restaurantId}`);
+    console.log('restruant res', response.data)
     return response.data;
   } catch (error) {
     console.error("Failed to fetch restaurant by ID:", error);
@@ -124,19 +125,44 @@ export const createRestaurant = async (formData) => {
 };
 
 
-export const updateRestaurant = async (restaurantId, formData) => {
+  export const updateRestaurant = async (restaurantId, formData) => {
   try {
-    console.log("Updating restaurant with data:");
-    // Log form data contents
+    // Create a new FormData object to ensure clean data
+    const requestData = new FormData();
+
+    // Process each field in the original formData
     for (let [key, value] of formData.entries()) {
+      // Special handling for address object
+      if (key === 'address') {
+        try {
+          const address = typeof value === 'string' ? JSON.parse(value) : value;
+          // Ensure longitude and latitude are floats
+          if (address.longitude) address.longitude = parseFloat(address.longitude);
+          if (address.latitude) address.latitude = parseFloat(address.latitude);
+          requestData.append(key, JSON.stringify(address));
+        } catch (e) {
+          console.error('Error processing address:', e);
+          requestData.append(key, value); // Fallback to original value
+        }
+      }
+      // Handle other fields normally
+      else {
+        requestData.append(key, value);
+      }
+    }
+
+    console.log("Updating restaurant with processed data:",requestData );
+    // Log the processed data for debugging
+    for (let [key, value] of requestData.entries()) {
       console.log(key, value);
     }
-    
-    const response = await apiClient.put(`/restaurants/${restaurantId}`, formData, {
+
+    const response = await apiClient.put(`/restaurants/${restaurantId}`, requestData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
+
     console.log("Restaurant updated:", response.data);
     return response.data;
   } catch (error) {
@@ -212,9 +238,9 @@ export const changePassword = async (data) => {
   }
 };
 
-export const getMerchantDetails = async (merchantId) => {
+export const getMerchantDetails = async () => {
   try {
-    const response = await apiClient.get(`/restaurants/${merchantId}`);
+    const response = await apiClient.get(`/restaurants/merchant`);
     console.log("Fetched merchant details:", response.data);
     return response.data;
   } catch (error) {
@@ -277,6 +303,7 @@ export const createProduct = async (restaurantId, productData) => {
 export const getRestaurantProducts = async (restaurantId) => {
   try {
     const response = await apiClient.get(`/restaurants/${restaurantId}/products`);
+    console.log('products', response.data)
     return response.data;
   } catch (error) {
     console.error("Error fetching restaurant products:", error.response?.data || error.message);
@@ -691,4 +718,65 @@ export const getServiceAreas = async (restaurantId) => {
     console.error("Error fetching service areas:", error);
     throw error;
   }
+};
+
+
+export const getOrdersByMerchant = async (restaurantId, page = 1, limit = 10) => {
+  try {
+    const response = await apiClient.get(
+      `/orders/restaurant/${restaurantId}`,
+      {
+        params: { page, limit },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching merchant orders:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+// toggle restaurant active
+export const toggleRestaurantActiveStatus = async (restaurantId) => {
+  try {
+    const response = await apiClient.put(`/restaurants/${restaurantId}/toggle-active`);
+    console.log("🔁 Toggled active status:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Failed to toggle active status:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// toggle restaurant product
+
+export const toggleProductStatus = async (productId) => {
+  try {
+    const response = await apiClient.put(`/restaurants/products/${productId}/toggle`);
+    console.log(" Product status toggled:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Failed to toggle product status:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+
+
+export const exportRestaurantProducts = async (restaurantId) => {
+  const response = await apiClient.get(`/restaurants/${restaurantId}/products/export`, {
+    responseType: 'blob', // Important to receive file data
+  });
+  return response.data;
+};
+
+
+export const bulkUpdateProducts = async (restaurantId, formData) => {
+  const response = await apiClient.post(
+    `/restaurants/${restaurantId}/products/bulk-update`,
+    formData
+  );
+  return response.data;
 };

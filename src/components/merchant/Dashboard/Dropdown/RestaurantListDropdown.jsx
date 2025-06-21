@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { getMerchantRestaurants } from "../../../../apis/restaurantApi";
-import { toast } from "react-toastify";
+import { toast } from 'react-hot-toast';
 
 const RestaurantListDropdown = ({ onRestaurantSelect }) => {
   const user = useSelector((state) => state.auth.user);

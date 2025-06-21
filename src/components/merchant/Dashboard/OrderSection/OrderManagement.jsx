@@ -31,49 +31,30 @@ const statusColors = {
   accepted_by_restaurant: "bg-blue-500",
   rejected_by_restaurant: "bg-red-500",
   preparing: "bg-orange-500",
-  ready: "bg-purple-500",
-  completed: "bg-green-500",
+  ready: "bg-purple-500"
 };
+
 const statusLabels = {
   pending: "Pending",
   accepted_by_restaurant: "Accepted",
   rejected_by_restaurant: "Rejected",
   preparing: "Preparing",
-  ready: "Ready for Pickup",
-  completed: "Completed",
+  ready: "Ready for Pickup"
 };
 
 const getStatusOptions = (currentStatus) => {
-  const statusFlow = [
-    "pending",
-    "accepted_by_restaurant",
-    "rejected_by_restaurant",
-    "preparing",
-    "ready",
-    "completed",
-  ];
-
-  const currentIndex = statusFlow.indexOf(currentStatus);
-  if (currentIndex === -1) return [];
-
-  if (currentStatus === "pending") {
-    return ["accepted_by_restaurant", "rejected_by_restaurant"];
-  }
-
+  // Simplified status flow since restaurants don't manually accept/reject or complete orders
   if (currentStatus === "accepted_by_restaurant") {
-    return ["preparing", "rejected_by_restaurant"];
+    return ["preparing"];
   }
 
   if (currentStatus === "preparing") {
-    return ["ready", "rejected_by_restaurant"];
-  }
-
-  if (currentStatus === "ready") {
-    return ["completed"];
+    return ["ready"];
   }
 
   return [];
 };
+
 
 // Custom hook for beep sound
 const useBeep = (volume = 0.3) => {
@@ -634,13 +615,13 @@ toast((t) => (
             
             <div className="mt-1 space-y-1">
               <p className="text-xs text-gray-600 font-medium">
-                Order #{data.orderNumber || data._id.substring(0, 8).toUpperCase()}
+                Order #{data._id || data._id.substring(0, 8).toUpperCase()}
               </p>
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-1">
                   <span className="text-lg font-bold text-orange-600">
-                    ₹{data.totalAmount}
+           ₹{Math.round(Number(data.totalAmount) || 0)}
                   </span>
                   <span className="text-xs text-gray-500">
                     • {data.itemCount || '3'} items
@@ -656,10 +637,10 @@ toast((t) => (
               {/* Customer info */}
               <div className="flex items-center space-x-1 text-xs text-gray-600 mt-2">
                 <User className="w-3 h-3" />
-                <span className="truncate">{data.customerName || 'Customer'}</span>
+                <span className="truncate">{data.customerId.name|| 'Customer'}</span>
                 <span className="text-gray-400">•</span>
                 <MapPin className="w-3 h-3" />
-                <span className="truncate">{data.area || 'Delivery Area'}</span>
+                <span className="truncate">{data.deliveryAddress.street || 'Delivery Area'}</span>
               </div>
             </div>
           </motion.div>
@@ -897,7 +878,17 @@ toast((t) => (
               onTimeUp={handleTimerExpired}
               onDelayModalOpen={handleDelayModalOpen}
             />
-
+{order.instructions && (
+  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+    <div className="flex items-start space-x-2">
+      <MessageSquare className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+      <div>
+        <p className="text-xs font-medium text-blue-800">Cooking Instructions:</p>
+        <p className="text-xs text-blue-700">{order.instructions}</p>
+      </div>
+    </div>
+  </div>
+)}
             {order.preparationDelayReason && (
               <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
                 <div className="flex items-start space-x-2">
@@ -936,7 +927,7 @@ toast((t) => (
             </p>
             <div className="flex items-center">
               <Phone className="w-4 h-4 mr-2" />
-              {order.customerPhone || "N/A"}
+              {order.customerId?.phone || "N/A"}
             </div>
             <div className="flex items-start">
               <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
@@ -1035,60 +1026,39 @@ toast((t) => (
         </div>
 
         {/* Order Status Update */}
-        <div className="md:col-span-1">
-          <h4 className="font-medium text-gray-900 mb-2">Update Status</h4>
-          <select
-            value={order.orderStatus}
-            onChange={(e) => handleStatusChange(order._id, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-            disabled={
-              !getStatusOptions(order.orderStatus).length ||
-              ["rejected_by_restaurant", "completed"].includes(order.orderStatus)
-            }
-          >
-            <option value={order.orderStatus}>
-              {statusLabels[order.orderStatus] || order.orderStatus}
-            </option>
-            {getStatusOptions(order.orderStatus).map((status) => (
-              <option key={status} value={status}>
-                {statusLabels[status] || status}
-              </option>
-            ))}
-          </select>
+      <div className="md:col-span-1">
+  <h4 className="font-medium text-gray-900 mb-2">Update Status</h4>
+  <select
+    value={order.orderStatus}
+    onChange={(e) => handleStatusChange(order._id, e.target.value)}
+    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+    disabled={
+      !getStatusOptions(order.orderStatus).length ||
+      ["rejected_by_restaurant", "ready"].includes(order.orderStatus)
+    }
+  >
+    <option value={order.orderStatus}>
+      {statusLabels[order.orderStatus] || order.orderStatus}
+    </option>
+    {getStatusOptions(order.orderStatus).map((status) => (
+      <option key={status} value={status}>
+        {statusLabels[status] || status}
+      </option>
+    ))}
+  </select>
 
-          {order.orderStatus === "pending" && (
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={() =>
-                  handleStatusChange(order._id, "accepted_by_restaurant")
-                }
-                className="flex-1 px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm"
-              >
-                Accept
-              </button>
-              <button
-                onClick={() =>
-                  handleStatusChange(order._id, "rejected_by_restaurant")
-                }
-                className="flex-1 px-3 py-1 border border-red-600 text-red-600 hover:bg-red-50 rounded-md text-sm"
-              >
-                Reject
-              </button>
-            </div>
-          )}
-
-          {order.orderStatus === "preparing" && (
-            <div className="mt-3">
-              <button
-                onClick={() => handleDelayModalOpen(order._id)}
-                className="w-full px-3 py-2 border border-orange-500 text-orange-600 hover:bg-orange-50 rounded-md text-sm flex items-center justify-center space-x-2"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span>Send Delay Notice</span>
-              </button>
-            </div>
-          )}
-        </div>
+  {order.orderStatus === "preparing" && (
+    <div className="mt-3">
+      <button
+        onClick={() => handleDelayModalOpen(order._id)}
+        className="w-full px-3 py-2 border border-orange-500 text-orange-600 hover:bg-orange-50 rounded-md text-sm flex items-center justify-center space-x-2"
+      >
+        <MessageSquare className="w-4 h-4" />
+        <span>Send Delay Notice</span>
+      </button>
+    </div>
+  )}
+</div>
       </div>
     </div>
   </div>

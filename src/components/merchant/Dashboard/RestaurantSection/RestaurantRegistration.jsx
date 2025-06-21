@@ -34,13 +34,13 @@ const RestaurantRegistration = ({ onBack, onComplete }) => {
       latitude: "",
     },
     openingHours: JSON.stringify([
-      { day: "monday", openingTime: "09:00", closingTime: "21:00" },
-      { day: "tuesday", openingTime: "09:00", closingTime: "21:00" },
-      { day: "wednesday", openingTime: "09:00", closingTime: "21:00" },
-      { day: "thursday", openingTime: "09:00", closingTime: "21:00" },
-      { day: "friday", openingTime: "09:00", closingTime: "21:00" },
-      { day: "saturday", openingTime: "09:00", closingTime: "21:00" },
-      { day: "sunday", openingTime: "09:00", closingTime: "21:00" },
+      { day: "monday", isClosed: false,openingTime: "09:00", closingTime: "21:00" },
+      { day: "tuesday", isClosed: false,openingTime: "09:00", closingTime: "21:00" },
+      { day: "wednesday", isClosed: false,openingTime: "09:00", closingTime: "21:00" },
+      { day: "thursday",isClosed: false, openingTime: "09:00", closingTime: "21:00" },
+      { day: "friday",isClosed: false, openingTime: "09:00", closingTime: "21:00" },
+      { day: "saturday",isClosed: false,isClosed: false ,openingTime: "09:00", closingTime: "21:00" },
+      { day: "sunday", isClosed: false,openingTime: "09:00", closingTime: "21:00" },
     ]),
     paymentMethods: ["online"],
     minOrderAmount: 100,
@@ -165,24 +165,26 @@ const RestaurantRegistration = ({ onBack, onComplete }) => {
       },
     }));
   };
+const handleBusinessHoursChange = (day, field, value) => {
+  try {
+    const hours = JSON.parse(formData.openingHours);
+    const updatedHours = hours.map((h) => {
+      if (h.day === day) {
+        return { ...h, [field]: value };
+      }
+      return h;
+    });
 
-  const handleBusinessHoursChange = (day, field, value) => {
-    try {
-      const hours = JSON.parse(formData.openingHours);
-      const updatedHours = hours.map((h) => {
-        if (h.day === day) {
-          return { ...h, [field]: value };
-        }
-        return h;
-      });
-      setFormData((prev) => ({
-        ...prev,
-        openingHours: JSON.stringify(updatedHours),
-      }));
-    } catch (err) {
-      console.error("Error updating business hours:", err);
-    }
-  };
+    setFormData((prev) => ({
+      ...prev,
+      openingHours: JSON.stringify(updatedHours),
+    }));
+    // Optional: console log for debugging
+    // console.log("Updated Opening Hours:", updatedHours);
+  } catch (err) {
+    console.error("Error updating business hours:", err);
+  }
+};
 
   const handlePaymentMethodToggle = (method) => {
     setFormData((prev) => {
@@ -432,52 +434,75 @@ const RestaurantRegistration = ({ onBack, onComplete }) => {
               </div>
             </div>
             <div className="space-y-4">
-              {JSON.parse(formData.openingHours).map((dayObj) => {
-                const day = dayObj.day;
-                return (
-                  <div key={day} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div className="capitalize font-medium text-gray-700 text-lg">
-                        {day.charAt(0).toUpperCase() + day.slice(1)}
-                      </div>
-                      <div>
-                        <label className="block text-sm text-gray-500 mb-1">
-                          Opening Time
-                        </label>
-                        <input
-                          type="time"
-                          value={dayObj.openingTime}
-                          onChange={(e) =>
-                            handleBusinessHoursChange(
-                              day,
-                              "openingTime",
-                              e.target.value
-                            )
-                          }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm text-gray-500 mb-1">
-                          Closing Time
-                        </label>
-                        <input
-                          type="time"
-                          value={dayObj.closingTime}
-                          onChange={(e) =>
-                            handleBusinessHoursChange(
-                              day,
-                              "closingTime",
-                              e.target.value
-                            )
-                          }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            {JSON.parse(formData.openingHours).map((dayObj) => {
+  const day = dayObj.day;
+  return (
+    <div key={day} className="bg-gray-50 p-4 rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+        <div className="capitalize font-medium text-gray-700 text-lg">
+          {day.charAt(0).toUpperCase() + day.slice(1)}
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-500 mb-1">
+            Closed
+          </label>
+          <input
+            type="checkbox"
+            checked={dayObj.isClosed}
+            onChange={(e) =>
+              handleBusinessHoursChange(
+                day,
+                "isClosed",
+                e.target.checked
+              )
+            }
+            className="w-5 h-5"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-500 mb-1">
+            Opening Time
+          </label>
+          <input
+            type="time"
+            value={dayObj.openingTime}
+            disabled={dayObj.isClosed}
+            onChange={(e) =>
+              handleBusinessHoursChange(
+                day,
+                "openingTime",
+                e.target.value
+              )
+            }
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-500 mb-1">
+            Closing Time
+          </label>
+          <input
+            type="time"
+            value={dayObj.closingTime}
+            disabled={dayObj.isClosed}
+            onChange={(e) =>
+              handleBusinessHoursChange(
+                day,
+                "closingTime",
+                e.target.value
+              )
+            }
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200"
+          />
+        </div>
+      </div>
+    </div>
+  );
+})}
+
             </div>
           </div>
         );

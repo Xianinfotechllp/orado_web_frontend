@@ -5,9 +5,10 @@ import {
   deleteProduct,
   exportRestaurantProducts,
   bulkUpdateProducts,
+  toggleProductStatus,
 } from "../../../../apis/restaurantApi";
 import { Plus, Edit, Trash2, Utensils, Download, Upload } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from 'react-hot-toast';
 import MenuAddModal from "./MenuAddModal";
 import MenuEditModal from "./MenuEditModal";
 import RestaurantSlider from "../Slider/RestaurantSlider";
@@ -90,6 +91,29 @@ const MenuManagement = () => {
     }
   };
 
+  const handleToggleAvailability = async (productId) => {
+    try {
+      setLoading(true);
+      const response = await toggleProductStatus(productId);
+      
+      if (response?.product) {
+        setMenuItems(prevItems => 
+          prevItems.map(item => 
+            item._id === productId 
+              ? { ...item, active: response.product.active } 
+              : item
+          )
+        );
+        toast.success(`Item is now ${response.product.active ? 'available' : 'unavailable'}`);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to toggle availability");
+      console.error("Toggle error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!id || !window.confirm("Are you sure you want to delete this product?")) {
       return;
@@ -134,6 +158,8 @@ const MenuManagement = () => {
           images: Array.isArray(newProduct?.images) ? newProduct.images : [],
           active: newProduct?.active !== false,
           foodType: newProduct?.foodType || "Uncategorized",
+          categoryId: newProduct?.categoryId || "",
+          categoryName: newProduct?.categoryName || "Uncategorized",
         },
       ]);
 
@@ -191,39 +217,40 @@ const MenuManagement = () => {
     }
   };
 
-  const handleExportToExcel = async () => {
-    if (!currentRestaurantId) {
-      toast.warning("Please select a restaurant first");
-      return;
-    }
+const handleExportToExcel = async () => {
+  if (!currentRestaurantId) {
+    toast.warning("Please select a restaurant first");
+    return;
+  }
 
-    try {
-      setIsExporting(true);
-      const response = await exportRestaurantProducts(currentRestaurantId);
-      
-      // Create a download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute(
-        'download', 
-        `products-${currentRestaurantId}-${new Date().toISOString().split('T')[0]}.xlsx`
-      );
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      
-      toast.success("Products exported successfully");
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to export products"
-      );
-    } finally {
-      setIsExporting(false);
-    }
-  };
+  try {
+    setIsExporting(true);
+    const blob = await exportRestaurantProducts(currentRestaurantId);
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `products-${currentRestaurantId}-${new Date().toISOString().split('T')[0]}.xlsx`
+    );
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+    toast.success("Products exported successfully");
+  } catch (error) {
+    console.log(error)
+    toast.error(
+      error.response?.data?.message ||
+      error.message ||
+      "Failed to export products"
+    );
+  } finally {
+    setIsExporting(false);
+  }
+};
 
   const handleImportClick = () => {
     if (!currentRestaurantId) {
@@ -233,36 +260,44 @@ const MenuManagement = () => {
     fileInputRef.current.click();
   };
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
 
-    try {
-      setIsImporting(true);
-      const formData = new FormData();
-      formData.append('file', file);
+  try {
+    setIsImporting(true);
+    const formData = new FormData();
+    formData.append('file', file);
 
-      const response = await bulkUpdateProducts(currentRestaurantId, formData);
-      
-      if (response.success) {
-        toast.success(`Updated ${response.updatedCount} products successfully`);
-        // Refresh the product list
-        await fetchRestaurantProducts(currentRestaurantId);
-      } else {
-        throw new Error(response.message || "Bulk update failed");
-      }
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to import products"
-      );
-    } finally {
-      setIsImporting(false);
-      // Reset file input
-      event.target.value = '';
+    const response = await bulkUpdateProducts(currentRestaurantId, formData);
+
+    if (response.success) {
+      toast.success(`Updated ${response.updatedCount} products successfully`);
+      await fetchRestaurantProducts(currentRestaurantId);
+    } else {
+      throw new Error(response.message || "Bulk update failed");
     }
-  };
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message ||
+      error.message ||
+      "Failed to import products"
+    );
+  } finally {
+    setIsImporting(false);
+    event.target.value = '';
+  }
+};
+
+  // Group menu items by category
+  const groupedMenuItems = menuItems.reduce((acc, item) => {
+    const categoryName = item.categoryName || "Uncategorized";
+    if (!acc[categoryName]) {
+      acc[categoryName] = [];
+    }
+    acc[categoryName].push(item);
+    return acc;
+  }, {});
 
   if (loading && restaurants.length === 0) {
     return (
@@ -292,40 +327,36 @@ const MenuManagement = () => {
         showError={true}
       />
 
-     <div className="flex justify-end gap-4 mb-6">
-  <button
-    onClick={handleExportToExcel}
-    disabled={!currentRestaurantId || menuItems.length === 0 || isExporting}
-    className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-      !currentRestaurantId || menuItems.length === 0
-        ? 'bg-gray-300 cursor-not-allowed'
-        : 'bg-blue-500 hover:bg-blue-600 text-white'
-    }`}
-  >
-    {isExporting ? (
-      <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-    ) : (
-      <>
-        <Download className="w-5 h-5" />
-        <span>Export to Excel</span>
-      </>
-    )}
-  </button>
+      <div className="flex justify-end gap-4 mb-6">
+        <button
+          onClick={handleExportToExcel}
+          disabled={!currentRestaurantId || menuItems.length === 0 || isExporting}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md ${
+            !currentRestaurantId || menuItems.length === 0
+              ? 'bg-gray-300 cursor-not-allowed'
+              : 'bg-blue-500 hover:bg-blue-600 text-white'
+          }`}
+        >
+          {isExporting ? (
+            <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+          ) : (
+            <>
+              <Download className="w-5 h-5" />
+              <span>Export to Excel</span>
+            </>
+          )}
+        </button>
 
-  <button
-    onClick={handleImportClick}
-    // disabled={!currentRestaurantId || isImporting}
-    className="flex items-center gap-2 px-4 py-2 rounded-md" >
-   
-      <>
-        <Upload className="w-5 h-5" />
-        <span>Bulk Edit</span>
-      </>
- 
-  </button>
-</div>
+        <button
+          onClick={handleImportClick}
+          className="flex items-center gap-2 px-4 py-2 rounded-md bg-green-500 hover:bg-green-600 text-white"
+        >
+          <Upload className="w-5 h-5" />
+          <span>Bulk Edit</span>
+        </button>
+      </div>
 
-      {/* Menu Items Grid */}
+      {/* Menu Items by Category */}
       {loading && menuItems.length === 0 ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
@@ -333,72 +364,91 @@ const MenuManagement = () => {
       ) : error ? (
         <div className="text-center py-12 text-red-500">{error}</div>
       ) : menuItems.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {menuItems.map((item) => (
-            <div
-              key={item._id}
-              className="bg-white rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
-            >
-              <div className="relative aspect-square">
-                <img
-                  src={item.images?.[0] || "/placeholder.svg"}
-                  alt={item.name}
-                  className="w-full h-full object-cover bg-gray-100"
-                  onError={(e) => {
-                    e.target.src = "/placeholder.svg";
-                  }}
-                />
-                <div className="absolute top-2 right-2">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      item.active
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-500 text-white"
-                    }`}
+        <div className="space-y-8">
+          {Object.entries(groupedMenuItems).map(([categoryName, items]) => (
+            <div key={categoryName} className="space-y-4">
+              <h2 className="text-xl font-bold text-gray-800 border-b pb-2">
+                {categoryName}
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {items.map((item) => (
+                  <div
+                    key={item._id}
+                    className="bg-white rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
                   >
-                    {item.active ? "Available" : "Unavailable"}
-                  </span>
-                </div>
-              </div>
+                    <div className="relative aspect-square">
+                      <img
+                        src={item.images?.[0] || "/placeholder.svg"}
+                        alt={item.name}
+                        className="w-full h-full object-cover bg-gray-100"
+                        onError={(e) => {
+                          e.target.src = "/placeholder.svg";
+                        }}
+                      />
+                    </div>
 
-              <div className="p-3">
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between">
-                    <h3 className="font-medium text-sm text-gray-900 line-clamp-1">
-                      {item.name}
-                    </h3>
-                    <span className="text-sm font-bold text-orange-600 whitespace-nowrap">
-                      ₹{item.price}
-                    </span>
+                    <div className="p-3">
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between">
+                          <h3 className="font-medium text-sm text-gray-900 line-clamp-1">
+                            {item.name}
+                          </h3>
+                          <span className="text-sm font-bold text-orange-600 whitespace-nowrap">
+                            ₹{item.price}
+                          </span>
+                        </div>
+
+                        <p className="text-gray-600 text-xs line-clamp-2">
+                          {item.description}
+                        </p>
+
+                        <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
+                          {item.foodType}
+                        </span>
+
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">
+                              {item.active ? 'Active' : 'Inactive'}
+                            </span>
+                            <button
+                              onClick={() => handleToggleAvailability(item._id)}
+                              className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
+                                item.active ? 'bg-green-500' : 'bg-gray-300'
+                              }`}
+                              disabled={loading}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                  item.active ? 'translate-x-5' : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => {
+                                setEditingProduct(item);
+                                setShowEditModal(true);
+                              }}
+                              className="border border-gray-300 px-2 py-1 text-xs rounded hover:bg-gray-50"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </button>
+
+                            <button
+                              className="border border-red-300 px-2 py-1 text-xs rounded text-red-600 hover:bg-red-50"
+                              onClick={() => handleDelete(item._id)}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-
-                  <p className="text-gray-600 text-xs line-clamp-2">
-                    {item.description}
-                  </p>
-
-                  <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
-                    {item.foodType}
-                  </span>
-
-                  <div className="flex gap-1 pt-2">
-                    <button
-                      onClick={() => {
-                        setEditingProduct(item);
-                        setShowEditModal(true);
-                      }}
-                      className="border border-gray-300 px-2 py-1 text-xs rounded hover:bg-gray-50"
-                    >
-                      <Edit className="w-3 h-3" />
-                    </button>
-
-                    <button
-                      className="border border-red-300 px-2 py-1 text-xs rounded text-red-600 hover:bg-red-50"
-                      onClick={() => handleDelete(item._id)}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           ))}

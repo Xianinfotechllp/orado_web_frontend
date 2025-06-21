@@ -127,21 +127,9 @@ const AddServiceModal = ({ isOpen, onClose, restaurantId, onServiceAdded }) => {
     if (!polygon) {
       newErrors.polygon = 'Please draw a service area polygon';
     }
-    if (!formData.name) {
-      newErrors.name = 'Name is required';
-    }
-    if (!formData.reason) {
-      newErrors.reason = 'Reason is required';
-    }
-    if (!formData.surgeValue || isNaN(formData.surgeValue)) {
-      newErrors.surgeValue = 'Valid surge value is required';
-    }
-    if (!formData.startTime) {
-      newErrors.startTime = 'Start time is required';
-    }
-    if (!formData.endTime) {
-      newErrors.endTime = 'End time is required';
-    }
+ 
+  
+ 
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -158,14 +146,7 @@ const AddServiceModal = ({ isOpen, onClose, restaurantId, onServiceAdded }) => {
     const serviceAreas = [{
       type: 'Polygon',
       coordinates: polygon.geometry.coordinates,
-      properties: {
-        name: formData.name,
-        surgeReason: formData.reason,
-        surgeType: formData.surgeType,
-        surgeValue: Number(formData.surgeValue),
-        startTime: formData.startTime,
-        endTime: formData.endTime
-      }
+    
     }];
 
     setIsSubmitting(true);
@@ -324,108 +305,15 @@ const AddServiceModal = ({ isOpen, onClose, restaurantId, onServiceAdded }) => {
         <div style={{ background: 'white', padding: 20, borderTop: '1px solid #ddd' }}>
           <h3 style={{ marginBottom: 20, marginTop: 0 }}>Service Area Details</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 15 }}>
-            <div>
-              <input 
-                name="name"
-                value={formData.name} 
-                onChange={handleChange} 
-                placeholder="Name*" 
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  ...(errors.name ? { borderColor: 'red' } : {})
-                }}
-              />
-              {errors.name && <p style={{ color: 'red', fontSize: 12, margin: '5px 0 0 0' }}>{errors.name}</p>}
-            </div>
+          
             
-            <div>
-              <input 
-                name="reason"
-                value={formData.reason} 
-                onChange={handleChange} 
-                placeholder="Reason*" 
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  ...(errors.reason ? { borderColor: 'red' } : {})
-                }}
-              />
-              {errors.reason && <p style={{ color: 'red', fontSize: 12, margin: '5px 0 0 0' }}>{errors.reason}</p>}
-            </div>
+          
             
-            <div>
-              <select 
-                name="surgeType"
-                value={formData.surgeType} 
-                onChange={handleChange}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px'
-                }}
-              >
-                <option value="fixed">Fixed ₹</option>
-                <option value="percentage">%</option>
-              </select>
-            </div>
             
-            <div>
-              <input 
-                type="number" 
-                name="surgeValue"
-                value={formData.surgeValue} 
-                onChange={handleChange} 
-                placeholder="Value*" 
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  ...(errors.surgeValue ? { borderColor: 'red' } : {})
-                }}
-              />
-              {errors.surgeValue && <p style={{ color: 'red', fontSize: 12, margin: '5px 0 0 0' }}>{errors.surgeValue}</p>}
-            </div>
             
-            <div>
-              <input 
-                type="datetime-local" 
-                name="startTime"
-                value={formData.startTime} 
-                onChange={handleChange} 
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  ...(errors.startTime ? { borderColor: 'red' } : {})
-                }}
-              />
-              {errors.startTime && <p style={{ color: 'red', fontSize: 12, margin: '5px 0 0 0' }}>{errors.startTime}</p>}
-            </div>
-            
-            <div>
-              <input 
-                type="datetime-local" 
-                name="endTime"
-                value={formData.endTime} 
-                onChange={handleChange} 
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  ...(errors.endTime ? { borderColor: 'red' } : {})
-                }}
-              />
-              {errors.endTime && <p style={{ color: 'red', fontSize: 12, margin: '5px 0 0 0' }}>{errors.endTime}</p>}
-            </div>
+          
+          
+        
           </div>
           
           <div style={{ display: 'flex', gap: '10px', marginTop: 20, justifyContent: 'flex-end' }}>

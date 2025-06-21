@@ -60,7 +60,7 @@ const RestaurantEarnings = () => {
         const formattedEndDate = new Date(endDate);
         formattedEndDate.setHours(23, 59, 59, 999); // Include entire end day
         
-        const response = await apiClient.get(`/restaurants/${restaurantId}/earnigsv2`, {
+        const response = await apiClient.get(`/restaurants/${restaurantId}/earningsv2`, {
           params: {
             startDate: formattedStartDate,
             endDate: formattedEndDate.toISOString()
@@ -68,7 +68,9 @@ const RestaurantEarnings = () => {
         });
         
         setData(response.data);
+        console.log(response.data,"erings")
       } catch (err) {
+        
         console.error("Error fetching earnings data:", err);
         setError(err.response?.data?.message || err.message || 'Failed to fetch earnings data');
       } finally {
@@ -316,6 +318,51 @@ const RestaurantEarnings = () => {
               </div>
             </div>
 
+
+
+
+
+
+
+            {/* Payment Method Summary Cards */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+  {/* Cash on Delivery Card */}
+  <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
+    <div className="flex items-center justify-between mb-4">
+      <div className="p-3 bg-green-100 rounded-xl group-hover:bg-green-200 transition-colors">
+        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      </div>
+    </div>
+    <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Cash on Delivery</h3>
+    <p className="text-3xl font-bold text-gray-900 mb-1">
+      {data?.paymentSummary?.find(p => p._id === 'cash')?.count || 0}
+    </p>
+    <p className="text-sm text-green-600 font-medium">
+      {data?.paymentSummary?.find(p => p._id === 'cash')?.count || 0} orders
+    </p>
+  </div>
+
+  {/* Online Payments Card */}
+  <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200">
+    <div className="flex items-center justify-between mb-4">
+      <div className="p-3 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition-colors">
+        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+      </div>
+    </div>
+    <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Online Payments</h3>
+    <p className="text-3xl font-bold text-gray-900 mb-1">
+      {data?.paymentSummary?.find(p => p._id === 'online')?.count || 0}
+    </p>
+    <p className="text-sm text-blue-600 font-medium">
+      {data?.paymentSummary?.find(p => p._id === 'online')?.count || 0} orders
+    </p>
+  </div>
+</div>
+
             {/* Orders Table */}
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
               <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
@@ -400,8 +447,7 @@ const RestaurantEarnings = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-bold text-gray-900">₹{order.totalAmount.toFixed(2)}</div>
-                          <div className="text-xs text-gray-500">Net: ₹{order.restaurantNetEarning?.toFixed(2) || (order.totalAmount * 0.9).toFixed(2)}</div>
+                         <div className="text-xs text-gray-500">₹{order.subtotal.toFixed(2) || (order.totalAmount * 0.9).toFixed(2)}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
@@ -549,14 +595,8 @@ const RestaurantEarnings = () => {
                           <p className="text-gray-600 text-sm font-medium mb-1">Subtotal</p>
                           <p className="text-2xl font-bold text-gray-900">₹{selectedOrder.subtotal.toFixed(2)}</p>
                         </div>
-                        <div className="bg-white p-4 rounded-xl border border-gray-200">
-                          <p className="text-gray-600 text-sm font-medium mb-1">Discount Amount</p>
-                          <p className="text-2xl font-bold text-blue-600">₹{(selectedOrder.discountAmount || 0).toFixed(2)}</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-xl border border-gray-200">
-                          <p className="text-gray-600 text-sm font-medium mb-1">Total Amount</p>
-                          <p className="text-2xl font-bold text-indigo-600">₹{selectedOrder.totalAmount.toFixed(2)}</p>
-                        </div>
+                       
+                      
                         <div className="bg-white p-4 rounded-xl border border-gray-200">
                           <p className="text-gray-600 text-sm font-medium mb-1">Offer Discount</p>
                           <p className="text-2xl font-bold text-red-600">₹{selectedOrder.offerDiscount.toFixed(2)}</p>

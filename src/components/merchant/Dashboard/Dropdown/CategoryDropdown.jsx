@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getRestaurantCategories } from "../../../../apis/restaurantApi";
-import { toast } from "react-toastify";
+import { toast } from 'react-hot-toast';
 
 const CategoryDropdown = ({ 
   restaurantId, 

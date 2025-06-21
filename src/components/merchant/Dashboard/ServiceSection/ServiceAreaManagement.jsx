@@ -168,7 +168,7 @@ const ServiceAreaManagement = () => {
               onClick={handleAddService}
               className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
             >
-              Add New Area
+              Edit Area
             </button>
           </div>
         </div>

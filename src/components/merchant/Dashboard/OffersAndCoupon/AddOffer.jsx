@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createOfferByRestaurantOwner } from "../../../../apis/restaurantApi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { toast } from "react-toastify";
+import { toast } from 'react-hot-toast';
 
 const OfferModal = ({ restaurantId, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
