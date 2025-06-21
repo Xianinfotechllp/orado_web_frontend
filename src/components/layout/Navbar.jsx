@@ -451,6 +451,7 @@ function Navbar() {
               <Link to={user ? "/my-account" : "/login"} onClick={() => setMenuOpen(false)}>
                 <button className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white px-4 py-4 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
                   <VscAccount size={20} />
+                    {console.log(user,"navbar")}
                   {user ? "My Account" : "Login / Register"}
                 </button>
               </Link>

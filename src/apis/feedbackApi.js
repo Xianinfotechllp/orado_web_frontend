@@ -1,56 +1,17 @@
 import apiClient from "./apiClient/apiClient";
 
-export const submitItemFeedback = async ({ orderId, reviews }) => {
+
+export const submitRestaurantFeedback = async (data) => {
   const formData = new FormData();
-  formData.append('orderId', orderId);
 
-  reviews.forEach((review, index) => {
-    formData.append(`reviews[${index}][itemId]`, review.itemId);
-    formData.append(`reviews[${index}][rating]`, review.rating);
-    formData.append(`reviews[${index}][comment]`, review.comment || '');
-    formData.append(`reviews[${index}][targetType]`, 'order');
-
-    review.images?.forEach((image, imgIndex) => {
-      formData.append(`reviews[${index}][images]`, image);
+  if (data.reviews[0]?.images?.length) {
+    data.reviews[0].images.forEach((file) => {
+      formData.append('files', file);
     });
-  });
-
-  try {
-    const response = await apiClient.post('/feedback', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error submitting item feedback:', error);
-    throw error;
   }
-};
 
-export const submitRestaurantFeedback = async ({
-  restaurantId,
-  rating,
-  comment,
-  images = [],
-  orderId
-}) => {
-  const formData = new FormData();
-
-  // Construct a single review object
-  const review = {
-    targetType: 'restaurant',
-    restaurantId,
-    rating,
-    comment,
-    orderId
-  };
-
-  // append review as JSON string
-  formData.append('reviews', JSON.stringify([review]));
-
-  // add images if any
-  images.forEach((image) => {
-    formData.append('images', image);
-  });
+  formData.append('orderId', data.orderId);
+  formData.append('reviews', JSON.stringify(data.reviews));
 
   try {
     const response = await apiClient.post('/feedback/restaurant', formData, {
@@ -60,7 +21,23 @@ export const submitRestaurantFeedback = async ({
     });
     return response.data;
   } catch (error) {
-    console.error('Error submitting restaurant feedback:', error);
+    throw new Error(error.response?.data?.message || 'Failed to submit feedback');
+  }
+};
+
+
+
+
+export const addProductReview = async (productId, formData) => {
+  try {
+    const response = await apiClient.post(`/feedback/product/${productId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error submitting product review:", error);
     throw error;
   }
 };

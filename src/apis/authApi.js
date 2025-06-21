@@ -24,6 +24,7 @@ export const registerUser = async ({ name, email, phone, password }) => {
     console.log('register',res.data);
     return res.data;
   } catch (err) {
+    console.log(err)
     // fallback if err.response is undefined
     throw err.response?.data || { message: 'Registration failed' };
   }
@@ -50,4 +51,15 @@ export const logoutAllDevices = async () => {
     console.error('Error logging out from all devices:', error.response?.data || error.message);
     throw error;
   }
+};
+
+
+export const sendOtpToPhone = (phone) => {
+  return apiClient.post(`/user/send-otp`, { phone });
+};
+
+// 📲 Login With OTP
+export const loginWithOtp = (phone, otp) => {
+  return apiClient.post(`/user/login-with-otp`, { phone, otp })
+    .then((res) => res.data);
 };

@@ -56,10 +56,10 @@ function Login() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 mt-10">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 mt-20">
         <div className="flex flex-col md:flex-row items-center justify-center min-h-[calc(100vh-80px)]">
           {/* Left side - Form */}
           <div className="w-full md:w-1/2 lg:w-2/5 bg-white rounded-lg shadow-xl p-8 md:mr-8">
@@ -104,24 +104,32 @@ function Login() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-4 w-4 text-[#EA4424] focus:ring-[#EA4424] border-gray-300 rounded"
-                    />
-                    <span className="text-gray-700 text-sm">Remember me</span>
-                  </label>
+               <div className="flex items-center justify-between">
+  <label className="flex items-center space-x-2">
+    <input
+      type="checkbox"
+      checked={rememberMe}
+      onChange={(e) => setRememberMe(e.target.checked)}
+      className="h-4 w-4 text-[#EA4424] focus:ring-[#EA4424] border-gray-300 rounded"
+    />
+    <span className="text-gray-700 text-sm">Remember me</span>
+  </label>
 
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm text-[#EA4424] hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
+  <div className="flex flex-col items-end space-y-1">
+    {/* <Link
+      to="/forgot-password"
+      className="text-sm text-[#EA4424] hover:underline"
+    >
+      Forgot password?
+    </Link> */}
+    <Link
+      to="/login-with-otp"
+      className="text-sm text-[#EA4424] hover:underline"
+    >
+      Login with OTP
+    </Link>
+  </div>
+</div>
 
                 {message && (
                   <div className="mt-2 text-center text-sm text-red-600 font-medium">

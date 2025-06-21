@@ -9,9 +9,11 @@ import {
   Zap,
   Tag,
   AlertCircle,
+  CheckCircle,
+  Loader2,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { getBillSummary } from "../../apis/orderApi";
+import { getBillSummary, placeOrder } from "../../apis/orderApi";
 import { getWalletBalance } from "../../apis/walletApi";
 import {
   clearCartApi,
@@ -19,9 +21,15 @@ import {
   removeFromCart,
   updateCart,
 } from "../../apis/cartApi";
-import { setCart, clearCart } from "../../slices/cartSlice";
+import { setCart, clearCart, setCartId } from "../../slices/cartSlice";
+import { setSelectedAddress } from "../../slices/addressSlice";
+import OrderSuccessModal from "./OrderSuccessfullModal";
+import { useNavigate } from "react-router-dom";
 
 export default function MyBasket({ useWallet, setUseWallet }) {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [items, setItems] = useState([]);
   const [cartDetails, setCartDetails] = useState({});
   const [loading, setLoading] = useState(true);
@@ -33,8 +41,13 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   const [error, setError] = useState(null);
   const [deliveryAvailable, setDeliveryAvailable] = useState(true);
   const [cookingInstructions, setCookingInstructions] = useState("");
-  const dispatch = useDispatch();
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [orderId, setOrderId] = useState(null);
+  const [estimatedDelivery, setEstimatedDelivery] = useState("60-70 mins");
+
   const user = useSelector((state) => state.auth.user);
+  const cartId = useSelector((state) => state.cart.cartId);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
 
   // Fetch bill summary
@@ -87,7 +100,7 @@ export default function MyBasket({ useWallet, setUseWallet }) {
         setDeliveryAvailable(true);
       }
     } catch (err) {
-      console.error("Error fetching bill summary", err);
+      console.error("Error fetching bill summary", err,);
       setError(err.message || "Failed to fetch bill summary. Please try again.");
     } finally {
       setBillLoading(false);
@@ -155,12 +168,63 @@ export default function MyBasket({ useWallet, setUseWallet }) {
     }
   }, [cartDetails._id, selectedAddress, useWallet]);
 
+  const handlePlaceOrder = async () => {
+    if (!selectedAddress) {
+      setError("Please select a delivery address first");
+      return;
+    }
 
+    if (!cartId) {
+      setError("No cart items found. Please add items to cart first");
+      return;
+    }
 
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const orderPayload = {
+        cartId: cartId,
+        userId: user._id,
+        paymentMethod,
+        useWallet,
+        cookingInstructions,
+        longitude: selectedAddress.location.longitude,
+        latitude: selectedAddress.location.latitude,
+        street: selectedAddress.street,
+        area: selectedAddress.area,
+        landmark: selectedAddress.landmark,
+        city: selectedAddress.city,
+        state: selectedAddress.state,
+        pincode: selectedAddress.zip,
+        country: selectedAddress.country,
+        instructions:cookingInstructions
+      };
+      
+      const res = await placeOrder(orderPayload);
 
+      if (res?.orderId) {
+        // Clear Redux and backend cart
+        dispatch(clearCart());
+        await clearCartApi(user._id);
+        
+        setOrderSuccess(true);
+        setOrderId(res.orderId);
+      }
+    } catch (error) {
+      console.error("Failed to place order:", error);
+      const errorMsg = error.response?.data?.message || 
+                      "Failed to place order. Please try again.";
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-
-
+  const handleOrderModalClose = () => {
+    setOrderSuccess(false);
+    navigate(`/orders/${orderId}`);
+  };
 
   const updateQuantity = async (productId, change) => {
     try {
@@ -222,19 +286,6 @@ export default function MyBasket({ useWallet, setUseWallet }) {
     setUseWallet(newUseWallet);
   };
 
-
-
-
-
-
-
-
-
-
-
-
-  
-
   if (loading) {
     return (
       <div className="text-center py-10 font-medium text-gray-600">
@@ -245,49 +296,58 @@ export default function MyBasket({ useWallet, setUseWallet }) {
 
   return (
     <div className="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden sm:max-w-md md:max-w-lg">
-      {/* Error Message Display */}
-   {error && (
-  <div className={`p-3 flex items-start gap-2 ${
-    error.code === "DELIVERY_UNAVAILABLE" 
-      ? "bg-yellow-50 border-l-4 border-yellow-400" 
-      : "bg-red-50 border-b border-red-100"
-  }`}>
-    <AlertCircle 
-      size={18} 
-      className={`mt-0.5 flex-shrink-0 ${
-        error.code === "DELIVERY_UNAVAILABLE" 
-          ? "text-yellow-500" 
-          : "text-red-500"
-      }`} 
-    />
-    <div className="flex-1 text-sm">
-      <p className={
-        error.code === "DELIVERY_UNAVAILABLE" 
-          ? "text-yellow-700" 
-          : "text-red-600"
-      }>
-        {error.userMessage || error.message}
-   Delivery unavailable to your selected location
-      </p>
-      {error.code === "DELIVERY_UNAVAILABLE" && (
-        <p className="text-yellow-600 text-xs mt-1">
-          Please try a different delivery address
-        </p>
+      {/* Order success modal */}
+      {orderSuccess && (
+        <OrderSuccessModal
+          orderId={orderId}
+          estimatedDelivery={estimatedDelivery}
+          onClose={handleOrderModalClose}
+        />
       )}
-    </div>
-    <button 
-      onClick={() => setError(null)} 
-      className={`text-lg ${
-        error.code === "DELIVERY_UNAVAILABLE" 
-          ? "text-yellow-400 hover:text-yellow-600" 
-          : "text-red-400 hover:text-red-600"
-      }`}
-      aria-label="Dismiss error"
-    >
-      &times;
-    </button>
-  </div>
-)}
+
+      {/* Error Message Display */}
+      {error && (
+        <div className={`p-3 flex items-start gap-2 ${
+          error.code === "DELIVERY_UNAVAILABLE" 
+            ? "bg-yellow-50 border-l-4 border-yellow-400" 
+            : "bg-red-50 border-b border-red-100"
+        }`}>
+          <AlertCircle 
+            size={18} 
+            className={`mt-0.5 flex-shrink-0 ${
+              error.code === "DELIVERY_UNAVAILABLE" 
+                ? "text-yellow-500" 
+                : "text-red-500"
+            }`} 
+          />
+          <div className="flex-1 text-sm">
+            <p className={
+              error.code === "DELIVERY_UNAVAILABLE" 
+                ? "text-yellow-700" 
+                : "text-red-600"
+            }>
+              {console.log(error)}
+             Sorry, we don’t deliver to this location yet
+            </p>
+            {error.code === "DELIVERY_UNAVAILABLE" && (
+              <p className="text-yellow-600 text-xs mt-1">
+                Please try a different delivery address
+              </p>
+            )}
+          </div>
+          <button 
+            onClick={() => setError(null)} 
+            className={`text-lg ${
+              error.code === "DELIVERY_UNAVAILABLE" 
+                ? "text-yellow-400 hover:text-yellow-600" 
+                : "text-red-400 hover:text-red-600"
+            }`}
+            aria-label="Dismiss error"
+          >
+            &times;
+          </button>
+        </div>
+      )}
 
       <div className="text-white p-4 flex items-center gap-3 bg-[#ea4525]">
         <div className="relative">
@@ -307,6 +367,23 @@ export default function MyBasket({ useWallet, setUseWallet }) {
           </button>
         )}
       </div>
+
+      {/* Address Display Section */}
+      {selectedAddress && (
+        <div className="bg-white border border-gray-300 rounded-lg p-4 m-4">
+          <div className="flex justify-between items-start mb-3">
+            <h2 className="text-orange-600 font-medium text-base">Delivery Address</h2>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-black font-medium text-base">
+              {selectedAddress?.type || "Selected Address"}
+            </h3>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              {selectedAddress.street}, {selectedAddress.city}, {selectedAddress.state}, {selectedAddress.zip}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="bg-gray-50 p-3 space-y-3 sm:p-4 sm:space-y-4">
         {items.length === 0 ? (
@@ -382,7 +459,6 @@ export default function MyBasket({ useWallet, setUseWallet }) {
           ))
         )}
       </div>
-
       {billLoading ? (
         <div className="p-4 space-y-3 animate-pulse">
           <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -502,35 +578,71 @@ export default function MyBasket({ useWallet, setUseWallet }) {
       ) : null}
 
       <div className="p-4 space-y-2">
-  <label className="text-sm font-medium text-gray-700">
-    Cooking Instructions (optional)
-  </label>
-  <textarea
-    value={cookingInstructions}
-    onChange={(e) => setCookingInstructions(e.target.value)}
-    placeholder="E.g. Less spicy, no onion, extra sauce..."
-    rows={3}
-    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm resize-none"
-  />
-</div>
+        <label className="text-sm font-medium text-gray-700">
+          Cooking Instructions (optional)
+        </label>
+        <textarea
+          value={cookingInstructions}
+          onChange={(e) => setCookingInstructions(e.target.value)}
+          placeholder="E.g. Less spicy, no onion, extra sauce..."
+          rows={3}
+          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm resize-none"
+        />
+      </div>
 
-      {/* Checkout Button */}
-      {items.length > 0 && (
-        <div className="p-4">
+      {/* Payment Method Section */}
+      <div className="bg-white border border-gray-300 rounded-lg p-4">
+        <h2 className="text-black font-medium text-base mb-4">Choose Payment Method</h2>
+
+        <div className="space-y-3">
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input
+              type="radio"
+              name="payment"
+              value="cash"
+              checked={paymentMethod === "cash"}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="h-4 w-4 text-orange-600 focus:ring-orange-500"
+            />
+            <span className="text-gray-700">Cash on Delivery</span>
+          </label>
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input
+              type="radio"
+              name="payment"
+              value="card"
+              checked={paymentMethod === "card"}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="h-4 w-4 text-orange-600 focus:ring-orange-500"
+            />
+            <span className="text-gray-700">Card Payment</span>
+          </label>
+        </div>
+
+        {/* Checkout Button */}
+        {items.length > 0 && (
           <button
-            className={`w-full py-3 px-4 rounded-lg font-medium text-white ${
+            onClick={handlePlaceOrder}
+            disabled={!deliveryAvailable || error || loading}
+            className={`w-full py-3 px-4 rounded-lg font-medium text-white mt-4 flex items-center justify-center ${
               !deliveryAvailable || error
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-orange-600 hover:bg-orange-700"
             }`}
-            disabled={!deliveryAvailable || error}
           >
-            {!deliveryAvailable 
-              ? "Delivery Unavailable" 
-              : "Proceed to Checkout"}
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin mr-2 h-5 w-5" />
+                Placing Order...
+              </>
+            ) : !deliveryAvailable ? (
+              "Delivery Unavailable"
+            ) : (
+              "Proceed to Pay"
+            )}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
