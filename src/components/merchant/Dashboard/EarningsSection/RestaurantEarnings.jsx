@@ -274,8 +274,8 @@ const RestaurantEarnings = () => {
                   </div>
                 </div>
                 <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Total Revenue</h3>
-                <p className="text-3xl font-bold text-gray-900 mb-1">₹{actualData.summary.totalOrderAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-                <p className="text-sm text-green-600 font-medium">+12.5% from last month</p>
+                <p className="text-3xl font-bold text-gray-900 mb-1">₹{actualData.summary?.totalCartTotal?.toLocaleString() ?? '0'}</p>
+                {/* <p className="text-sm text-green-600 font-medium">+12.5% from last month</p> */}
               </div>
 
               <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200">
@@ -288,7 +288,7 @@ const RestaurantEarnings = () => {
                 </div>
                 <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Net Earnings</h3>
                 <p className="text-3xl font-bold text-gray-900 mb-1">₹{actualData.summary.totalNetRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-                <p className="text-sm text-blue-600 font-medium">+8.2% from last month</p>
+                {/* <p className="text-sm text-blue-600 font-medium">+8.2% from last month</p> */}
               </div>
 
               <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-orange-200">
@@ -301,7 +301,7 @@ const RestaurantEarnings = () => {
                 </div>
                 <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Total Commission</h3>
                 <p className="text-3xl font-bold text-gray-900 mb-1">₹{actualData.summary.totalCommission.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-                <p className="text-sm text-orange-600 font-medium">15.6% of revenue</p>
+                {/* <p className="text-sm text-orange-600 font-medium">15.6% of revenue</p> */}
               </div>
 
               <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200">
@@ -314,7 +314,7 @@ const RestaurantEarnings = () => {
                 </div>
                 <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Total Orders</h3>
                 <p className="text-3xl font-bold text-gray-900 mb-1">{actualData.summary.orderCount.toLocaleString('en-IN')}</p>
-                <p className="text-sm text-purple-600 font-medium">+23 from yesterday</p>
+                {/* <p className="text-sm text-purple-600 font-medium">+23 from yesterday</p> */}
               </div>
             </div>
 
@@ -447,7 +447,7 @@ const RestaurantEarnings = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                         <div className="text-xs text-gray-500">₹{order.subtotal.toFixed(2) || (order.totalAmount * 0.9).toFixed(2)}</div>
+                         <div className="text-xs text-gray-500">₹{order?.subtotal?.toFixed(2) || (order.totalAmount * 0.9).toFixed(2)}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
@@ -592,8 +592,8 @@ const RestaurantEarnings = () => {
                           </div>
                         </div>
                         <div className="bg-white p-4 rounded-xl border border-gray-200">
-                          <p className="text-gray-600 text-sm font-medium mb-1">Subtotal</p>
-                          <p className="text-2xl font-bold text-gray-900">₹{selectedOrder.subtotal.toFixed(2)}</p>
+                          <p className="text-gray-600 text-sm font-medium mb-1">Cart Total</p>
+                          <p className="text-2xl font-bold text-gray-900">₹{selectedOrder?.cartTotal?.toFixed(2)}</p>
                         </div>
                        
                       
@@ -625,6 +625,12 @@ const RestaurantEarnings = () => {
                         <div className="bg-white p-4 rounded-xl border border-gray-200">
                           <p className="text-gray-600 text-sm font-medium mb-1">Net Earnings</p>
                           <p className="text-2xl font-bold text-green-600">₹{selectedOrder.restaurantNetEarning.toFixed(2)}</p>
+                        </div>
+
+
+                          <div className="bg-white p-4 rounded-xl border border-gray-200">
+                          <p className="text-gray-600 text-sm font-medium mb-1">Customer Paid Amount</p>
+                          <p className="text-2xl font-bold text-green-600">₹{selectedOrder?.totalAmount?.toFixed(2)}</p>
                         </div>
                       </div>
                       <div className="mt-6 pt-6 border-t border-gray-200 flex flex-wrap gap-4 items-center justify-between">

@@ -39,7 +39,7 @@ const RestaurantRegistration = ({ onBack, onComplete }) => {
       { day: "wednesday", isClosed: false,openingTime: "09:00", closingTime: "21:00" },
       { day: "thursday",isClosed: false, openingTime: "09:00", closingTime: "21:00" },
       { day: "friday",isClosed: false, openingTime: "09:00", closingTime: "21:00" },
-      { day: "saturday",isClosed: false,isClosed: false ,openingTime: "09:00", closingTime: "21:00" },
+      { day: "saturday",isClosed: false,openingTime: "09:00", closingTime: "21:00" },
       { day: "sunday", isClosed: false,openingTime: "09:00", closingTime: "21:00" },
     ]),
     paymentMethods: ["online"],
