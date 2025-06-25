@@ -21,10 +21,12 @@ import {
   removeFromCart,
   updateCart,
 } from "../../apis/cartApi";
+import { loadRazorpayScript } from "../../utility/razorpay";
 import { setCart, clearCart, setCartId } from "../../slices/cartSlice";
 import { setSelectedAddress } from "../../slices/addressSlice";
 import OrderSuccessModal from "./OrderSuccessfullModal";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function MyBasket({ useWallet, setUseWallet }) {
   const dispatch = useDispatch();
@@ -52,60 +54,67 @@ export default function MyBasket({ useWallet, setUseWallet }) {
 
   // Fetch bill summary
   const fetchBill = async (cartId) => {
-    if (!cartId) {
-      setError("Cart ID is required");
-      return;
-    }
+  if (!cartId) {
+    setError("Cart ID is required");
+    return;
+  }
 
-    if (!selectedAddress?.location) {
-      setError("Please select a valid delivery address");
-      return;
-    }
+  if (!selectedAddress?.location) {
+    setError("Please select a valid delivery address");
+    return;
+  }
 
-    // Handle both location formats
-    let longitude, latitude;
+  // Handle both location formats
+  const { longitude, latitude } = (() => {
+    const loc = selectedAddress.location;
+    return loc.coordinates 
+      ? { longitude: loc.coordinates[0], latitude: loc.coordinates[1] }
+      : { longitude: loc.longitude, latitude: loc.latitude };
+  })();
+
+  try {
+    setError(null);
+    setBillLoading(true);
+    setDeliveryAvailable(true);
     
-    if (selectedAddress.location.coordinates) { 
-      [longitude, latitude] = selectedAddress.location.coordinates;
-    } else {
-      longitude = selectedAddress.location.longitude;
-      latitude = selectedAddress.location.latitude;
-    }
+    const billRes = await getBillSummary({
+      userId: user._id,
+      longitude,
+      latitude,
+      cartId,
+      useWallet: Boolean(useWallet),
+    });
 
-    try {
-      setError(null);
-      setBillLoading(true);
-      setDeliveryAvailable(true);
-      
-      const billRes = await getBillSummary({
-        userId: user._id,
-        longitude,
-        latitude,
-        cartId,
-        useWallet: Boolean(useWallet),
-      });
-      
-      if (billRes.error) {
-        if (billRes.error.includes("do not deliver to your location")) {
-          setBill({});
-          setDeliveryAvailable(false);
-          setError("Delivery unavailable to selected location");
-        } else {
-          throw new Error(billRes.error);
-        }
-      } else if (!billRes.data) {
-        throw new Error("Invalid response from server");
+    console.log(billRes,"why........")
+    
+    if (billRes.error) {
+      if (billRes.error.includes("do not deliver to your location")) {
+        setBill({});
+        setDeliveryAvailable(false);
+        setError({
+          code: "DELIVERY_UNAVAILABLE",
+          message: "Delivery unavailable to selected location"
+        });
       } else {
-        setBill({ ...billRes.data, deliveryAvailable: true });
-        setDeliveryAvailable(true);
+        throw new Error(billRes.error);
       }
-    } catch (err) {
-      console.error("Error fetching bill summary", err,);
-      setError(err.message || "Failed to fetch bill summary. Please try again.");
-    } finally {
-      setBillLoading(false);
+    } else if (!billRes.data) {
+      throw new Error("Invalid response from server");
+    } else {
+      // ✅ Add the fix here - this replaces your existing success handling
+      setBill({ ...billRes.data, deliveryAvailable: true });
+      setDeliveryAvailable(true);
+      setError(null); // Explicitly clear errors
     }
-  };
+  } catch (err) {
+    console.error("Error fetching bill summary", err);
+    setError({
+      message: err.message || "Failed to fetch bill summary. Please try again."
+    });
+  } finally {
+    setBillLoading(false);
+  }
+};
 
   // Fetch cart data
   const fetchCartData = async () => {
@@ -162,29 +171,46 @@ export default function MyBasket({ useWallet, setUseWallet }) {
     fetchCartData();
   }, [user?._id]);
 
-  useEffect(() => {
+useEffect(() => {
+  const timer = setTimeout(() => {
     if (cartDetails._id && selectedAddress?.location) {
       fetchBill(cartDetails._id);
     }
-  }, [cartDetails._id, selectedAddress, useWallet]);
+  }, 500);
+  return () => clearTimeout(timer);
+}, [selectedAddress, cartDetails._id, useWallet]);
 
-  const handlePlaceOrder = async () => {
-    if (!selectedAddress) {
-      setError("Please select a delivery address first");
-      return;
-    }
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (cartDetails._id && selectedAddress?.location) {
+        fetchBill(cartDetails._id);
+      }
+    }, 500); // 500ms debounce
+    
+    return () => clearTimeout(timer);
+  }, [selectedAddress]);
 
-    if (!cartId) {
-      setError("No cart items found. Please add items to cart first");
-      return;
-    }
 
-    try {
-      setLoading(true);
-      setError(null);
-      
+
+const handlePlaceOrder = async () => {
+  if (!selectedAddress) {
+    setError("Please select a delivery address first");
+    return;
+  }
+
+  if (!cartId) {
+    setError("No cart items found. Please add items to cart first");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setError(null);
+
+    if (paymentMethod === "cash") {
+      // 👉 Cash order flow
       const orderPayload = {
-        cartId: cartId,
+        cartId,
         userId: user._id,
         paymentMethod,
         useWallet,
@@ -198,28 +224,106 @@ export default function MyBasket({ useWallet, setUseWallet }) {
         state: selectedAddress.state,
         pincode: selectedAddress.zip,
         country: selectedAddress.country,
-        instructions:cookingInstructions
+        instructions: cookingInstructions
       };
-      
+
       const res = await placeOrder(orderPayload);
 
       if (res?.orderId) {
-        // Clear Redux and backend cart
         dispatch(clearCart());
         await clearCartApi(user._id);
-        
         setOrderSuccess(true);
         setOrderId(res.orderId);
       }
-    } catch (error) {
-      console.error("Failed to place order:", error);
-      const errorMsg = error.response?.data?.message || 
-                      "Failed to place order. Please try again.";
-      setError(errorMsg);
-    } finally {
-      setLoading(false);
+
+    } else if (paymentMethod === "card") {  
+
+        const resScript = await loadRazorpayScript();
+
+
+
+  if (!resScript) {
+    alert("Failed to load Razorpay SDK. Please check your connection.");
+    setLoading(false);
+    return;
+  }
+      // 👉 Online payment flow
+const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
+      // 1️⃣ Create Razorpay order from backend
+      const { data } = await axios.post("http://localhost:5000/payments/create-order", {
+       amount: amountInPaise // your calculated cart total
+      });
+
+      // 2️⃣ Razorpay checkout options
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount:amountInPaise,
+        currency: "INR",
+        name: "Orado Food Delivery",
+        description: "Order Payment",
+        order_id: data.orderId,
+        handler: async function (response) {
+          // 3️⃣ Verify payment at backend
+          await axios.post("http://localhost:5000/payments/verify", {
+            order_id: data.orderId,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature
+          });
+
+          // 4️⃣ Place the order now (after payment success)
+          const orderPayload = {
+            cartId,
+            userId: user._id,
+            paymentMethod,
+            paymentStatus: "success",
+            razorpayPaymentId: response.razorpay_payment_id,
+            useWallet,
+            cookingInstructions,
+            longitude: selectedAddress.location.longitude,
+            latitude: selectedAddress.location.latitude,
+            street: selectedAddress.street,
+            area: selectedAddress.area,
+            landmark: selectedAddress.landmark,
+            city: selectedAddress.city,
+            state: selectedAddress.state,
+            pincode: selectedAddress.zip,
+            country: selectedAddress.country,
+            instructions: cookingInstructions
+          };
+
+          const res = await placeOrder(orderPayload);
+
+          if (res?.orderId) {
+            dispatch(clearCart());
+            await clearCartApi(user._id);
+            setOrderSuccess(true);
+            setOrderId(res.orderId);
+          }
+        },
+        prefill: {
+          name: user.fullName,
+          email: user.email,
+          contact: user.phone
+        },
+        theme: {
+          color: "#ff5500",
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     }
-  };
+
+  } catch (error) {
+    console.error("Failed to place order:", error);
+    const errorMsg = error.response?.data?.message || 
+                    "Failed to place order. Please try again.";
+    setError(errorMsg);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleOrderModalClose = () => {
     setOrderSuccess(false);
@@ -615,7 +719,7 @@ export default function MyBasket({ useWallet, setUseWallet }) {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="h-4 w-4 text-orange-600 focus:ring-orange-500"
             />
-            <span className="text-gray-700">Card Payment</span>
+            <span className="text-gray-700">Pay online</span>
           </label>
         </div>
 
