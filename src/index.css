@@ -9,3 +9,15 @@
 
   @import "leaflet/dist/leaflet.css";
   
+
+  .restaurant-marker {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+
+

@@ -14,10 +14,16 @@ import {
 import { CiDeliveryTruck } from "react-icons/ci";
 import { MdDeliveryDining, MdOutlineLocalOffer } from "react-icons/md";
 
-import { GrUserAdmin , GrUser} from 'react-icons/gr';
-import { Link, Outlet } from 'react-router-dom';
+import { GrUserAdmin, GrUser } from "react-icons/gr";
+import { Link, Outlet } from "react-router-dom";
 
-const SidebarItem = ({ title, icon, children, hasPermission, closeSidebar }) => {
+const SidebarItem = ({
+  title,
+  icon,
+  children,
+  hasPermission,
+  closeSidebar,
+}) => {
   const [open, setOpen] = useState(false);
 
   if (!hasPermission) return null;
@@ -49,10 +55,10 @@ const SidebarItem = ({ title, icon, children, hasPermission, closeSidebar }) => 
           open ? "max-h-120 py-2" : "max-h-0"
         }`}
       >
-        {React.Children.map(children, child => {
+        {React.Children.map(children, (child) => {
           if (React.isValidElement(child)) {
             return React.cloneElement(child, {
-              onClick: handleLinkClick
+              onClick: handleLinkClick,
             });
           }
           return child;
@@ -246,7 +252,7 @@ function AdminDashboard() {
           </SidebarItem>
           <SidebarItem
             title="Orders"
-            icon={<CiDeliveryTruck  size={18} />}
+            icon={<CiDeliveryTruck size={18} />}
             hasPermission={hasPermission("agents.manage")}
           >
             <Link
@@ -256,9 +262,58 @@ function AdminDashboard() {
               Orders
             </Link>
           </SidebarItem>
+
+          <SidebarItem
+            title="Marketing"
+            icon={<SquareGanttChart size={18} />}
+            hasPermission={hasPermission("agents.manage")}
+          >
+            <SidebarItem
+              title="Promotions"
+              icon={<SquareGanttChart size={18} />}
+              hasPermission={hasPermission("agents.manage")}
+            >
+              <Link
+                to="admin-promotions-promo"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+                Promo codes
+              </Link>
+
+              <Link
+                to="promotion-loyalty-points"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+                loyalty-points
+              </Link>
+            </SidebarItem>
+
+            <SidebarItem
+              title="Push Campaings"
+              icon={<SquareGanttChart size={18} />}
+              hasPermission={hasPermission("agents.manage")}
+            >
+              <Link
+                to="campaigns-customer"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+                Customer
+              </Link>
+
+              <Link
+                to="campaigns-restaurant"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+                Restaurant
+              </Link>
+            </SidebarItem>
+
+            <SidebarItem></SidebarItem>
+          </SidebarItem>
+
           <SidebarItem
             title="surge"
-            icon={<SquareGanttChart  size={18} />}
+            icon={<SquareGanttChart size={18} />}
             hasPermission={hasPermission("agents.manage")}
           >
             <Link
@@ -267,20 +322,21 @@ function AdminDashboard() {
             >
               Surge Selecter
             </Link>
-             <Link  to="admin-surge-list"    className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="admin-surge-list"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               List Surge
-             </Link>
-
-
+            </Link>
           </SidebarItem>
           <SidebarItem
             title="Agents"
-            icon={<MdDeliveryDining  size={18} />}
+            icon={<MdDeliveryDining size={18} />}
             hasPermission={hasPermission("agents.manage")}
             closeSidebar={closeSidebar}
           >
             <Link
-              to="#"
+              to="/admin/agent-dashboard"
               className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
             >
               View Agents
@@ -313,13 +369,10 @@ function AdminDashboard() {
             </Link>
           </SidebarItem>
 
-
-         
-
-          <SidebarItem 
-            title="Customers" 
-            icon={<GrUser size={18}/>}
-            hasPermission={hasPermission('users.manage')}
+          <SidebarItem
+            title="Customers"
+            icon={<GrUser size={18} />}
+            hasPermission={hasPermission("users.manage")}
             closeSidebar={closeSidebar}
           >
             <Link
@@ -349,22 +402,21 @@ function AdminDashboard() {
               Ticket Manager
             </Link>
           </SidebarItem>
-          <SidebarItem 
-            title="Transactions" 
-            icon={<Receipt size={18}/>}
-            hasPermission={hasPermission('support.manage')}
+          <SidebarItem
+            title="Transactions"
+            icon={<Receipt size={18} />}
+            hasPermission={hasPermission("support.manage")}
             closeSidebar={closeSidebar}
           >
-            <Link to="refund/transactions" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="refund/transactions"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Refunds
             </Link>
           </SidebarItem>
 
-
-
-
-
-   <SidebarItem
+          <SidebarItem
             title="Tax & Delivery Fee Settings"
             icon={<FiSettings size={18} />}
             hasPermission={true} // Always show settings
@@ -380,18 +432,50 @@ function AdminDashboard() {
               to="admin-deliveryfee-management"
               className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
             >
-            Delivery Fee Settings
+              Delivery Fee Settings
             </Link>
-           
           </SidebarItem>
 
+          <SidebarItem
+            title="Configure"
+            icon={<FiSettings size={18} />}
+            hasPermission={true} // Always show settings
+            closeSidebar={closeSidebar}
+          >
+            <SidebarItem
+              title="User settings"
+              icon={<FiSettings size={18} />}
+              hasPermission={true} // Always show settings
+              closeSidebar={closeSidebar}
+            >
+              <Link
+                to="admin-deliveryfee-management"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+                Customer
+              </Link>
+              <Link
+                to="admin-deliveryfee-management"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+                Restaurants
+              </Link>
 
+              <Link
+                to="/admin/dashboard/manger-managment"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+                Mangers
+              </Link>
 
-
-
-
-
-
+              <Link
+                to="/admin/dashboard/role-management"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+                Roles
+              </Link>
+            </SidebarItem>
+          </SidebarItem>
 
           <SidebarItem
             title="Settings"
@@ -411,7 +495,10 @@ function AdminDashboard() {
             >
               Change Password
             </Link>
-            <Link to="access-logs" className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded">
+            <Link
+              to="access-logs"
+              className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+            >
               Access Logs
             </Link>
           </SidebarItem>

@@ -11,6 +11,7 @@ import {
   ArrowLeftCircle,
   IndianRupee,
   MapPin,
+  AlertTriangle,
 } from "lucide-react";
 import axios from "axios";
 import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
@@ -21,11 +22,13 @@ const RestaurantOrderList = () => {
   const navigate = useNavigate();
 
   const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("all"); // New state for filter
 
   const fetchOrders = async (page = 1) => {
     try {
@@ -44,6 +47,7 @@ const RestaurantOrderList = () => {
       const { orders, totalOrders, totalPages, currentPage } = res.data;
 
       setOrders(orders);
+      setFilteredOrders(orders); // Initialize filtered orders
       setTotalOrders(totalOrders);
       setTotalPages(totalPages);
       setCurrentPage(currentPage);
@@ -56,47 +60,54 @@ const RestaurantOrderList = () => {
     }
   };
 
-  useEffect(() => {
-    fetchOrders(currentPage);
-  }, [restaurantId]);
-
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      fetchOrders(newPage);
+  // Handle filter change
+  const handleStatusFilter = (status) => {
+    setStatusFilter(status);
+    if (status === "all") {
+      setFilteredOrders(orders);
+    } else {
+      const filtered = orders.filter(
+        (order) => order.orderStatus.toLowerCase() === status.toLowerCase()
+      );
+      setFilteredOrders(filtered);
     }
   };
+
+  useEffect(() => {
+    fetchOrders(currentPage);
+  }, [restaurantId, currentPage]);
 
   const getStatusIcon = (status) => {
     switch (status.toLowerCase()) {
       case "delivered":
-        return { 
-          icon: <Check className="w-4 h-4" />, 
+        return {
+          icon: <Check className="w-4 h-4" />,
           color: "bg-green-100 text-green-800",
-          border: "border-green-200"
+          border: "border-green-200",
         };
       case "ready":
-        return { 
-          icon: <AlertCircle className="w-4 h-4" />, 
+        return {
+          icon: <AlertCircle className="w-4 h-4" />,
           color: "bg-blue-100 text-blue-800",
-          border: "border-blue-200"
+          border: "border-blue-200",
         };
       case "pending":
-        return { 
-          icon: <Clock className="w-4 h-4" />, 
+        return {
+          icon: <Clock className="w-4 h-4" />,
           color: "bg-amber-100 text-amber-800",
-          border: "border-amber-200"
+          border: "border-amber-200",
         };
       case "cancelled":
-        return { 
-          icon: <X className="w-4 h-4" />, 
+        return {
+          icon: <X className="w-4 h-4" />,
           color: "bg-red-100 text-red-800",
-          border: "border-red-200"
+          border: "border-red-200",
         };
       default:
-        return { 
-          icon: <Clock className="w-4 h-4" />, 
+        return {
+          icon: <Clock className="w-4 h-4" />,
           color: "bg-gray-100 text-gray-800",
-          border: "border-gray-200"
+          border: "border-gray-200",
         };
     }
   };
@@ -144,19 +155,44 @@ const RestaurantOrderList = () => {
             </h2>
           </div>
 
+          {/* Filter UI */}
+          <div className="p-4 border-b border-gray-100">
+            <div className="flex flex-wrap gap-2">
+              {["all", "delivered", "ready", "pending", "cancelled"].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => handleStatusFilter(status)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    statusFilter === status
+                      ? "bg-orange-500 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="p-4 sm:p-6 space-y-4">
-            {orders.length === 0 ? (
+            {filteredOrders.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">No orders found for this restaurant</p>
+                <p className="text-gray-500">No orders found for this status</p>
               </div>
             ) : (
-              orders.map((order) => {
+              filteredOrders.map((order) => {
                 const status = getStatusIcon(order.orderStatus);
+                const hasDelayReason = order.preparationDelayReason;
                 return (
                   <div
                     key={order._id}
-                    className={`border ${status.border} rounded-lg overflow-hidden transition-all hover:shadow-md`}
+                    className={`border ${status.border} rounded-lg overflow-hidden transition-all hover:shadow-md relative`}
                   >
+                    {hasDelayReason && (
+                      <div className="absolute top-0 right-0 bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded-bl-lg">
+                        Delayed
+                      </div>
+                    )}
                     <div className="bg-white p-4 sm:p-5">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                         <div>
@@ -165,7 +201,8 @@ const RestaurantOrderList = () => {
                           </h3>
                           <div className="mt-1 space-y-1">
                             <p className="text-sm text-gray-600">
-                              <span className="font-medium">Customer:</span> {order.customerId?.name} ({order.customerId?.email})
+                              <span className="font-medium">Customer:</span>{" "}
+                              {order.customerId?.name} ({order.customerId?.email})
                             </p>
                             <p className="text-sm text-gray-600">
                               <span className="font-medium">Payment:</span>{" "}
@@ -182,6 +219,25 @@ const RestaurantOrderList = () => {
                           {order.orderStatus}
                         </span>
                       </div>
+
+                      {hasDelayReason && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                          <h4 className="font-medium text-gray-700 flex items-center">
+                            <AlertTriangle className="w-4 h-4 mr-1.5 text-orange-500" />
+                            Delay Information
+                          </h4>
+                          <div className="mt-2 bg-orange-50 p-3 rounded-md">
+                            <p className="text-sm text-orange-800 font-medium">
+                              Reason: {order.preparationDelayReason}
+                            </p>
+                            {order.additionalPreparationTime && (
+                              <p className="text-sm text-orange-800 mt-1">
+                                Additional time needed: {order.additionalPreparationTime} minutes
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                       <div className="mt-4 pt-4 border-t border-gray-100">
                         <h4 className="font-medium text-gray-700 flex items-center">

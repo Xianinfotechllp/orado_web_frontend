@@ -17,24 +17,8 @@ import {
   FiActivity,
   FiShoppingBag,
 } from "react-icons/fi";
-
-import axios from "axios";
+import apiClient from "../../apis/apiClient/apiClient";
 import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
-
-export const fetchOrderStats = async () => {
-  try {
-    const response = await axios.get(
-      "https://orado.work.gd/api/admin/order/order-stats"
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching order stats:", error);
-    return null;
-  }
-};
-
-// Mock Data
-
 
 const salesData = [
   { day: "Mon", sales: 500 },
@@ -55,15 +39,6 @@ const activityData = [
   { date: "06", activity: 1000 },
 ];
 
-// const recentOrders = [
-//   { id: 1001, restaurant: "Burger Haven", amount: 450, status: "Completed" },
-//   { id: 1002, restaurant: "Spice Villa", amount: 320, status: "Pending" },
-//   { id: 1003, restaurant: "Ocean Grill", amount: 650, status: "Completed" },
-//   { id: 1004, restaurant: "Pizza Planet", amount: 280, status: "Pending" },
-// ];
-
-
-
 const topRestaurants = [
   { name: "Grill House", revenue: 4500 },
   { name: "Tandoori Nights", revenue: 4200 },
@@ -71,11 +46,15 @@ const topRestaurants = [
   { name: "Seafood Bay", revenue: 3500 },
 ];
 
-const StatCard = ({ icon, title, value, change, isPositive }) => (
+const StatCard = ({ icon, title, value, change, isPositive, isNeutral }) => (
   <div className="bg-white hover:shadow-xl transition duration-300 shadow rounded-2xl p-6 border border-gray-100 flex items-start gap-4">
     <div
       className={`p-3 rounded-xl ${
-        isPositive ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+        isNeutral
+          ? "bg-gray-100 text-gray-600"
+          : isPositive
+          ? "bg-green-100 text-green-600"
+          : "bg-red-100 text-red-600"
       }`}
     >
       {icon}
@@ -85,10 +64,15 @@ const StatCard = ({ icon, title, value, change, isPositive }) => (
       <p className="text-2xl font-semibold text-gray-800">{value}</p>
       <p
         className={`text-xs mt-1 font-medium ${
-          isPositive ? "text-green-600" : "text-red-600"
+          isNeutral
+            ? "text-gray-600"
+            : isPositive
+            ? "text-green-600"
+            : "text-red-600"
         }`}
       >
-        {change} {isPositive ? "↑" : "↓"} this week
+        {change}{" "}
+        {isNeutral ? "→" : isPositive ? "↑" : "↓"} this week
       </p>
     </div>
   </div>
@@ -104,6 +88,7 @@ const Dashboard = () => {
       value: "Loading...",
       change: "0%",
       isPositive: false,
+      isNeutral: false,
       icon: <FiUsers size={22} />,
     },
     {
@@ -111,6 +96,7 @@ const Dashboard = () => {
       value: "Loading...",
       change: "0%",
       isPositive: false,
+      isNeutral: false,
       icon: <FiHome size={22} />,
     },
     {
@@ -118,6 +104,7 @@ const Dashboard = () => {
       value: "₹0",
       change: "0%",
       isPositive: false,
+      isNeutral: false,
       icon: <FiDollarSign size={22} />,
     },
     {
@@ -125,121 +112,90 @@ const Dashboard = () => {
       value: "0",
       change: "0%",
       isPositive: false,
+      isNeutral: false,
       icon: <FiActivity size={22} />,
     },
   ]);
 
   const fetchRecentOrders = async () => {
-  try {
-    setLoading(true); // Set loading state
-    
-    const token = sessionStorage.getItem('adminToken'); // Get auth token
-    
-    if (!token) {
-      throw new Error("No authentication token found");
+    try {
+      setLoading(true);
+      const response = await apiClient.get("/admin/order/order-stats/recent");
+      setRecentOrders(response.data.data || []);
+    } catch (error) {
+      console.error("Error fetching recent orders:", error);
+      setError(error.response?.data?.message || "Failed to load recent orders");
+    } finally {
+      setLoading(false);
     }
-
-    const headers = {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    };
-
-    // Fetch only recent orders
-    const response = await fetch(
-      "https://orado.work.gd/api/admin/order/order-stats/recent",
-      { headers }
-    );
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Session expired. Please login again.");
-      }
-      throw new Error("Failed to fetch recent orders");
-    }
-
-    const recentOrdersData = await response.json();
-    setRecentOrders(recentOrdersData); // Update state with real data
-
-  } catch (error) {
-    console.error("Error fetching recent orders:", error);
-    setError(error.message || "Failed to load recent orders");
-    
-    if (error.message.includes("Session expired")) {
-      // Handle logout or redirect to login
-    }
-  } finally {
-    setLoading(false); // Reset loading state
-  }
-};
+  };
 
   const fetchAllStats = async () => {
     try {
       setLoading(true);
 
-      // Fetch all statistics in parallel
       const [usersResponse, restaurantsResponse, ordersResponse] =
         await Promise.all([
-          fetch("https://orado.work.gd/api/admin/user/user-stats"),
-          fetch("https://orado.work.gd/api/admin/restaurant/stats/restaurant-stats"),
-          fetch("https://orado.work.gd/api/admin/order/order-stats"),
-        ])
+          apiClient.get("/admin/user/user-stats"),
+          apiClient.get("/admin/restaurant/stats/restaurant-stats"),
+          apiClient.get("/admin/order/order-stats"),
+        ]);
 
-      if (!usersResponse.ok || !restaurantsResponse.ok || !ordersResponse.ok) {
-        throw new Error("One or more network responses were not ok");
-      }
-
-      const usersData = await usersResponse.json();
-      const restaurantsData = await restaurantsResponse.json();
-      const ordersData = await ordersResponse.json();
+      const usersData = usersResponse.data.data;
+      const restaurantsData = restaurantsResponse.data.data;
+      const ordersData = ordersResponse.data;
 
       setStatData((prevStats) =>
         prevStats.map((stat) => {
           if (stat.title === "Total Users") {
+            const growth = parseFloat(usersData?.growthPercentage || 0);
             return {
               ...stat,
-              value: usersData.data.totalUsers,
-              change: `${parseFloat(usersData.data.growthPercentage).toFixed(
-                1
-              )}%`,
-              isPositive: usersData.data.trend === "↑",
+              value: usersData?.totalUsers || "0",
+              change: `${isNaN(growth) ? "0" : growth.toFixed(1)}%`,
+              isPositive: usersData?.trend === "↑",
+              isNeutral: usersData?.trend === "→",
             };
           } else if (stat.title === "Total Restaurants") {
+            const growth = parseFloat(restaurantsData?.growthPercentage || 0);
             return {
               ...stat,
-              value: restaurantsData.data.totalRestaurants,
-              change: `${parseFloat(
-                restaurantsData.data.growthPercentage
-              ).toFixed(1)}%`,
-              isPositive: restaurantsData.data.trend === "↑",
+              value: restaurantsData?.totalRestaurants || "0",
+              change: `${isNaN(growth) ? "0" : growth.toFixed(1)}%`,
+              isPositive: restaurantsData?.trend === "↑",
+              isNeutral: restaurantsData?.trend === "→",
             };
           } else if (stat.title === "Active Orders") {
+            const change = parseFloat(ordersData?.percentageChange || 0);
             return {
               ...stat,
-              value: ordersData.activeOrders.toString(),
-              change: `${parseFloat(ordersData.percentageChange).toFixed(1)}%`,
-              isPositive: ordersData.trend === "↑",
+              value: ordersData?.activeOrders?.toString() || "0",
+              change: `${isNaN(change) ? "0" : change.toFixed(1)}%`,
+              isPositive: ordersData?.trend === "↑",
+              isNeutral: ordersData?.trend === "→",
             };
+          } else if (stat.title === "Total Revenue") {
+            // Add revenue data handling if available from API
+            return stat;
           }
           return stat;
         })
       );
     } catch (error) {
       console.error("Error fetching statistics:", error);
-      setError("Failed to load dashboard data");
+      setError(error.response?.data?.message || "Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
   };
 
-  // useEffect usage (example):
   useEffect(() => {
     fetchAllStats();
-    fetchRecentOrders()
+    fetchRecentOrders();
   }, []);
 
-  // In your JSX:
-  if (loading) return <LoadingForAdmins/>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <LoadingForAdmins />;
+  if (error) return <div className="p-6 text-red-500">Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 space-y-8 max-w-[1500px] mx-auto">

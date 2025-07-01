@@ -50,8 +50,25 @@ import AdminNotificationSender from "./pages/Admin/notifications/AdminNotificati
 import SurgeAreaList from "./pages/Admin/Surge/SurgeAreaList";
 import TaxManagementPanel from "./pages/Admin/FeeAndTaxSettings/TaxManagementPanel";
 import DeliveryFeeSettings from "./pages/Admin/FeeAndTaxSettings/DeliveryFeeSettings";
-
+import RestaurantEarningsv from "./pages/Admin/restauratnsEarnigs/RestaurantEarningsv";
 import AdminRestaurantChatDashboard from "./pages/Admin/RestaurantChats/AdminRestaurantChatDashboard";
+import OrderTable from "./pages/Admin/order/OrderTable";
+import CityCreationMap from "./pages/Admin/city/CityCreationMap";
+import PromoCodeManager from "./pages/Admin/Marketing/promotions/promoCode/ PromoCodeManager";
+import CreateLoyaltyPoints from "./pages/Admin/Marketing/promotions/loyalityPoints/CreateLoyaltyPoints";
+import RestaurantTables from "./pages/Admin/Restaurants/RestaurantTables";
+import RestaurantConfigPage from "./pages/Admin/Restaurants/RestaurantConfigPage";
+import AdminAgentDashboardLayout from "./layouts/AdminAgentDashboardLayout";
+import AgentDashboardSettings from "./pages/AgentAdminDashboard/AgentDashboardSettings";
+import CustomerCampaigns from "./pages/Admin/Marketing/pushCampaigns/CustomerCampaigns";
+import RestaurantCampaigns from "./pages/Admin/Marketing/pushCampaigns/RestaurantCampaigns";
+import RolesPage from "./pages/Admin/configure/userSettings/Rolepage";
+import AddRolePage from "./pages/Admin/configure/userSettings/AddRolepage";
+import ManagerManagement from "./pages/Admin/configure/userSettings/ManagerManagement";
+import AddManager from "./pages/Admin/configure/userSettings/AddManager";
+import EditRolePage from "./pages/Admin/configure/userSettings/EditRolePage";
+import EditManager from "./pages/Admin/configure/userSettings/EditManager";
+import CatalogPage  from "./pages/Admin/products/CatalogPage ";
 
 function App() {
   // const [count, setCount] = useState(0);
@@ -59,21 +76,21 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Login />} />
+        {/* <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/home" element={<Home />} />
 
         <Route path="/add-to-cart" element={<AddToCart />} />
-        <Route path="/order-management" element={<OrderManagement />} />
-
+        <Route path="/order-management" element={<OrderManagement />} /> */}
+{/* 
         <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils />} />
         <Route path="/faq" element={<Faq />} />
-        <Route path="/notifications" element={<NotificationPage />} />
+        <Route path="/notifications" element={<NotificationPage />} /> */}
 
         {/* User Profile */}
-        <Route path="/my-account" element={<OrdersPage />} />
+        {/* <Route path="/my-account" element={<OrdersPage />} />
         <Route path="/my-account/orders" element={<OrdersPage />} />
-        <Route path="/my-account/settings" element={<SettingsPage />} />
+        <Route path="/my-account/settings" element={<SettingsPage />} /> */}
 
 
         {/* Admin-Side */}
@@ -86,6 +103,12 @@ function App() {
           <Route path="restaurant-approvals" element={<RestaurantApprovalsPage />} />
           <Route path="restaurant-add" element={<AddRestaurantPage />} />
           <Route path="restaurant-edit" element={<RestaurantList />} />
+
+          <Route path="restaurant-table" element={<RestaurantTables/>} />
+            <Route path="restaurant-config" element={<RestaurantConfigPage/>}  />
+        
+
+
           <Route path="restaurant-createmenu" element={<CreateMenu />} />
           <Route path="restaurant-permission" element={<RestaurantPermissions />} />
           <Route path="restaurant-commission" element={<RestaurantCommission />} />
@@ -93,6 +116,9 @@ function App() {
           <Route path="restaurant-feedback" element={<RestaurantListforReviews />} />
            <Route path="restaurant-earnings" element={<RestaurantEarningsTable />} />
            <Route path="restaurant-chats" element={<AdminRestaurantChatDashboard />} />
+           <Route path="restaurant-earnings-summary/:restaurantId" element={<RestaurantEarningsv />} />
+
+
 
           {/* offer section */}
           <Route path="create-offer" element={<CreateOffer />} />
@@ -109,7 +135,42 @@ function App() {
           <Route path="admin-surge-list" element={<SurgeAreaList/>}    />
 
           
+          {/* products */}
+              {/* CatalogPage */}
+       
+                <Route path="merchants/catalogue" element={<CatalogPage />} />
 
+          {/* marketing */}
+
+             { /* >>  promotions */}
+                {/* promocodes */}
+                <Route path="admin-promotions-promo" element={<PromoCodeManager/>}  />
+                <Route path="promotion-loyalty-points" element={<CreateLoyaltyPoints/>} />
+
+                {/* push campings */}
+                <Route path="campaigns-customer" element={<CustomerCampaigns/>} />
+                <Route path="campaigns-restaurant" element={<RestaurantCampaigns/>} />
+
+
+
+
+
+
+
+
+                {/* configration menu */}
+                   {/* >  user settings */}
+                <Route path="role-management" element={<RolesPage/>} />
+                <Route path="role-add" element={<AddRolePage/>} />
+                <Route path="role-edit/:roleId" element={<EditRolePage/>}  />
+
+                <Route path="manger-managment" element={<ManagerManagement/>}  />
+                <Route path="manger-add" element={<AddManager/>}  />
+                <Route path="manger-edit/:mangerId" element={<EditManager/>}  />
+
+
+                    
+            
           <Route path="admin-tax-management" element={<TaxManagementPanel />}    />
           <Route path="admin-deliveryfee-management" element={<DeliveryFeeSettings />}    />
 
@@ -123,16 +184,33 @@ function App() {
           <Route path="refund/transactions" element={<RefundTransactionsPage />} />
         
           <Route path="notification-sender"  element={<AdminNotificationSender/>} />
-
+        <Route path="order/table" element={<OrderTable/>} />
+        <Route path="add-city" element={<CityCreationMap/>}  />
           {/* Add more nested routes as needed */}
         </Route>
-        <Route path="/restaurants/:restaurantId/categories" element={<RestaurantCategories />} />
         <Route path="/restaurants/:restaurantId/orders" element={<RestaurantOrderList />} />
+
+        <Route path="/restaurants/:restaurantId/categories" element={<RestaurantCategories />} />
         <Route path="/feedback/restaurants/:restaurantId" element={<RestaurantReviewsPage />} />
         <Route
           path="/restaurants/:restaurantId/categories/:categoryId/items"
           element={<CategoryItems />}
-        />
+/>
+
+
+
+
+
+
+
+<Route  path="/admin/agent-dashboard" element={<AdminAgentDashboardLayout/>}>
+
+ <Route index element={<AdminAgentDashboardLayout />} />
+
+    
+</Route>
+<Route path="/admin/agent-dashboard/settings" element={<AgentDashboardSettings />} />
+
       </Routes>
       <ToastContainer />
     </>

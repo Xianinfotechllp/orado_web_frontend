@@ -22,7 +22,8 @@ import { createRestaurant } from "../../apis/restaurantApi";
 import axios from "axios";
 import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
 import apiClient from "../../apis/apiClient/apiClient";
-
+import LocationPicker from "../../components/map/LocationPicker";
+import { useCallback } from "react";
 const AddRestaurant = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -46,7 +47,7 @@ const AddRestaurant = () => {
     foodType: "veg",
     minOrderAmount: 100,
     openingHours: [],
-    paymentMethods: ["online"],
+    paymentMethods: ["online", "cash", "wallet", "card"],
   });
 
   const [documents, setDocuments] = useState({
@@ -68,9 +69,7 @@ const AddRestaurant = () => {
     const fetchMerchants = async () => {
       setMerchantLoading(true);
       try {
-        const response = await apiClient.get(
-          "/admin/merchant/getallmerchants"
-        );
+        const response = await apiClient.get("/admin/merchant/getallmerchants");
         setMerchants(response.data.data || []);
       } catch (error) {
         console.error("Error fetching merchants:", error);
@@ -165,12 +164,12 @@ const AddRestaurant = () => {
     setFormData((prev) => ({ ...prev, openingHours: updated }));
   };
 
-  const handleLocationSelect = (locationDetails) => {
+  const handleLocationSelect = useCallback((locationDetails) => {
     setFormData((prev) => ({
       ...prev,
       address: {
         ...prev.address,
-        street: locationDetails.address || "",
+        street: locationDetails.street || "",
         city: locationDetails.city || "",
         state: locationDetails.state || "",
         pincode: locationDetails.zip || "",
@@ -178,7 +177,7 @@ const AddRestaurant = () => {
         longitude: locationDetails.longitude || "",
       },
     }));
-  };
+  }, []);
 
   const validateStep = (step) => {
     const newErrors = {};
@@ -187,7 +186,6 @@ const AddRestaurant = () => {
       "ownerName",
       "phone",
       "email",
-      "password",
       "fssaiNumber",
       "ownerId",
       "gstNumber",
@@ -207,13 +205,6 @@ const AddRestaurant = () => {
       if (!formData.email.trim()) newErrors.email = "Email is required";
       else if (!/^\S+@\S+\.\S+$/.test(formData.email))
         newErrors.email = "Invalid email format";
-      if (!formData.password) newErrors.password = "Password is required";
-      else if (formData.password.length < 8)
-        newErrors.password = "Password must be at least 8 characters";
-      if (!formData.confirmPassword)
-        newErrors.confirmPassword = "Please confirm password";
-      else if (formData.password !== formData.confirmPassword)
-        newErrors.confirmPassword = "Passwords don't match";
     } else if (step === 2) {
       if (!formData.address.street.trim())
         newErrors.street = "Street address is required";
@@ -280,7 +271,6 @@ const AddRestaurant = () => {
     formDataToSend.append("ownerName", formData.ownerName);
     formDataToSend.append("phone", formData.phone);
     formDataToSend.append("email", formData.email);
-    formDataToSend.append("password", formData.password);
 
     // Business details
     formDataToSend.append("fssaiNumber", formData.fssaiNumber);
@@ -334,78 +324,78 @@ const AddRestaurant = () => {
     { id: 4, title: "Documents", icon: Upload },
   ];
 
-  const LocationPicker = ({ onSelectLocation }) => {
-    const [position, setPosition] = useState([20.5937, 78.9629]); // Default to India
-    const [currentAddress, setCurrentAddress] = useState("");
+  // const LocationPicker = ({ onSelectLocation }) => {
+  //   const [position, setPosition] = useState([20.5937, 78.9629]); // Default to India
+  //   const [currentAddress, setCurrentAddress] = useState("");
 
-    const customIcon = new L.Icon({
-      iconUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png",
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-    });
+  //   const customIcon = new L.Icon({
+  //     iconUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png",
+  //     iconSize: [25, 41],
+  //     iconAnchor: [12, 41],
+  //   });
 
-    const reverseGeocode = async (lat, lon) => {
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
-        );
-        const data = await response.json();
-        setCurrentAddress(data.display_name);
+  //   const reverseGeocode = async (lat, lon) => {
+  //     try {
+  //       const response = await fetch(
+  //         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+  //       );
+  //       const data = await response.json();
+  //       setCurrentAddress(data.display_name);
 
-        const addressDetails = {
-          address: data.display_name,
-          city:
-            data.address?.city ||
-            data.address?.town ||
-            data.address?.village ||
-            "",
-          state: data.address?.state || "",
-          zip: data.address?.postcode || "",
-          latitude: lat,
-          longitude: lon,
-        };
+  //       const addressDetails = {
+  //         address: data.display_name,
+  //         city:
+  //           data.address?.city ||
+  //           data.address?.town ||
+  //           data.address?.village ||
+  //           "",
+  //         state: data.address?.state || "",
+  //         zip: data.address?.postcode || "",
+  //         latitude: lat,
+  //         longitude: lon,
+  //       };
 
-        onSelectLocation(addressDetails);
-      } catch (error) {
-        console.error("Geocoding error:", error);
-      }
-    };
+  //       onSelectLocation(addressDetails);
+  //     } catch (error) {
+  //       console.error("Geocoding error:", error);
+  //     }
+  //   };
 
-    const MapClickHandler = () => {
-      useMapEvents({
-        click(e) {
-          const { lat, lng } = e.latlng;
-          setPosition([lat, lng]);
-          reverseGeocode(lat, lng);
-        },
-      });
-      return null;
-    };
+  //   const MapClickHandler = () => {
+  //     useMapEvents({
+  //       click(e) {
+  //         const { lat, lng } = e.latlng;
+  //         setPosition([lat, lng]);
+  //         reverseGeocode(lat, lng);
+  //       },
+  //     });
+  //     return null;
+  //   };
 
-    return (
-      <div>
-        <MapContainer
-          center={position}
-          zoom={5}
-          style={{ height: "400px", width: "100%" }}
-        >
-          <TileLayer
-            attribution="© OpenStreetMap"
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <Marker position={position} icon={customIcon} />
-          <MapClickHandler />
-        </MapContainer>
+  //   return (
+  //     <div>
+  //       <MapContainer
+  //         center={position}
+  //         zoom={5}
+  //         style={{ height: "400px", width: "100%" }}
+  //       >
+  //         <TileLayer
+  //           attribution="© OpenStreetMap"
+  //           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+  //         />
+  //         <Marker position={position} icon={customIcon} />
+  //         <MapClickHandler />
+  //       </MapContainer>
 
-        <p className="mt-2">
-          <strong>Selected Address:</strong> {currentAddress}
-        </p>
-        {errors.location && (
-          <p className="text-red-500 text-sm mt-1">{errors.location}</p>
-        )}
-      </div>
-    );
-  };
+  //       <p className="mt-2">
+  //         <strong>Selected Address:</strong> {currentAddress}
+  //       </p>
+  //       {errors.location && (
+  //         <p className="text-red-500 text-sm mt-1">{errors.location}</p>
+  //       )}
+  //     </div>
+  //   );
+  // };
 
   const daysOfWeek = [
     { value: "monday", label: "Monday" },
@@ -615,48 +605,6 @@ const AddRestaurant = () => {
                     {errors.email && (
                       <p className="text-red-500 text-sm mt-1">
                         {errors.email}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      Password
-                    </label>
-                    <input
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300"
-                      name="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      placeholder="Create a password"
-                      required
-                    />
-                    {errors.password && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.password}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      Confirm Password
-                    </label>
-                    <input
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300"
-                      name="confirmPassword"
-                      type="password"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      placeholder="Confirm password"
-                      required
-                    />
-                    {errors.confirmPassword && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.confirmPassword}
                       </p>
                     )}
                   </div>
@@ -915,13 +863,38 @@ const AddRestaurant = () => {
                       <CreditCard className="w-4 h-4 mr-2 text-orange-500" />
                       Payment Methods
                     </label>
-                    <input
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300"
-                      name="paymentMethods"
-                      value={formData.paymentMethods}
-                      onChange={handleChange}
-                      placeholder="online, cash, card"
-                    />
+
+                    
+                    <div className="flex flex-wrap gap-4">
+                      {["cash", "online", "wallet"].map((method) => (
+                        <label
+                          key={method}
+                          className="flex items-center space-x-2"
+                        >
+                          <input
+                            type="checkbox"
+                            value={method}
+                            checked={formData.paymentMethods.includes(method)}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              const value = e.target.value;
+                              setFormData((prev) => ({
+                                ...prev,
+                                paymentMethods: checked
+                                  ? [...prev.paymentMethods, value]
+                                  : prev.paymentMethods.filter(
+                                      (item) => item !== value
+                                    ),
+                              }));
+                            }}
+                            className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                          />
+                          <span className="text-sm text-gray-700 capitalize">
+                            {method}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -929,6 +902,7 @@ const AddRestaurant = () => {
                       <Clock className="w-4 h-4 mr-2 text-orange-500" />
                       Opening Hours
                     </label>
+
 
                     {formData.openingHours.length === 0 && (
                       <p className="text-sm text-gray-500">

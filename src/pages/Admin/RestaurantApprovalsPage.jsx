@@ -86,14 +86,11 @@ const RestaurantApprovalsPage = () => {
     const fetchMerchants = async () => {
       try {
         const token = sessionStorage.getItem("adminToken");
-        const response = await apiClient.get(
-          "/admin/restaurant-requests",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await apiClient.get("/admin/restaurant-requests", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         // console.log(response.data)
 
         const formatted = response.data.restaurants.map((restaurant) => {
@@ -153,6 +150,18 @@ const RestaurantApprovalsPage = () => {
     fetchMerchants();
   }, []);
 
+
+
+  const downloadImage = async (url, filename) => {
+  const response = await fetch(url, { mode: "cors" });
+  const blob = await response.blob();
+  const link = document.createElement("a");
+  link.href = window.URL.createObjectURL(blob);
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
   const handleApprove = async (id) => {
     try {
       const token = sessionStorage.getItem("adminToken");
@@ -394,7 +403,7 @@ const RestaurantApprovalsPage = () => {
           {/* Table */}
           <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
             {loading ? (
-              <LoadingForAdmins/>
+              <LoadingForAdmins />
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -508,6 +517,7 @@ const RestaurantApprovalsPage = () => {
                 </table>
               </div>
             )}
+            Media Galler
           </div>
         </>
       ) : (
@@ -879,42 +889,34 @@ const RestaurantApprovalsPage = () => {
                             </div>
                           )}
 
-                          {selectedRestaurant && (
-                            <div className="mb-4">
-                              <h5 className="text-sm font-medium text-gray-600 mb-2">
-                                Kyc Images
-                              </h5>
-                              <div className="grid grid-cols-3 gap-2">
-                                <img
-                                  src={
-                                    selectedRestaurant.kycDocuments.fssaiDocUrl
-                                  }
-                                  alt=""
-                                  className="h-16 w-full object-cover rounded-md border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
-                                />
-                                <img
-                                  src={
-                                    selectedRestaurant.kycDocuments.aadharDocUrl
-                                  }
-                                  alt=""
-                                  className="h-16 w-full object-cover rounded-md border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
-                                />
-                                <img
-                                  src={
-                                    selectedRestaurant.kycDocuments.gstDocUrl
-                                  }
-                                  alt=""
-                                  className="h-16 w-full object-cover rounded-md border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
-                                />
-                              </div>
-                              {selectedRestaurant.images.length > 6 && (
-                                <p className="text-xs text-gray-500 mt-1">
-                                  +{selectedRestaurant.images.length - 6} more
-                                  images
-                                </p>
-                              )}
-                            </div>
-                          )}
+                        {selectedRestaurant && (
+  <div className="mb-4">
+    <h5 className="text-sm font-medium text-gray-600 mb-2">KYC Images</h5>
+    <div className="grid grid-cols-3 gap-2">
+      {[
+        { label: "FSSAI", url: selectedRestaurant.kycDocuments.fssaiDocUrl },
+        { label: "Aadhar", url: selectedRestaurant.kycDocuments.aadharDocUrl },
+        { label: "GST", url: selectedRestaurant.kycDocuments.gstDocUrl },
+      ].map(({ label, url }, index) => (
+        <div key={index} className="relative group">
+          <img
+            src={url}
+            alt={label}
+            className="h-16 w-full object-cover rounded-md border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+          />
+          <button
+            type="button"
+            onClick={() => downloadImage(url, `${label}.jpg`)}
+            className="absolute top-1 right-1 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded hidden group-hover:block"
+            title={`Download ${label}`}
+          >
+            ⬇
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
                           {selectedRestaurant.banners.length > 0 && (
                             <div>
