@@ -286,6 +286,14 @@ function AdminDashboard() {
               >
                 loyalty-points
               </Link>
+
+
+                   <Link
+                to="promotion-referal"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+                Referal
+              </Link>
             </SidebarItem>
 
             <SidebarItem
@@ -473,6 +481,73 @@ function AdminDashboard() {
                 className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
               >
                 Roles
+              </Link>
+            </SidebarItem>
+
+            <SidebarItem
+              title="Order settings"
+              icon={<FiSettings size={18} />}
+              hasPermission={true} // Always show settings
+              closeSidebar={closeSidebar}
+            >
+
+
+               <Link
+                to="/admin/dashboard/order/settings"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+             Order
+              </Link>
+
+
+
+   <Link
+                to="/admin/dashboard/order/cancel-settings"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+            Cancellation
+              </Link>
+
+
+              <Link
+                to="/admin/dashboard/delivery-settings"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+               Delivery
+              </Link>
+
+               <Link
+                to="/admin/dashboard/commission/setup"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+              Commission
+              </Link>
+            </SidebarItem>
+
+
+
+
+              <SidebarItem
+              title=" genter settings"
+              icon={<FiSettings size={18} />}
+              hasPermission={true} // Always show settings
+              closeSidebar={closeSidebar}
+            >
+           
+
+
+             <Link
+                to="/admin/dashboard/general/preference"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+           Preference
+              </Link>
+
+               <Link
+                to="/admin/dashboard/general/terminology"
+                className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+              >
+             Terminology
               </Link>
             </SidebarItem>
           </SidebarItem>

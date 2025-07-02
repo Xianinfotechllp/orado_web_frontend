@@ -38,6 +38,8 @@ const AdminLogin = () => {
         password,
       });
       
+
+      console.log(response)
       const { token, user } = response.data;
       sessionStorage.setItem('userRole',user.userType)
       sessionStorage.setItem('permissions',JSON.stringify(user.adminPermissions))

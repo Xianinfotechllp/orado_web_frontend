@@ -69,6 +69,14 @@ import AddManager from "./pages/Admin/configure/userSettings/AddManager";
 import EditRolePage from "./pages/Admin/configure/userSettings/EditRolePage";
 import EditManager from "./pages/Admin/configure/userSettings/EditManager";
 import CatalogPage  from "./pages/Admin/products/CatalogPage ";
+import ReferralPromotions from "./pages/Admin/Marketing/promotions/referal/ReferralPromotions";
+import CommissionPage from "./pages/Admin/configure/orderSettings/CommissionPage";
+import DeliverySettings from "./pages/Admin/configure/orderSettings/DeliverySettings";
+import TerminologyPage from "./pages/Admin/configure/generalSettings/TerminologyPage";
+import ManagerLogin from "./pages/Admin/manager/ManagerLogin";
+import PreferencesPage from "./pages/Admin/configure/generalSettings/PerferencePage";
+import OrderSettings from "./pages/Admin/configure/orderSettings/OrderSettings";
+import CancellationSettings from "./pages/Admin/configure/orderSettings/CancellationSettings";
 
 function App() {
   // const [count, setCount] = useState(0);
@@ -93,9 +101,21 @@ function App() {
         <Route path="/my-account/settings" element={<SettingsPage />} /> */}
 
 
+
+
+
+        
+
+
+
+
+
+
         {/* Admin-Side */}
         <Route path="admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />}>
+      
+
 
 
           <Route index element={<Dashboard />} />
@@ -146,7 +166,7 @@ function App() {
                 {/* promocodes */}
                 <Route path="admin-promotions-promo" element={<PromoCodeManager/>}  />
                 <Route path="promotion-loyalty-points" element={<CreateLoyaltyPoints/>} />
-
+                 <Route path="promotion-referal" element={<ReferralPromotions/>}  />
                 {/* push campings */}
                 <Route path="campaigns-customer" element={<CustomerCampaigns/>} />
                 <Route path="campaigns-restaurant" element={<RestaurantCampaigns/>} />
@@ -168,11 +188,22 @@ function App() {
                 <Route path="manger-add" element={<AddManager/>}  />
                 <Route path="manger-edit/:mangerId" element={<EditManager/>}  />
 
+                 {/* order settings */}
+                <Route path="order/settings" element={<OrderSettings/>} />
+                <Route path="order/cancel-settings" element={<CancellationSettings/>}  />
+                <Route path="commission/setup" element={<CommissionPage/>}  />
 
+                <Route path="delivery-settings"  element={<DeliverySettings/>}  />
                     
-            
-          <Route path="admin-tax-management" element={<TaxManagementPanel />}    />
-          <Route path="admin-deliveryfee-management" element={<DeliveryFeeSettings />}    />
+             {/* general settings */}
+             <Route path="general/terminology" element={<TerminologyPage/>} />
+             <Route path="general/preference" element={<PreferencesPage/>} />
+
+
+
+
+            <Route path="admin-tax-management" element={<TaxManagementPanel />}    />
+             <Route path="admin-deliveryfee-management" element={<DeliveryFeeSettings />}    />
 
 
 
@@ -209,8 +240,13 @@ function App() {
 
     
 </Route>
+
 <Route path="/admin/agent-dashboard/settings" element={<AgentDashboardSettings />} />
 
+
+
+{/* manager logins */}
+<Route path="/manger/login" element={<ManagerLogin/>}/>
       </Routes>
       <ToastContainer />
     </>
