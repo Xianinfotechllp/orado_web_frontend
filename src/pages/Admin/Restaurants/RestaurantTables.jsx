@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { restaurantTableList } from '../../../apis/adminApis/adminFuntionsApi';
+import { Link } from 'react-router-dom';
 
 const RestaurantTables = () => {
 const [restaurantList,setRestaurantsList] = useState([])
@@ -117,7 +118,16 @@ const [restaurantList,setRestaurantsList] = useState([])
           <tbody className="divide-y divide-gray-200">
             {restaurantList.map((restaurant) => (
               <tr key={restaurant.id} className="hover:bg-gray-50">
-                <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-900">{restaurant.id.substring(0, 8)}</td>
+                <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-900">
+                    <Link 
+    to={`/admin/dashboard/merchants/merchant-details/${restaurant.id}`}
+    className="text-blue-600 hover:text-blue-800 hover:underline"
+  >
+                  
+                  {restaurant.id.substring(0, 8)}
+                  </Link>
+                  
+                  </td>
                 <td className="py-4 px-4 whitespace-nowrap text-sm font-medium text-gray-900">{restaurant.name}</td>
                 <td className="py-4 px-4 text-sm text-gray-700 max-w-xs truncate">{restaurant.address}</td>
                 <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-700">{restaurant.phone}</td>

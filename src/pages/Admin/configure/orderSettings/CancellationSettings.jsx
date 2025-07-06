@@ -1,280 +1,505 @@
 import { useState } from 'react';
 
-const CancellationSettings = () => {
-  const [settings, setSettings] = useState({
-    cancellationEnabled: true,
-    reasonType: 'predefined', // 'custom' or 'predefined'
-    allowOverride: false
+const CancellationPolicyPage = () => {
+  const [isCustomReason, setIsCustomReason] = useState(true);
+  const [reasons, setReasons] = useState([]);
+  const [newReason, setNewReason] = useState('');
+  const [showAddPolicyModal, setShowAddPolicyModal] = useState(false);
+  const [policies, setPolicies] = useState([
+    { name: 'new poly', createdBy: 'Admin', status: 'Active' }
+  ]);
+  const [newPolicy, setNewPolicy] = useState({
+    name: '',
+    pending: { enabled: false, fixed: '', percent: '' },
+    accepted: { enabled: false, rules: [{ fixed: '', percent: '', threshold: '' }] },
+    dispatched: { enabled: false, fixed: '', percent: '' }
   });
 
-  const [cancellationPolicies, setCancellationPolicies] = useState([]);
-
-  const handleToggle = (field) => {
-    setSettings(prev => ({
-      ...prev,
-      [field]: !prev[field]
-    }));
+  const handleAddReason = (e) => {
+    e.preventDefault();
+    if (newReason.trim()) {
+      setReasons([...reasons, newReason]);
+      setNewReason('');
+    }
   };
 
-  const handleReasonTypeChange = (type) => {
-    setSettings(prev => ({
-      ...prev,
-      reasonType: type
-    }));
+  const handleAddPolicy = () => {
+    setPolicies([...policies, { ...newPolicy, createdBy: 'Admin', status: 'Active' }]);
+    setShowAddPolicyModal(false);
+    setNewPolicy({
+      name: '',
+      pending: { enabled: false, fixed: '', percent: '' },
+      accepted: { enabled: false, rules: [{ fixed: '', percent: '', threshold: '' }] },
+      dispatched: { enabled: false, fixed: '', percent: '' }
+    });
   };
 
-  const addNewPolicy = () => {
-    // In a real app, this would open a modal/form to create a new policy
-    const newPolicy = {
-      id: Date.now(),
-      name: `Policy ${cancellationPolicies.length + 1}`,
-      stages: {
-        pending: { amount: 0, type: 'percentage' },
-        ongoing: { amount: 0, type: 'percentage' },
-        dispatched: { amount: 0, type: 'percentage' }
+  const addAcceptedRule = () => {
+    setNewPolicy({
+      ...newPolicy,
+      accepted: {
+        ...newPolicy.accepted,
+        rules: [...newPolicy.accepted.rules, { fixed: '', percent: '', threshold: '' }]
       }
-    };
-    setCancellationPolicies([...cancellationPolicies, newPolicy]);
+    });
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-white rounded-xl shadow-sm border border-gray-100">
-      {/* Header */}
-      <div className="flex items-center justify-between pb-6 border-b border-gray-200">
-        <div className="flex items-center gap-4">
-          <div className="bg-blue-50 p-3 rounded-xl">
-            <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M28.5833 32.6921C28.3927 32.8665 28.1005 32.8669 27.9093 32.693L25.3289 30.3449C25.1108 30.1464 25.1109 29.8033 25.3292 29.605L25.3926 29.5473C25.5834 29.374 25.8746 29.3741 26.0653 29.5475L27.881 31.1989C28.0717 31.3724 28.3632 31.3724 28.5539 31.1988L32.8515 27.2882C33.0449 27.1122 33.3412 27.115 33.5313 27.2945L33.6089 27.3677C33.8201 27.5672 33.8174 27.9041 33.6031 28.1002L28.5833 32.6921ZM18.318 27.0993C18.1273 27.2729 17.8357 27.273 17.6449 27.0994L17.5811 27.0413C17.3631 26.8429 17.3631 26.5 17.5811 26.3017L18.6419 25.3364C18.8599 25.138 18.8599 24.7951 18.6419 24.5967L17.5814 23.6317C17.3633 23.4332 17.3634 23.0901 17.5816 22.8918L17.645 22.8342C17.8358 22.6609 18.1271 22.661 18.3178 22.8345L19.5186 23.9272C19.7094 24.1008 20.0009 24.1008 20.1917 23.9272L21.3925 22.8345C21.5832 22.661 21.8745 22.6609 22.0653 22.8342L22.1287 22.8918C22.3469 23.0901 22.347 23.4332 22.1289 23.6317L21.0684 24.5967C20.8504 24.7951 20.8504 25.138 21.0684 25.3364L22.1289 26.3014C22.347 26.4999 22.3469 26.843 22.1287 27.0413L22.0653 27.0989C21.8745 27.2722 21.5832 27.2721 21.3925 27.0986L20.1918 26.006C20.001 25.8323 19.7094 25.8324 19.5186 26.0061L18.318 27.0993ZM15.8924 32.4256C15.3529 32.4256 14.9029 32.2615 14.5422 31.9333C14.1815 31.6051 14.0008 31.1956 14 30.7047V17.0972C14 16.607 14.1807 16.1978 14.5422 15.8696C14.9036 15.5414 15.3537 15.377 15.8924 15.3763H17.4639C17.7401 15.3763 17.9639 15.1524 17.9639 14.8763V13.5C17.9639 13.2239 18.1878 13 18.4639 13H18.7251C19.0013 13 19.2251 13.2239 19.2251 13.5V14.8763C19.2251 15.1524 19.449 15.3763 19.7251 15.3763H27.1027C27.3788 15.3763 27.6027 15.1524 27.6027 14.8763V13.5C27.6027 13.2239 27.8265 13 28.1027 13H28.2737C28.5498 13 28.7737 13.2239 28.7737 13.5V14.8763C28.7737 15.1524 28.9976 15.3763 29.2737 15.3763H30.8452C31.3839 15.3763 31.834 15.5407 32.1954 15.8696C32.5569 16.1985 32.7372 16.6081 32.7365 17.0982V22.9707C32.7365 23.1094 32.6789 23.2418 32.5775 23.3363L32.4065 23.4959C32.0868 23.794 31.5654 23.5673 31.5654 23.1302V21.8606C31.5654 21.5845 31.3416 21.3606 31.0654 21.3606H15.671C15.3949 21.3606 15.171 21.5845 15.171 21.8606V30.7047C15.171 30.8681 15.246 31.0184 15.3959 31.1555C15.5458 31.2926 15.7109 31.3608 15.8912 31.3601H21.6477C21.7694 31.3601 21.8869 31.4044 21.9782 31.4849L22.0527 31.5505C22.3985 31.8551 22.183 32.4256 21.7222 32.4256H15.8924Z" fill="currentColor"/>
-            </svg>
-          </div>
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-800">Cancellation Settings</h2>
-            <p className="text-sm text-gray-500">Configure order cancellation rules and policies</p>
-          </div>
-        </div>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input 
-            type="checkbox" 
-            className="sr-only peer" 
-            checked={settings.cancellationEnabled}
-            onChange={() => handleToggle('cancellationEnabled')}
-          />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-        </label>
-      </div>
-
+    <div className="container mx-auto p-4">
       {/* Cancellation Reasons Section */}
-      <section className="py-6 border-b border-gray-200">
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="md:w-1/3">
-            <h3 className="text-lg font-medium text-gray-800">Cancellation Reasons</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Configure how customers specify cancellation reasons
-            </p>
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="flex items-center justify-between border-b pb-4 mb-4">
+          <div className="flex items-center">
+            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mr-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24Z" fill="#E3E7EA"/>
+                <path d="M14.2917 16.346C14.1963 16.4332 14.0502 16.4334 13.9546 16.3465L12.6645 15.1724C12.5554 15.0732 12.5554 14.9016 12.6646 14.8025L12.6963 14.7736C12.7917 14.687 12.9373 14.6871 13.0326 14.7737L14.4405 15.9994C14.5358 16.0862 14.6816 16.0862 14.7769 15.9994L16.4257 14.6441C16.5224 14.5561 16.6706 14.5575 16.7656 14.6472L16.8044 14.6838C17.0101 14.7836 17.0087 15.052 16.8015 15.1501L14.2917 16.346ZM9.159 13.5496C9.0636 13.6365 8.9178 13.6365 8.8225 13.5497L8.7906 13.5206C8.6815 13.4215 8.6815 13.25 8.7906 13.1508L9.3209 12.6682C9.43 12.569 9.43 12.3975 9.3209 12.2984L8.7907 11.8158C8.6816 11.7166 8.6817 11.5451 8.7909 11.4459L8.8225 11.4171C8.9179 11.3305 9.0636 11.3305 9.1589 11.4172L9.7593 11.9636C9.8546 12.0504 10.0005 12.0504 10.0958 11.9636L10.6962 11.4171C10.7916 11.3305 10.9373 11.3305 11.0326 11.4171L11.0645 11.4459C11.1735 11.545 11.1735 11.7165 11.0645 11.8156L10.5342 12.2982C10.4252 12.3974 10.4252 12.5689 10.5342 12.668L11.0645 13.1506C11.1735 13.2498 11.1735 13.4215 11.0645 13.5207L11.0326 13.5494C10.9373 13.6361 10.7916 13.636 10.6962 13.5494L10.0959 13.003C10.0005 12.9163 9.8546 12.9162 9.7593 13.0029L9.159 13.5496ZM7.9462 16.2128C7.6764 16.2128 7.4514 16.1307 7.2711 15.9666C7.0908 15.8025 6.9994 15.5978 7 15.3523V8.5486C7 8.3035 7.0904 8.0989 7.2711 7.9348C7.4518 7.7707 7.6768 7.6885 7.9462 7.6883H8.7319C9.0013 7.6883 9.2263 7.4642 9.2263 7.1881V6.75C9.2263 6.4739 9.4513 6.25 9.7207 6.25H9.8625C10.132 6.25 10.357 6.4739 10.357 6.75V7.1881C10.357 7.4642 10.582 7.6883 10.8514 7.6883H13.5513C13.8208 7.6883 14.0458 7.4642 14.0458 7.1881V6.75C14.0458 6.4739 14.2708 6.25 14.5402 6.25H14.6369C14.9063 6.25 15.1313 6.4739 15.1313 6.75V7.1881C15.1313 7.4642 15.3563 7.6883 15.6257 7.6883H16.4226C16.692 7.6883 16.917 7.8524 17.0977 15.9666L14.2917 16.346Z" fill="#111827" stroke="#111827" strokeWidth="0.1"/>
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold">Cancellation</h2>
           </div>
-          <div className="md:w-2/3">
-            <div className="bg-gray-50/50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600 mb-4">
-                Choose between custom reasons (customers enter their own) or predefined reasons (select from your list)
+          <label className="switch custom-switch">
+            <input type="checkbox" className="sr-only" />
+            <span className="slider round"></span>
+          </label>
+        </div>
+
+        <section className="mb-8">
+          <div className="flex flex-col md:flex-row">
+            <div className="md:w-1/4 mb-4 md:mb-0">
+              <label className="font-medium">Enter Cancellation Reason</label>
+            </div>
+            <div className="md:w-3/4">
+              <p className="text-gray-600 mb-4">
+                You can enable either of two types of cancellation reason. Custom, where custom can provide their own reason for cancelling the order or you can define multiple reasons and the customer can choose one of them.
               </p>
-
-              <div className="flex items-center gap-6 mb-4">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    id="customReason"
-                    name="reasonType"
-                    checked={settings.reasonType === 'custom'}
-                    onChange={() => handleReasonTypeChange('custom')}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                  />
-                  <label htmlFor="customReason" className="text-sm font-medium text-gray-700">
-                    Custom Reasons
-                  </label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    id="predefinedReason"
-                    name="reasonType"
-                    checked={settings.reasonType === 'predefined'}
-                    onChange={() => handleReasonTypeChange('predefined')}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                  />
-                  <label htmlFor="predefinedReason" className="text-sm font-medium text-gray-700">
-                    Predefined Reasons
-                  </label>
-                </div>
-              </div>
-
-              {settings.reasonType === 'predefined' && (
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-3">Add predefined reasons for customers to select:</p>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        placeholder="Add new reason"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="mb-4">
+                  <div className="flex items-center">
+                    <label className="font-medium mr-4">Custom</label>
+                    <label className="switch custom-switch">
+                      <input 
+                        type="checkbox" 
+                        checked={isCustomReason}
+                        onChange={() => setIsCustomReason(!isCustomReason)}
                       />
-                      <button className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
-                        Add
-                      </button>
-                    </div>
-                    <div className="border-t border-gray-200 pt-2">
-                      <p className="text-xs text-gray-500 mb-2">Current reasons:</p>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded">
-                          <span className="text-sm">Changed my mind</span>
-                          <button className="text-red-500 hover:text-red-700">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                        </div>
-                        <div className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded">
-                          <span className="text-sm">Order placed by mistake</span>
-                          <button className="text-red-500 hover:text-red-700">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                          </button>
+                      <span className="slider round"></span>
+                    </label>
+                    <label className="font-medium ml-4">Pre-defined</label>
+                  </div>
+                </div>
+                <form onSubmit={handleAddReason} className="flex flex-col md:flex-row items-center">
+                  <div className="md:w-2/3 mb-2 md:mb-0 md:pr-2">
+                    <input
+                      type="text"
+                      maxLength="40"
+                      value={newReason}
+                      onChange={(e) => setNewReason(e.target.value)}
+                      className="w-full p-2 border rounded"
+                      placeholder="Enter Cancellation Reason"
+                    />
+                  </div>
+                  <div className="md:w-1/3">
+                    <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                      Add
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Cancellation Policies Section */}
+        <section className="border-t pt-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <div className="md:w-1/4 mb-4 md:mb-0">
+              <h3 className="font-medium">Cancellation Policies</h3>
+            </div>
+            <div className="md:w-2/4 text-gray-600 mb-4 md:mb-0">
+              <p>
+                Enable users on your platform to cancel an order. Here you can add the cancellation policy defining the cancellation amount to be deducted at different level(i.e when the order is still pending or ongoing or dispatched).
+              </p>
+            </div>
+            <div className="md:w-1/4 text-right">
+              <button 
+                onClick={() => setShowAddPolicyModal(true)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+              >
+                Add a new Policy
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <div className="flex items-center">
+              <div className="md:w-1/4"></div>
+              <div className="md:w-2/3 flex items-center">
+                <label className="mr-2">Allow customers to cancel Orders</label>
+                <label className="switch custom-switch">
+                  <input type="checkbox" />
+                  <span className="slider round"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <div className="flex items-center">
+              <div className="md:w-1/4"></div>
+              <div className="md:w-2/3">
+                <label>Allow restaurants to override cancellation policy to give individual restaurants the power to define their own cancellation policy.</label>
+              </div>
+              <div className="md:w-1/12">
+                <label className="switch custom-switch">
+                  <input type="checkbox" />
+                  <span className="slider round"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Policies Table */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="py-3 px-4 text-left w-1/4">Policy Name</th>
+                  <th className="py-3 px-4 text-left w-1/4">Created By</th>
+                  <th className="py-3 px-4 text-left w-1/4">Status</th>
+                  <th className="py-3 px-4 text-left w-1/4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {policies.map((policy, index) => (
+                  <tr key={index} className="border-b">
+                    <td className="py-3 px-4">
+                      <a className="text-blue-500 font-medium">{policy.name}</a>
+                    </td>
+                    <td className="py-3 px-4">{policy.createdBy}</td>
+                    <td className="py-3 px-4">
+                      <span className="text-green-500">Active</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="relative inline-block text-left">
+                        <button className="text-gray-500 hover:text-gray-700">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                          </svg>
+                        </button>
+                        <div className="hidden origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                          <div className="py-1">
+                            <button className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">Edit</button>
+                            <button className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">Delete</button>
+                          </div>
                         </div>
                       </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      {/* Add Policy Modal */}
+      {showAddPolicyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-full max-w-3xl max-h-screen overflow-y-auto">
+            <div className="p-4 border-b">
+              <h3 className="text-lg font-medium">Cancellation Policy</h3>
+            </div>
+
+            <div className="p-4 overflow-y-auto" style={{ maxHeight: '70vh' }}>
+              <form className="space-y-4">
+                {/* Policy Name */}
+                <div className="flex flex-col md:flex-row">
+                  <label className="md:w-1/4 font-medium mb-2 md:mb-0">
+                    Policy Name<span className="text-red-500">*</span>
+                  </label>
+                  <div className="md:w-3/4">
+                    <input
+                      type="text"
+                      value={newPolicy.name}
+                      onChange={(e) => setNewPolicy({...newPolicy, name: e.target.value})}
+                      className="w-full p-2 border rounded"
+                      placeholder="Enter Policy name"
+                    />
+                  </div>
+                </div>
+                <hr className="my-4" />
+
+                {/* Pending Order */}
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <label className="font-medium">Order Pending</label>
+                  </div>
+                  <div className="flex items-center mb-4">
+                    <label className="mr-2">Allow Customers to Cancel Order</label>
+                    <label className="switch custom-switch">
+                      <input
+                        type="checkbox"
+                        checked={newPolicy.pending.enabled}
+                        onChange={() => setNewPolicy({
+                          ...newPolicy,
+                          pending: {...newPolicy.pending, enabled: !newPolicy.pending.enabled}
+                        })}
+                      />
+                      <span className="slider round"></span>
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-medium mb-1">
+                        Fixed Charges<span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={newPolicy.pending.fixed}
+                        onChange={(e) => setNewPolicy({
+                          ...newPolicy,
+                          pending: {...newPolicy.pending, fixed: e.target.value}
+                        })}
+                        className="w-full p-2 border rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium mb-1">
+                        % Charges<span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={newPolicy.pending.percent}
+                        onChange={(e) => setNewPolicy({
+                          ...newPolicy,
+                          pending: {...newPolicy.pending, percent: e.target.value}
+                        })}
+                        className="w-full p-2 border rounded"
+                      />
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
+                <hr className="my-4" />
 
-      {/* Cancellation Policies Section */}
-      <section className="py-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="md:w-1/3">
-            <h3 className="text-lg font-medium text-gray-800">Cancellation Policies</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Define cancellation fees at different order stages
-            </p>
-          </div>
-          <div className="md:w-2/3">
-            <div className="bg-gray-50/50 p-4 rounded-lg">
-              <div className="flex justify-between items-start mb-4">
-                <p className="text-sm text-gray-600 flex-1">
-                  Set cancellation policies that define refund amounts at different order stages (pending, ongoing, dispatched).
-                </p>
-                <button 
-                  onClick={addNewPolicy}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm"
-                >
-                  Add New Policy
-                </button>
-              </div>
+                {/* Accepted Order */}
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <label className="font-medium">Order Accepted</label>
+                  </div>
+                  <div className="flex items-center mb-4">
+                    <label className="mr-2">Allow Customers to Cancel Order</label>
+                    <label className="switch custom-switch">
+                      <input
+                        type="checkbox"
+                        checked={newPolicy.accepted.enabled}
+                        onChange={() => setNewPolicy({
+                          ...newPolicy,
+                          accepted: {...newPolicy.accepted, enabled: !newPolicy.accepted.enabled}
+                        })}
+                      />
+                      <span className="slider round"></span>
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+                    <div>
+                      <label className="block font-medium mb-1">
+                        Fixed Charges<span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                    <div>
+                      <label className="block font-medium mb-1">
+                        % Charges<span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                    <div>
+                      <label className="block font-medium mb-1">
+                        Threshold<span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                  </div>
 
-              <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200 mb-4">
-                <p className="text-sm text-gray-600">
-                  Allow restaurants to override these policies with their own rules
-                </p>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
-                    checked={settings.allowOverride}
-                    onChange={() => handleToggle('allowOverride')}
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              {cancellationPolicies.length > 0 ? (
-                <div className="space-y-4">
-                  {cancellationPolicies.map(policy => (
-                    <div key={policy.id} className="bg-white p-4 rounded-lg border border-gray-200">
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="font-medium text-gray-800">{policy.name}</h4>
-                        <div className="flex gap-2">
-                          <button className="text-blue-600 hover:text-blue-800">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                            </svg>
-                          </button>
-                          <button className="text-red-600 hover:text-red-800">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                        </div>
+                  {newPolicy.accepted.rules.map((rule, index) => (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <input
+                          type="number"
+                          value={rule.fixed}
+                          onChange={(e) => {
+                            const updatedRules = [...newPolicy.accepted.rules];
+                            updatedRules[index].fixed = e.target.value;
+                            setNewPolicy({
+                              ...newPolicy,
+                              accepted: {...newPolicy.accepted, rules: updatedRules}
+                            });
+                          }}
+                          className="w-full p-2 border rounded"
+                        />
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="border rounded-lg p-3">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Pending Stage</label>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              value={policy.stages.pending.amount}
-                              className="w-16 px-2 py-1 border border-gray-300 rounded-md text-sm"
-                            />
-                            <select className="text-sm border border-gray-300 rounded-md px-2 py-1">
-                              <option>%</option>
-                              <option>$</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div className="border rounded-lg p-3">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Ongoing Stage</label>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              value={policy.stages.ongoing.amount}
-                              className="w-16 px-2 py-1 border border-gray-300 rounded-md text-sm"
-                            />
-                            <select className="text-sm border border-gray-300 rounded-md px-2 py-1">
-                              <option>%</option>
-                              <option>$</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div className="border rounded-lg p-3">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Dispatched Stage</label>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              value={policy.stages.dispatched.amount}
-                              className="w-16 px-2 py-1 border border-gray-300 rounded-md text-sm"
-                            />
-                            <select className="text-sm border border-gray-300 rounded-md px-2 py-1">
-                              <option>%</option>
-                              <option>$</option>
-                            </select>
-                          </div>
-                        </div>
+                      <div>
+                        <input
+                          type="number"
+                          value={rule.percent}
+                          onChange={(e) => {
+                            const updatedRules = [...newPolicy.accepted.rules];
+                            updatedRules[index].percent = e.target.value;
+                            setNewPolicy({
+                              ...newPolicy,
+                              accepted: {...newPolicy.accepted, rules: updatedRules}
+                            });
+                          }}
+                          className="w-full p-2 border rounded"
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          value={rule.threshold}
+                          onChange={(e) => {
+                            const updatedRules = [...newPolicy.accepted.rules];
+                            updatedRules[index].threshold = e.target.value;
+                            setNewPolicy({
+                              ...newPolicy,
+                              accepted: {...newPolicy.accepted, rules: updatedRules}
+                            });
+                          }}
+                          className="w-full p-2 border rounded"
+                          placeholder="(After the order is confirmed this rule will be used.)"
+                        />
                       </div>
                     </div>
                   ))}
-                </div>
-              ) : (
-                <div className="bg-white p-8 rounded-lg border border-gray-200 text-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <h4 className="mt-3 text-lg font-medium text-gray-700">No Cancellation Policies</h4>
-                  <p className="mt-1 text-sm text-gray-500">Add your first cancellation policy to get started</p>
-                  <button 
-                    onClick={addNewPolicy}
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm"
+
+                  <button
+                    type="button"
+                    onClick={addAcceptedRule}
+                    className="text-blue-500 hover:text-blue-700"
                   >
-                    Create Policy
+                    Add Time Based Cancellations
                   </button>
                 </div>
-              )}
+                <hr className="my-4" />
+
+                {/* Dispatched Order */}
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <label className="font-medium">Order Dispatched</label>
+                  </div>
+                  <div className="flex items-center mb-4">
+                    <label className="mr-2">Allow Customers to Cancel Order</label>
+                    <label className="switch custom-switch">
+                      <input
+                        type="checkbox"
+                        checked={newPolicy.dispatched.enabled}
+                        onChange={() => setNewPolicy({
+                          ...newPolicy,
+                          dispatched: {...newPolicy.dispatched, enabled: !newPolicy.dispatched.enabled}
+                        })}
+                      />
+                      <span className="slider round"></span>
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-medium mb-1">
+                        Fixed Charges<span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={newPolicy.dispatched.fixed}
+                        onChange={(e) => setNewPolicy({
+                          ...newPolicy,
+                          dispatched: {...newPolicy.dispatched, fixed: e.target.value}
+                        })}
+                        className="w-full p-2 border rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium mb-1">
+                        % Charges<span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={newPolicy.dispatched.percent}
+                        onChange={(e) => setNewPolicy({
+                          ...newPolicy,
+                          dispatched: {...newPolicy.dispatched, percent: e.target.value}
+                        })}
+                        className="w-full p-2 border rounded"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div className="p-4 border-t flex justify-end">
+              <button
+                onClick={() => setShowAddPolicyModal(false)}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded mr-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddPolicy}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+              >
+                Submit
+              </button>
             </div>
           </div>
         </div>
-      </section>
+      )}
+
+      {/* Tailwind CSS for switches */}
+      <style jsx>{`
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 50px;
+          height: 24px;
+        }
+        
+        .switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          transition: .4s;
+          border-radius: 24px;
+        }
+        
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 16px;
+          width: 16px;
+          left: 4px;
+          bottom: 4px;
+          background-color: white;
+          transition: .4s;
+          border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+          background-color: #3b82f6;
+        }
+        
+        input:checked + .slider:before {
+          transform: translateX(26px);
+        }
+      `}</style>
     </div>
   );
 };
 
-export default CancellationSettings;
+export default CancellationPolicyPage;

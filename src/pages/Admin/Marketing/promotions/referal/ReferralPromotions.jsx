@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import apiClient from '../../../../../apis/apiClient/apiClient';
+import { toast } from 'react-toastify';
 
 const ReferralPromotions = () => {
-  const [referralType, setReferralType] = useState('percentage');
   const [formData, setFormData] = useState({
     language: 'English',
+    referralType: 'percentage',
     referrerDiscountValue: '30.00',
     referrerMaxDiscountValue: '0',
     referrerDescription: 'Refer & get 30% off',
@@ -15,6 +17,26 @@ const ReferralPromotions = () => {
     referralCodeOnSignup: true,
     smartURL: true
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Fetch referral settings on component mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await apiClient.get("/referal/referral-promotions");
+        if (response.data && response.data.success) {
+          setFormData(response.data.data);
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch settings:", error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -22,27 +44,72 @@ const ReferralPromotions = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+
+    // Update descriptions when discount values change
+    if (name === 'referrerDiscountValue' || name === 'refereeDiscountValue') {
+      updateDescriptions(name, value);
+    }
+  };
+
+  const updateDescriptions = (field, value) => {
+    if (field === 'referrerDiscountValue') {
+      setFormData(prev => ({
+        ...prev,
+        referrerDescription: prev.referralType === 'percentage' 
+          ? `Refer & get ${value}% off` 
+          : `Refer & get $${value} off`
+      }));
+    } else if (field === 'refereeDiscountValue') {
+      setFormData(prev => ({
+        ...prev,
+        refereeDescription: prev.referralType === 'percentage' 
+          ? `Refer & get ${value}% off` 
+          : `Refer & get $${value} off`
+      }));
+    }
   };
 
   const handleReferralTypeChange = (e) => {
     const type = e.target.value;
-    setReferralType(type);
+    setFormData(prev => ({
+      ...prev,
+      referralType: type,
+      referrerDescription: type === 'percentage' 
+        ? `Refer & get ${prev.referrerDiscountValue}% off` 
+        : `Refer & get $${prev.referrerDiscountValue} off`,
+      refereeDescription: type === 'percentage' 
+        ? `Refer & get ${prev.refereeDiscountValue}% off` 
+        : `Refer & get $${prev.refereeDiscountValue} off`
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
     
-    // Update descriptions when changing type
-    if (type === 'percentage') {
-      setFormData(prev => ({
-        ...prev,
-        referrerDescription: `Refer & get ${prev.referrerDiscountValue}% off`,
-        refereeDescription: `Refer & get ${prev.refereeDiscountValue}% off`
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        referrerDescription: `Refer & get $${prev.referrerDiscountValue} off`,
-        refereeDescription: `Refer & get $${prev.refereeDiscountValue} off`
-      }));
+    try {
+      const response = await apiClient.post("/referal/referral-promotions", formData);
+      
+      if (response.data && response.data.success) {
+        toast.success('Settings saved successfully!');
+      } else {
+        toast.error('Failed to save settings. Please try again.');
+      }
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      toast.error('Failed to save settings. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm max-w-6xl mx-auto">
@@ -60,308 +127,318 @@ const ReferralPromotions = () => {
       </div>
 
       {/* Referral Settings Section */}
-      <section className="mb-8 p-6 border border-gray-100 rounded-xl bg-gray-50">
-        <div className="flex flex-col md:flex-row justify-between w-full mb-6">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">Referral Program Settings</h2>
-            <p className="text-gray-500 text-sm">
-              Define referral codes that customers can use to refer new customers to your platform.
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          {/* Language */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+      <form onSubmit={handleSubmit}>
+        <section className="mb-8 p-6 border border-gray-100 rounded-xl bg-gray-50">
+          <div className="flex flex-col md:flex-row justify-between w-full mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
-              <p className="text-xs text-gray-500">Language for referral messages</p>
-            </div>
-            <div className="md:col-span-2">
-              <select 
-                name="language"
-                value={formData.language}
-                onChange={handleInputChange}
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              >
-                <option>English</option>
-                <option>Spanish</option>
-                <option>French</option>
-              </select>
+              <h2 className="text-lg font-semibold text-gray-900 mb-1">Referral Program Settings</h2>
+              <p className="text-gray-500 text-sm">
+                Define referral codes that customers can use to refer new customers to your platform.
+              </p>
             </div>
           </div>
 
-          {/* Referral Type */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Referral type</label>
-              <p className="text-xs text-gray-500">Choose between percentage or flat discount</p>
-            </div>
-            <div className="md:col-span-2">
-              <select 
-                value={referralType}
-                onChange={handleReferralTypeChange}
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              >
-                <option value="percentage">Percentage Discount</option>
-                <option value="flat">Flat Discount</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-gray-200 my-4"></div>
-
-          {/* Referrer Section */}
           <div className="space-y-6">
-            <h3 className="text-md font-medium text-gray-900">Referrer Benefits</h3>
-            
-            {/* Referrer Discount Value */}
+            {/* Language */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Discount {referralType === 'percentage' ? '(%)' : 'value'}
-                </label>
-                <p className="text-xs text-gray-500">Amount to reward the referrer</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                <p className="text-xs text-gray-500">Language for referral messages</p>
               </div>
               <div className="md:col-span-2">
-                <div className="relative">
-                  <input 
-                    type="number" 
-                    name="referrerDiscountValue"
-                    value={formData.referrerDiscountValue}
-                    onChange={handleInputChange}
-                    className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                  />
-                  <span className="absolute right-3 top-2.5 text-gray-500 text-sm">
-                    {referralType === 'percentage' ? '%' : '$'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Referrer Max Discount Value */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Maximum discount value</label>
-                <p className="text-xs text-gray-500">Cap the maximum discount amount</p>
-              </div>
-              <div className="md:col-span-2">
-                <div className="relative">
-                  <input 
-                    type="number" 
-                    name="referrerMaxDiscountValue"
-                    value={formData.referrerMaxDiscountValue}
-                    onChange={handleInputChange}
-                    className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                  />
-                  <span className="absolute right-3 top-2.5 text-gray-500 text-sm">$</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Referrer Description */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <p className="text-xs text-gray-500">How this will appear to referrers</p>
-              </div>
-              <div className="md:col-span-2">
-                <input 
-                  type="text" 
-                  name="referrerDescription"
-                  value={formData.referrerDescription}
+                <select 
+                  name="language"
+                  value={formData.language}
                   onChange={handleInputChange}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                />
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                >
+                  <option>English</option>
+                  <option>Spanish</option>
+                  <option>French</option>
+                </select>
               </div>
             </div>
-          </div>
 
-          {/* Divider */}
-          <div className="border-t border-gray-200 my-4"></div>
-
-          {/* Referee Section */}
-          <div className="space-y-6">
-            <h3 className="text-md font-medium text-gray-900">Referee Benefits</h3>
-            
-            {/* Referee Discount Value */}
+            {/* Referral Type */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Discount {referralType === 'percentage' ? '(%)' : 'value'}
-                </label>
-                <p className="text-xs text-gray-500">Amount to reward the new customer</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Referral type</label>
+                <p className="text-xs text-gray-500">Choose between percentage or flat discount</p>
               </div>
               <div className="md:col-span-2">
-                <div className="relative">
+                <select 
+                  name="referralType"
+                  value={formData.referralType}
+                  onChange={handleReferralTypeChange}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                >
+                  <option value="percentage">Percentage Discount</option>
+                  <option value="flat">Flat Discount</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-gray-200 my-4"></div>
+
+            {/* Referrer Section */}
+            <div className="space-y-6">
+              <h3 className="text-md font-medium text-gray-900">Referrer Benefits</h3>
+              
+              {/* Referrer Discount Value */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Discount {formData.referralType === 'percentage' ? '(%)' : 'value'}
+                  </label>
+                  <p className="text-xs text-gray-500">Amount to reward the referrer</p>
+                </div>
+                <div className="md:col-span-2">
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      name="referrerDiscountValue"
+                      value={formData.referrerDiscountValue}
+                      onChange={handleInputChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                    />
+                    <span className="absolute right-3 top-2.5 text-gray-500 text-sm">
+                      {formData.referralType === 'percentage' ? '%' : '$'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Referrer Max Discount Value */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Maximum discount value</label>
+                  <p className="text-xs text-gray-500">Cap the maximum discount amount</p>
+                </div>
+                <div className="md:col-span-2">
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      name="referrerMaxDiscountValue"
+                      value={formData.referrerMaxDiscountValue}
+                      onChange={handleInputChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                    />
+                    <span className="absolute right-3 top-2.5 text-gray-500 text-sm">$</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Referrer Description */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <p className="text-xs text-gray-500">How this will appear to referrers</p>
+                </div>
+                <div className="md:col-span-2">
                   <input 
-                    type="number" 
-                    name="refereeDiscountValue"
-                    value={formData.refereeDiscountValue}
+                    type="text" 
+                    name="referrerDescription"
+                    value={formData.referrerDescription}
                     onChange={handleInputChange}
                     className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
                   />
-                  <span className="absolute right-3 top-2.5 text-gray-500 text-sm">
-                    {referralType === 'percentage' ? '%' : '$'}
-                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Referee Max Discount Value */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Maximum discount value</label>
-                <p className="text-xs text-gray-500">Cap the maximum discount amount</p>
+            {/* Divider */}
+            <div className="border-t border-gray-200 my-4"></div>
+
+            {/* Referee Section */}
+            <div className="space-y-6">
+              <h3 className="text-md font-medium text-gray-900">Referee Benefits</h3>
+              
+              {/* Referee Discount Value */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Discount {formData.referralType === 'percentage' ? '(%)' : 'value'}
+                  </label>
+                  <p className="text-xs text-gray-500">Amount to reward the new customer</p>
+                </div>
+                <div className="md:col-span-2">
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      name="refereeDiscountValue"
+                      value={formData.refereeDiscountValue}
+                      onChange={handleInputChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                    />
+                    <span className="absolute right-3 top-2.5 text-gray-500 text-sm">
+                      {formData.referralType === 'percentage' ? '%' : '$'}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="md:col-span-2">
-                <div className="relative">
+
+              {/* Referee Max Discount Value */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Maximum discount value</label>
+                  <p className="text-xs text-gray-500">Cap the maximum discount amount</p>
+                </div>
+                <div className="md:col-span-2">
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      name="refereeMaxDiscountValue"
+                      value={formData.refereeMaxDiscountValue}
+                      onChange={handleInputChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                    />
+                    <span className="absolute right-3 top-2.5 text-gray-500 text-sm">$</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Minimum Order Amount */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Minimum order amount</label>
+                  <p className="text-xs text-gray-500">Required purchase to get the discount</p>
+                </div>
+                <div className="md:col-span-2">
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      name="minOrderValue"
+                      value={formData.minOrderValue}
+                      onChange={handleInputChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                    />
+                    <span className="absolute right-3 top-2.5 text-gray-500 text-sm">$</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Referee Description */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
+                    Description
+                    <span className="ml-1.5 text-gray-400 hover:text-gray-500 cursor-help" title="This will be shown to new customers">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  </label>
+                  <p className="text-xs text-gray-500">How this will appear to new customers</p>
+                </div>
+                <div className="md:col-span-2">
                   <input 
-                    type="number" 
-                    name="refereeMaxDiscountValue"
-                    value={formData.refereeMaxDiscountValue}
+                    type="text" 
+                    name="refereeDescription"
+                    value={formData.refereeDescription}
                     onChange={handleInputChange}
                     className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
                   />
-                  <span className="absolute right-3 top-2.5 text-gray-500 text-sm">$</span>
                 </div>
               </div>
             </div>
 
-            {/* Minimum Order Amount */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Minimum order amount</label>
-                <p className="text-xs text-gray-500">Required purchase to get the discount</p>
+            {/* Divider */}
+            <div className="border-t border-gray-200 my-4"></div>
+
+            {/* Program Options */}
+            <div className="space-y-6">
+              <h3 className="text-md font-medium text-gray-900">Program Options</h3>
+              
+              {/* Status */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Program status</label>
+                  <p className="text-xs text-gray-500">Enable or disable the referral program</p>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      name="status"
+                      checked={formData.status}
+                      onChange={handleInputChange}
+                      className="sr-only peer" 
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <span className="ml-3 text-sm font-medium text-gray-700">
+                      {formData.status ? 'Active' : 'Inactive'}
+                    </span>
+                  </label>
+                </div>
               </div>
-              <div className="md:col-span-2">
-                <div className="relative">
-                  <input 
-                    type="number" 
-                    name="minOrderValue"
-                    value={formData.minOrderValue}
-                    onChange={handleInputChange}
-                    className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                  />
-                  <span className="absolute right-3 top-2.5 text-gray-500 text-sm">$</span>
+
+              {/* Referral Code On Signup */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Referral code on signup</label>
+                  <p className="text-xs text-gray-500">Show referral field during registration</p>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      name="referralCodeOnSignup"
+                      checked={formData.referralCodeOnSignup}
+                      onChange={handleInputChange}
+                      className="sr-only peer" 
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <span className="ml-3 text-sm font-medium text-gray-700">
+                      {formData.referralCodeOnSignup ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Smart URL */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Smart referral URL</label>
+                  <p className="text-xs text-gray-500">Generate trackable referral links</p>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      name="smartURL"
+                      checked={formData.smartURL}
+                      onChange={handleInputChange}
+                      className="sr-only peer" 
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <span className="ml-3 text-sm font-medium text-gray-700">
+                      {formData.smartURL ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </label>
                 </div>
               </div>
             </div>
-
-            {/* Referee Description */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
-                  Description
-                  <span className="ml-1.5 text-gray-400 hover:text-gray-500 cursor-help" title="This will be shown to new customers">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clipRule="evenodd" />
-                    </svg>
-                  </span>
-                </label>
-                <p className="text-xs text-gray-500">How this will appear to new customers</p>
-              </div>
-              <div className="md:col-span-2">
-                <input 
-                  type="text" 
-                  name="refereeDescription"
-                  value={formData.refereeDescription}
-                  onChange={handleInputChange}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                />
-              </div>
-            </div>
           </div>
 
-          {/* Divider */}
-          <div className="border-t border-gray-200 my-4"></div>
-
-          {/* Program Options */}
-          <div className="space-y-6">
-            <h3 className="text-md font-medium text-gray-900">Program Options</h3>
-            
-            {/* Status */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Program status</label>
-                <p className="text-xs text-gray-500">Enable or disable the referral program</p>
-              </div>
-              <div className="md:col-span-2">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    name="status"
-                    checked={formData.status}
-                    onChange={handleInputChange}
-                    className="sr-only peer" 
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  <span className="ml-3 text-sm font-medium text-gray-700">
-                    {formData.status ? 'Active' : 'Inactive'}
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* Referral Code On Signup */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Referral code on signup</label>
-                <p className="text-xs text-gray-500">Show referral field during registration</p>
-              </div>
-              <div className="md:col-span-2">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    name="referralCodeOnSignup"
-                    checked={formData.referralCodeOnSignup}
-                    onChange={handleInputChange}
-                    className="sr-only peer" 
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  <span className="ml-3 text-sm font-medium text-gray-700">
-                    {formData.referralCodeOnSignup ? 'Enabled' : 'Disabled'}
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* Smart URL */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Smart referral URL</label>
-                <p className="text-xs text-gray-500">Generate trackable referral links</p>
-              </div>
-              <div className="md:col-span-2">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    name="smartURL"
-                    checked={formData.smartURL}
-                    onChange={handleInputChange}
-                    className="sr-only peer" 
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  <span className="ml-3 text-sm font-medium text-gray-700">
-                    {formData.smartURL ? 'Enabled' : 'Disabled'}
-                  </span>
-                </label>
-              </div>
-            </div>
+          {/* Buttons */}
+          <div className="flex justify-end mt-8 gap-3">
+            <button 
+              type="button"
+              className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-sm font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-sm font-medium transition-colors shadow-sm disabled:opacity-70"
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </button>
           </div>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex justify-end mt-8 gap-3">
-          <button className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-sm font-medium transition-colors">
-            Cancel
-          </button>
-          <button className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-sm font-medium transition-colors shadow-sm">
-            Save Changes
-          </button>
-        </div>
-      </section>
+        </section>
+      </form>
 
       {/* Referral Statistics Section */}
       <section className="p-6 border border-gray-100 rounded-xl">

@@ -77,6 +77,13 @@ import ManagerLogin from "./pages/Admin/manager/ManagerLogin";
 import PreferencesPage from "./pages/Admin/configure/generalSettings/PerferencePage";
 import OrderSettings from "./pages/Admin/configure/orderSettings/OrderSettings";
 import CancellationSettings from "./pages/Admin/configure/orderSettings/CancellationSettings";
+import DiscountPage from "./pages/Admin/Marketing/promotions/discount/DiscountPage";
+import OrderDetails from "./pages/Admin/order/OrderDetail";
+import ManagerDashboard from "./pages/manager/ManagerDashboard";
+import CustomerDetailsPage from "./pages/Admin/customer/CustomerDetails";
+import MerchantDetailsPage from "./pages/Admin/Restaurants/MerchantDetailsPage";
+import MerchantConfiguration from "./pages/Admin/Restaurants/MerchantConfiguration";
+import MerchantCataloguePage from "./pages/Admin/Restaurants/CataloguePage";
 
 function App() {
   // const [count, setCount] = useState(0);
@@ -126,7 +133,7 @@ function App() {
 
           <Route path="restaurant-table" element={<RestaurantTables/>} />
             <Route path="restaurant-config" element={<RestaurantConfigPage/>}  />
-        
+         
 
 
           <Route path="restaurant-createmenu" element={<CreateMenu />} />
@@ -138,7 +145,10 @@ function App() {
            <Route path="restaurant-chats" element={<AdminRestaurantChatDashboard />} />
            <Route path="restaurant-earnings-summary/:restaurantId" element={<RestaurantEarningsv />} />
 
-
+        {/* Restuarnt */}
+            <Route path="merchants/merchant-details/:id" element={<MerchantDetailsPage/>}  />
+               <Route path="merchants/merchant-config/:id" element={<MerchantConfiguration/>}/>
+               <Route path="merchants/merchant-catelogue/:id" element={<MerchantCataloguePage/>}/>
 
           {/* offer section */}
           <Route path="create-offer" element={<CreateOffer />} />
@@ -160,11 +170,17 @@ function App() {
        
                 <Route path="merchants/catalogue" element={<CatalogPage />} />
 
+
+          {/* Customer  */}
+
+              <Route path="customer/:customerId/details" element={<CustomerDetailsPage/>}  />
+
           {/* marketing */}
 
              { /* >>  promotions */}
                 {/* promocodes */}
                 <Route path="admin-promotions-promo" element={<PromoCodeManager/>}  />
+                <Route  path="promotions-discount"  element={<DiscountPage/>} />
                 <Route path="promotion-loyalty-points" element={<CreateLoyaltyPoints/>} />
                  <Route path="promotion-referal" element={<ReferralPromotions/>}  />
                 {/* push campings */}
@@ -216,6 +232,7 @@ function App() {
         
           <Route path="notification-sender"  element={<AdminNotificationSender/>} />
         <Route path="order/table" element={<OrderTable/>} />
+        <Route path="order/table/details/:orderId" element={<OrderDetails/>}  />
         <Route path="add-city" element={<CityCreationMap/>}  />
           {/* Add more nested routes as needed */}
         </Route>
@@ -246,7 +263,9 @@ function App() {
 
 
 {/* manager logins */}
-<Route path="/manger/login" element={<ManagerLogin/>}/>
+    <Route path="/manger/login" element={<ManagerLogin/>}/>
+
+    <Route  path="/manager/dashboard" element={<ManagerDashboard/>}></Route>
       </Routes>
       <ToastContainer />
     </>

@@ -1,56 +1,161 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const PreferencesPage = () => {
-  // State for dropdown selections
-  const [countryCode, setCountryCode] = useState({
-    name: 'UNITED STATES',
-    code: 'US',
-    dialCode: '+1'
+  // Initialize state with default values
+  const [preferences, setPreferences] = useState({
+    countryCode: { name: 'UNITED STATES', code: 'US', dialCode: '+1' },
+    currency: 'USD ($)',
+    currencyFormat: 'Default',
+    timezone: '(UTC+05:00) Ashgabat, Tashkent',
+    timeFormat: '12Hrs Format',
+    dateFormat: 'MMMM dd yyyy',
+    distanceUnit: 'KM',
+    onlineOfflineTax: false,
+    productShare: false,
+    deliveryAddressConfirmation: false,
+    aerialDistance: false,
+    favoriteRestaurants: false,
+    autoRefund: false,
+    pickupNotifications: false,
+    orderReadyStatus: false,
+    showCommission: false,
+    showProductTags: false,
+    enableHolidayHours: false,
+    virtualMeetTimings: false,
+    customerRating: false,
+    hideCustomerDetails: false,
+    showCustomerProfile: false,
+    showCurrencyToRestaurants: false,
+    showGeofence: false,
+    showGeofenceVirtualMeet: false,
+    servingRadius: false,
+    showAcceptReject: false,
+    showAnalytics: false,
+    customerSeeSameTags: false,
+    userTags: []
   });
-  const [currency, setCurrency] = useState('USD ($)');
-  const [currencyFormat, setCurrencyFormat] = useState('Default');
-  const [timezone, setTimezone] = useState('(UTC+05:00) Ashgabat, Tashkent');
-  const [timeFormat, setTimeFormat] = useState('12Hrs Format');
-  const [dateFormat, setDateFormat] = useState('MMMM dd yyyy');
-  const [distanceUnit, setDistanceUnit] = useState('KM');
-  
-  // State for toggle switches
-  const [onlineOfflineTax, setOnlineOfflineTax] = useState(false);
-  const [productShare, setProductShare] = useState(false);
-  const [deliveryAddressConfirmation, setDeliveryAddressConfirmation] = useState(false);
-  const [aerialDistance, setAerialDistance] = useState(false);
-  const [favoriteRestaurants, setFavoriteRestaurants] = useState(false);
-  const [autoRefund, setAutoRefund] = useState(false);
-  const [pickupNotifications, setPickupNotifications] = useState(false);
-  const [orderReadyStatus, setOrderReadyStatus] = useState(false);
-  const [showCommission, setShowCommission] = useState(false);
-  const [showProductTags, setShowProductTags] = useState(false);
-  const [enableHolidayHours, setEnableHolidayHours] = useState(false);
-  const [virtualMeetTimings, setVirtualMeetTimings] = useState(false);
-  const [customerRating, setCustomerRating] = useState(false);
-  const [hideCustomerDetails, setHideCustomerDetails] = useState(false);
-  const [showCustomerProfile, setShowCustomerProfile] = useState(false);
-  const [showCurrencyToRestaurants, setShowCurrencyToRestaurants] = useState(false);
-  const [showGeofence, setShowGeofence] = useState(false);
-  const [showGeofenceVirtualMeet, setShowGeofenceVirtualMeet] = useState(false);
-  const [servingRadius, setServingRadius] = useState(false);
-  const [showAcceptReject, setShowAcceptReject] = useState(false);
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const [customerSeeSameTags, setCustomerSeeSameTags] = useState(false);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Mock data for dropdowns
   const countryOptions = [
     { name: 'UNITED STATES', code: 'US', dialCode: '+1' },
     { name: 'UNITED KINGDOM', code: 'GB', dialCode: '+44' },
     { name: 'CANADA', code: 'CA', dialCode: '+1' },
+    { name: 'India', code: 'IN', dialCode: '+91' }
   ];
 
   const currencyOptions = ['USD ($)', 'EUR (€)', 'GBP (£)'];
   const currencyFormatOptions = ['Default', 'Symbol First', 'Symbol Last'];
-  const timezoneOptions = ['(UTC+05:00) Ashgabat, Tashkent', '(UTC-05:00) Eastern Time', '(UTC+00:00) London'];
+  const timezoneOptions = [
+    '(UTC+05:00) Ashgabat, Tashkent', 
+    '(UTC-05:00) Eastern Time', 
+    '(UTC+00:00) London',
+    '(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi'
+  ];
   const timeFormatOptions = ['12Hrs Format', '24Hrs Format'];
   const dateFormatOptions = ['MMMM dd yyyy', 'dd/MM/yyyy', 'MM/dd/yyyy'];
   const distanceUnitOptions = ['KM', 'Miles'];
+
+  // Fetch preferences from API
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/preferences');
+        if (response.data && response.data.data) {
+          // Transform the API data to match our state structure
+          const apiData = response.data.data;
+          setPreferences({
+            countryCode: apiData.countryCode || { name: 'UNITED STATES', code: 'US', dialCode: '+1' },
+            currency: apiData.currency || 'USD ($)',
+            currencyFormat: apiData.currencyFormat || 'Default',
+            timezone: apiData.timezone || '(UTC+05:00) Ashgabat, Tashkent',
+            timeFormat: apiData.timeFormat || '12Hrs Format',
+            dateFormat: apiData.dateFormat || 'MMMM dd yyyy',
+            distanceUnit: apiData.distanceUnit || 'KM',
+            onlineOfflineTax: apiData.onlineOfflineTax || false,
+            productShare: apiData.productShare || false,
+            deliveryAddressConfirmation: apiData.deliveryAddressConfirmation || false,
+            aerialDistance: apiData.aerialDistance || false,
+            favoriteRestaurants: apiData.favoriteRestaurants || false,
+            autoRefund: apiData.autoRefund || false,
+            pickupNotifications: apiData.pickupNotifications || false,
+            orderReadyStatus: apiData.orderReadyStatus || false,
+            showCommission: apiData.showCommission || false,
+            showProductTags: apiData.showProductTags || false,
+            enableHolidayHours: apiData.enableHolidayHours || false,
+            virtualMeetTimings: apiData.virtualMeetTimings || false,
+            customerRating: apiData.customerRating || false,
+            hideCustomerDetails: apiData.hideCustomerDetails || false,
+            showCustomerProfile: apiData.showCustomerProfile || false,
+            showCurrencyToRestaurants: apiData.showCurrencyToRestaurants || false,
+            showGeofence: apiData.showGeofence || false,
+            showGeofenceVirtualMeet: apiData.showGeofenceVirtualMeet || false,
+            servingRadius: apiData.servingRadius || false,
+            showAcceptReject: apiData.showAcceptReject || false,
+            showAnalytics: apiData.showAnalytics || false,
+            customerSeeSameTags: apiData.customerSeeSameTags || false,
+            userTags: apiData.userTags || []
+          });
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPreferences();
+  }, []);
+
+  // Handle preference updates
+  const handlePreferenceChange = (field, value) => {
+    setPreferences(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle country code change
+  const handleCountryCodeChange = (e) => {
+    const selectedCountry = JSON.parse(e.target.value);
+    setPreferences(prev => ({
+      ...prev,
+      countryCode: selectedCountry
+    }));
+  };
+
+  // Handle save
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      // Transform data to match API expected format
+      const dataToSave = {
+        ...preferences,
+        countryCode: {
+          name: preferences.countryCode.name,
+          code: preferences.countryCode.code,
+          dialCode: preferences.countryCode.dialCode
+        }
+      };
+      
+      await axios.post('http://localhost:5000/preferences', dataToSave);
+      // Show success message
+      toast.success("Preferences saved successfully!")
+
+    } catch (err) {
+      setError(err.message);
+     toast.error('Error saving preferences: ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <div className="flex justify-center items-center h-screen">Loading preferences...</div>;
+  if (error) return <div className="text-red-500 p-4">Error loading preferences: {error}</div>;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -76,8 +181,8 @@ const PreferencesPage = () => {
             <div className="relative">
               <select 
                 className="w-full p-2 border border-gray-300 rounded-md appearance-none bg-white pr-8"
-                value={JSON.stringify(countryCode)}
-                onChange={(e) => setCountryCode(JSON.parse(e.target.value))}
+                value={JSON.stringify(preferences.countryCode)}
+                onChange={handleCountryCodeChange}
               >
                 {countryOptions.map((country) => (
                   <option key={country.code} value={JSON.stringify(country)}>
@@ -106,8 +211,8 @@ const PreferencesPage = () => {
             <div className="relative">
               <select 
                 className="w-full p-2 border border-gray-300 rounded-md appearance-none bg-white pr-8"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
+                value={preferences.currency}
+                onChange={(e) => handlePreferenceChange('currency', e.target.value)}
               >
                 {currencyOptions.map((option) => (
                   <option key={option} value={option}>{option}</option>
@@ -134,8 +239,8 @@ const PreferencesPage = () => {
             <div className="relative">
               <select 
                 className="w-full p-2 border border-gray-300 rounded-md appearance-none bg-white pr-8"
-                value={currencyFormat}
-                onChange={(e) => setCurrencyFormat(e.target.value)}
+                value={preferences.currencyFormat}
+                onChange={(e) => handlePreferenceChange('currencyFormat', e.target.value)}
               >
                 {currencyFormatOptions.map((option) => (
                   <option key={option} value={option}>{option}</option>
@@ -162,8 +267,8 @@ const PreferencesPage = () => {
             <div className="relative">
               <select 
                 className="w-full p-2 border border-gray-300 rounded-md appearance-none bg-white pr-8"
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
+                value={preferences.timezone}
+                onChange={(e) => handlePreferenceChange('timezone', e.target.value)}
               >
                 {timezoneOptions.map((option) => (
                   <option key={option} value={option}>{option}</option>
@@ -190,8 +295,8 @@ const PreferencesPage = () => {
             <div className="relative">
               <select 
                 className="w-full p-2 border border-gray-300 rounded-md appearance-none bg-white pr-8"
-                value={timeFormat}
-                onChange={(e) => setTimeFormat(e.target.value)}
+                value={preferences.timeFormat}
+                onChange={(e) => handlePreferenceChange('timeFormat', e.target.value)}
               >
                 {timeFormatOptions.map((option) => (
                   <option key={option} value={option}>{option}</option>
@@ -218,8 +323,8 @@ const PreferencesPage = () => {
             <div className="relative">
               <select 
                 className="w-full p-2 border border-gray-300 rounded-md appearance-none bg-white pr-8"
-                value={dateFormat}
-                onChange={(e) => setDateFormat(e.target.value)}
+                value={preferences.dateFormat}
+                onChange={(e) => handlePreferenceChange('dateFormat', e.target.value)}
               >
                 {dateFormatOptions.map((option) => (
                   <option key={option} value={option}>{option}</option>
@@ -259,8 +364,8 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={onlineOfflineTax}
-                onChange={() => setOnlineOfflineTax(!onlineOfflineTax)}
+                checked={preferences.onlineOfflineTax}
+                onChange={() => handlePreferenceChange('onlineOfflineTax', !preferences.onlineOfflineTax)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -280,8 +385,8 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={productShare}
-                onChange={() => setProductShare(!productShare)}
+                checked={preferences.productShare}
+                onChange={() => handlePreferenceChange('productShare', !preferences.productShare)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -301,8 +406,8 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={deliveryAddressConfirmation}
-                onChange={() => setDeliveryAddressConfirmation(!deliveryAddressConfirmation)}
+                checked={preferences.deliveryAddressConfirmation}
+                onChange={() => handlePreferenceChange('deliveryAddressConfirmation', !preferences.deliveryAddressConfirmation)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -322,8 +427,8 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={aerialDistance}
-                onChange={() => setAerialDistance(!aerialDistance)}
+                checked={preferences.aerialDistance}
+                onChange={() => handlePreferenceChange('aerialDistance', !preferences.aerialDistance)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -343,8 +448,8 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={favoriteRestaurants}
-                onChange={() => setFavoriteRestaurants(!favoriteRestaurants)}
+                checked={preferences.favoriteRestaurants}
+                onChange={() => handlePreferenceChange('favoriteRestaurants', !preferences.favoriteRestaurants)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -364,8 +469,8 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={autoRefund}
-                onChange={() => setAutoRefund(!autoRefund)}
+                checked={preferences.autoRefund}
+                onChange={() => handlePreferenceChange('autoRefund', !preferences.autoRefund)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -387,8 +492,8 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={pickupNotifications}
-                onChange={() => setPickupNotifications(!pickupNotifications)}
+                checked={preferences.pickupNotifications}
+                onChange={() => handlePreferenceChange('pickupNotifications', !preferences.pickupNotifications)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -410,8 +515,8 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={orderReadyStatus}
-                onChange={() => setOrderReadyStatus(!orderReadyStatus)}
+                checked={preferences.orderReadyStatus}
+                onChange={() => handlePreferenceChange('orderReadyStatus', !preferences.orderReadyStatus)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -430,8 +535,8 @@ const PreferencesPage = () => {
             <div className="relative">
               <select 
                 className="w-full p-2 border border-gray-300 rounded-md appearance-none bg-white pr-8"
-                value={distanceUnit}
-                onChange={(e) => setDistanceUnit(e.target.value)}
+                value={preferences.distanceUnit}
+                onChange={(e) => handlePreferenceChange('distanceUnit', e.target.value)}
               >
                 {distanceUnitOptions.map((option) => (
                   <option key={option} value={option}>{option}</option>
@@ -459,8 +564,8 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={showCommission}
-                onChange={() => setShowCommission(!showCommission)}
+                checked={preferences.showCommission}
+                onChange={() => handlePreferenceChange('showCommission', !preferences.showCommission)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -480,8 +585,8 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={showProductTags}
-                onChange={() => setShowProductTags(!showProductTags)}
+                checked={preferences.showProductTags}
+                onChange={() => handlePreferenceChange('showProductTags', !preferences.showProductTags)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -501,8 +606,8 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={enableHolidayHours}
-                onChange={() => setEnableHolidayHours(!enableHolidayHours)}
+                checked={preferences.enableHolidayHours}
+                onChange={() => handlePreferenceChange('enableHolidayHours', !preferences.enableHolidayHours)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -524,8 +629,8 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={virtualMeetTimings}
-                onChange={() => setVirtualMeetTimings(!virtualMeetTimings)}
+                checked={preferences.virtualMeetTimings}
+                onChange={() => handlePreferenceChange('virtualMeetTimings', !preferences.virtualMeetTimings)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -545,10 +650,10 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={customerRating}
-                onChange={() => setCustomerRating(!customerRating)}
+                checked={preferences.customerRating}
+                onChange={() => handlePreferenceChange('customerRating', !preferences.customerRating)}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left:[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
           </div>
         </div>
@@ -566,10 +671,10 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={hideCustomerDetails}
-                onChange={() => setHideCustomerDetails(!hideCustomerDetails)}
+                checked={preferences.hideCustomerDetails}
+                onChange={() => handlePreferenceChange('hideCustomerDetails', !preferences.hideCustomerDetails)}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left:[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
           </div>
         </div>
@@ -587,10 +692,10 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={showCustomerProfile}
-                onChange={() => setShowCustomerProfile(!showCustomerProfile)}
+                checked={preferences.showCustomerProfile}
+                onChange={() => handlePreferenceChange('showCustomerProfile', !preferences.showCustomerProfile)}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left:[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
           </div>
         </div>
@@ -608,10 +713,10 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={showCurrencyToRestaurants}
-                onChange={() => setShowCurrencyToRestaurants(!showCurrencyToRestaurants)}
+                checked={preferences.showCurrencyToRestaurants}
+                onChange={() => handlePreferenceChange('showCurrencyToRestaurants', !preferences.showCurrencyToRestaurants)}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left:[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
           </div>
         </div>
@@ -629,10 +734,10 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={showGeofence}
-                onChange={() => setShowGeofence(!showGeofence)}
+                checked={preferences.showGeofence}
+                onChange={() => handlePreferenceChange('showGeofence', !preferences.showGeofence)}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left:[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
           </div>
         </div>
@@ -650,10 +755,10 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={showGeofenceVirtualMeet}
-                onChange={() => setShowGeofenceVirtualMeet(!showGeofenceVirtualMeet)}
+                checked={preferences.showGeofenceVirtualMeet}
+                onChange={() => handlePreferenceChange('showGeofenceVirtualMeet', !preferences.showGeofenceVirtualMeet)}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left:[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
           </div>
         </div>
@@ -673,10 +778,10 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={servingRadius}
-                onChange={() => setServingRadius(!servingRadius)}
+                checked={preferences.servingRadius}
+                onChange={() => handlePreferenceChange('servingRadius', !preferences.servingRadius)}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left:[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
           </div>
         </div>
@@ -694,10 +799,10 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={showAcceptReject}
-                onChange={() => setShowAcceptReject(!showAcceptReject)}
+                checked={preferences.showAcceptReject}
+                onChange={() => handlePreferenceChange('showAcceptReject', !preferences.showAcceptReject)}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left:[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
           </div>
         </div>
@@ -715,10 +820,10 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={showAnalytics}
-                onChange={() => setShowAnalytics(!showAnalytics)}
+                checked={preferences.showAnalytics}
+                onChange={() => handlePreferenceChange('showAnalytics', !preferences.showAnalytics)}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left:[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
           </div>
         </div>
@@ -752,10 +857,10 @@ const PreferencesPage = () => {
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
-                checked={customerSeeSameTags}
-                onChange={() => setCustomerSeeSameTags(!customerSeeSameTags)}
+                checked={preferences.customerSeeSameTags}
+                onChange={() => handlePreferenceChange('customerSeeSameTags', !preferences.customerSeeSameTags)}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left:[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
           </div>
         </div>
@@ -776,9 +881,27 @@ const PreferencesPage = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td colSpan="3" className="py-4 text-center text-gray-500">No Data Available</td>
-              </tr>
+              {preferences.userTags.length > 0 ? (
+                preferences.userTags.map(tag => (
+                  <tr key={tag._id}>
+                    <td className="py-2 px-4 border">{tag.name}</td>
+                    <td className="py-2 px-4 border">
+                      {tag.isDefault ? 'Yes' : 'No'}
+                    </td>
+                    <td className="py-2 px-4 border">
+                      <button className="text-red-500 hover:text-red-700">
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="3" className="py-4 text-center text-gray-500">
+                    No Data Available
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -786,8 +909,12 @@ const PreferencesPage = () => {
 
       {/* Save Button */}
       <div className="flex justify-end mt-8">
-        <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded">
-          Save Changes
+        <button 
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded"
+          onClick={handleSave}
+          disabled={loading}
+        >
+          {loading ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
     </div>

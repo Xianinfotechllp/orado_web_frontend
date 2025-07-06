@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { getTerminologyByLanguage, saveTerminology } from '../../../../apis/adminApis/terminologyApi';
+import { toast } from 'react-toastify';
 
 const TerminologyPage = () => {
   const [language, setLanguage] = useState('English');
@@ -6,7 +8,7 @@ const TerminologyPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState('ORDER');
 
-  // Group terms by category
+  // Static term categories
   const termCategories = {
     ORDER: [
       'ORDER PLACED', 'STORE CLOSED', 'ORDER ACCEPTED', 'ORDER ASSIGNED',
@@ -25,20 +27,28 @@ const TerminologyPage = () => {
     ]
   };
 
-  // Populate default terminologies
+  // Fetch terminology by language
   useEffect(() => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      const defaultTerminologies = {};
-      Object.values(termCategories).flat().forEach(term => {
-        defaultTerminologies[term] = term;
-      });
-      setTerminologies(defaultTerminologies);
+    const fetchTerminologies = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getTerminologyByLanguage(language);
+        setTerminologies(data.terms);  // ✅ This is correct
+      } catch (error) {
+        // If not found, initialize with defaults
+        const defaultTerminologies = {};
+        Object.values(termCategories).flat().forEach(term => {
+          defaultTerminologies[term] = term;
+        });
+        setTerminologies(defaultTerminologies);
+      }
       setIsLoading(false);
-    }, 800);
-  }, []);
+    };
 
+    fetchTerminologies();
+  }, [language]);
+
+  // Handle term value change
   const handleTermChange = (term, value) => {
     setTerminologies(prev => ({
       ...prev,
@@ -46,16 +56,20 @@ const TerminologyPage = () => {
     }));
   };
 
-  const handleSave = () => {
+  // Save API call
+  const handleSave = async () => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Saved terminologies:', { language, terminologies });
-      setIsLoading(false);
-      alert('Terminologies saved successfully!');
-    }, 1000);
+    try {
+      await saveTerminology(language, terminologies);
+   toast.success('Terminologies saved successfully!');
+    } catch (error) {
+      console.error("Error saving terminologies:", error);
+    toast.error('Failed to save terminologies.');
+    }
+    setIsLoading(false);
   };
 
+  // Reset to defaults
   const handleCancel = () => {
     const defaultTerminologies = {};
     Object.values(termCategories).flat().forEach(term => {
@@ -72,9 +86,7 @@ const TerminologyPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Terminology Management</h1>
-              <p className="text-gray-600 mt-1">
-                Customize system terminology for different languages
-              </p>
+              <p className="text-gray-600 mt-1">Customize system terminology for different languages</p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="relative">
@@ -83,13 +95,16 @@ const TerminologyPage = () => {
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
                 >
-                  <option>English</option>
-                  <option>Spanish</option>
-                  <option>French</option>
-                  <option>German</option>
+                <option value="English">English</option>
+
+<option value="Malayalam">Malayalam</option>
+<option value="Tamil">Tamil</option>
+<option value="Hindi">Hindi</option>
+
+
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <svg className="fill-current h-4 w-4" viewBox="0 0 20 20">
                     <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
                   </svg>
                 </div>
@@ -100,7 +115,7 @@ const TerminologyPage = () => {
 
         {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar Navigation */}
+          {/* Sidebar */}
           <div className="w-full lg:w-64">
             <div className="bg-white shadow rounded-lg overflow-hidden">
               <div className="p-4 border-b border-gray-200">
@@ -110,7 +125,9 @@ const TerminologyPage = () => {
                 {Object.keys(termCategories).map((category) => (
                   <button
                     key={category}
-                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${activeCategory === category ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
+                      activeCategory === category ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                    }`}
                     onClick={() => setActiveCategory(category)}
                   >
                     {category}
@@ -161,14 +178,14 @@ const TerminologyPage = () => {
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                   >
                     Reset
                   </button>
                   <button
                     type="button"
                     onClick={handleSave}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                   >
                     Save Changes
                   </button>

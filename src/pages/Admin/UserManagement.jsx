@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Phone, Mail, MapPin, Wallet, Star, X, Shield, UserCheck } from 'lucide-react';
+import { Eye, Phone, Mail, Wallet, Star, X, Shield, UserCheck, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
@@ -7,6 +8,7 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -14,11 +16,13 @@ const UserManagement = () => {
     totalPages: 1
   });
 
-  // API client function to fetch customers
-  const fetchCustomers = async (page = 1, limit = 20) => {
+  // API client function to fetch customers with search and pagination
+  const fetchCustomers = async (page = 1, limit = 20, search = '') => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/admin/customer-list?page=${page}&limit=${limit}`);
+      const response = await fetch(
+        `http://localhost:5000/admin/customer-list?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`
+      );
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -27,7 +31,6 @@ const UserManagement = () => {
       const data = await response.json();
       
       if (data.success) {
-        // Transform the API data to match your existing schema
         const transformedUsers = data.data.customers.map(customer => ({
           _id: customer.userId,
           name: customer.name,
@@ -37,14 +40,14 @@ const UserManagement = () => {
           profilePicture: `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.name)}&background=random`,
           walletBalance: customer.walletBalance,
           loyaltyPoints: customer.loyaltyPoints,
-          totalSpending: 0, // Not provided in the API, default to 0
-          active: true, // Assume all are active since status isn't provided
+          totalSpending: 0,
+          active: true,
           verification: {
-            emailVerified: true, // Assume verified since not provided
-            phoneVerified: true  // Assume verified since not provided
+            emailVerified: true,
+            phoneVerified: true
           },
-          addresses: [], // No address data provided
-          lastActivity: new Date(customer.createdAt), // Use created date as last activity
+          addresses: [],
+          lastActivity: new Date(customer.createdAt),
           createdAt: new Date(customer.createdAt)
         }));
         
@@ -62,8 +65,21 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
-    fetchCustomers();
-  }, []);
+    fetchCustomers(pagination.page, pagination.limit, searchQuery);
+  }, [pagination.page, pagination.limit, searchQuery]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // Reset to page 1 when searching
+    setPagination(prev => ({ ...prev, page: 1 }));
+    fetchCustomers(1, pagination.limit, searchQuery);
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage > 0 && newPage <= pagination.totalPages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+    }
+  };
 
   const openModal = (user) => {
     setSelectedUser(user);
@@ -124,8 +140,35 @@ const UserManagement = () => {
         <p className="text-orange-100 mt-2">Manage and monitor all platform users</p>
       </div>
 
+      {/* Search and Filter Bar */}
+      <div className="p-6">
+        <div className="bg-white border border-orange-200 rounded-lg p-4 shadow-sm">
+          <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-grow">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by name, email or phone..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <button
+              type="submit"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center justify-center"
+            >
+              <Search className="w-4 h-4 mr-2" />
+              Search
+            </button>
+          </form>
+        </div>
+      </div>
+
       {/* Stats Cards */}
-      <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="px-6 pb-6 grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white border border-orange-200 rounded-lg p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -172,14 +215,27 @@ const UserManagement = () => {
       {/* User List */}
       <div className="px-6 pb-6">
         <div className="bg-white rounded-lg shadow-sm border border-orange-200 overflow-hidden">
-          <div className="bg-orange-500 text-white px-6 py-4">
+          <div className="bg-orange-500 text-white px-6 py-4 flex justify-between items-center">
             <h2 className="text-xl font-semibold">Customers</h2>
+            <div className="flex items-center space-x-2">
+              <select
+                className="bg-orange-600 border border-orange-300 text-white text-sm rounded-md px-2 py-1"
+                value={pagination.limit}
+                onChange={(e) => setPagination(prev => ({ ...prev, limit: Number(e.target.value), page: 1 }))}
+              >
+                <option value={10}>10 per page</option>
+                <option value={20}>20 per page</option>
+                <option value={50}>50 per page</option>
+                <option value={100}>100 per page</option>
+              </select>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-orange-50">
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">ID</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">User</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Contact</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Wallet</th>
@@ -189,8 +245,16 @@ const UserManagement = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-orange-100">
-                {users.map((user, index) => (
+                {users.map((user) => (
                   <tr key={user._id} className="hover:bg-orange-50 transition-colors duration-200">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <Link 
+                        to={`/admin/dashboard/customer/${user._id}/details`}
+                        className="hover:underline"
+                      >
+                        {user._id.substring(0, 8)}...
+                      </Link>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <img 
@@ -236,6 +300,64 @@ const UserManagement = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="bg-orange-50 px-6 py-4 flex items-center justify-between border-t border-orange-200">
+            <div className="flex-1 flex justify-between items-center">
+              <button
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page === 1}
+                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                  pagination.page === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <ChevronLeft className="h-5 w-5" />
+                Previous
+              </button>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-center">
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (pagination.totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (pagination.page <= 3) {
+                        pageNum = i + 1;
+                      } else if (pagination.page >= pagination.totalPages - 2) {
+                        pageNum = pagination.totalPages - 4 + i;
+                      } else {
+                        pageNum = pagination.page - 2 + i;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            pagination.page === pageNum
+                              ? 'z-10 bg-orange-500 border-orange-500 text-white'
+                              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </div>
+              </div>
+              <button
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page === pagination.totalPages}
+                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                  pagination.page === pagination.totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Next
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -325,6 +447,9 @@ const UserManagement = () => {
                     </div>
                     <div className="text-sm">
                       <span className="font-medium">Last Activity:</span> {formatDate(selectedUser.lastActivity)}
+                    </div>
+                    <div className="text-sm">
+                      <span className="font-medium">User ID:</span> {selectedUser._id}
                     </div>
                   </div>
                 </div>

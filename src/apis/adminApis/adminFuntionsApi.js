@@ -9,8 +9,28 @@ export const getAdminOrders = async () => {
     throw error;
   }
 };
+export const getAdminOrderDetails = async (orderId) => {
+  try {
+    const response = await apiClient.get(`/admin/order-details/${orderId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Failed to fetch order details:", error);
+    throw error;
+  }
+};
 
 
+
+
+export const fetchSingleCustomerDetails = async (customerId) => {
+  try {
+    const response = await apiClient.get(`/admin/customer/${customerId}/details`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching customer details:", error.response?.data?.message || error.message);
+    throw error;
+  }
+};
 
 
 export const addCity = async (cityData) => {
@@ -24,6 +44,16 @@ export const addCity = async (cityData) => {
 };
 
 
+
+export const getOrdersByCustomerForAdmin = async (params) => {
+  try {
+    const response = await apiClient.get(`/admin/orders/by-customer`, { params });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch customer orders:", error);
+    throw error;
+  }
+};
 
 
 
@@ -203,3 +233,163 @@ export const fetchOrdersLocationForMap = async () => {
 
 
 
+export const fetchSingleRestaurantDetails = async (restaurantId) => {
+  try {
+    const response = await apiClient.get(`/admin/restaurants/details/${restaurantId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching restaurant details:", error.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+
+
+
+
+
+
+export const updateRestaurantProfile = async (restaurantId, updateData, imageFiles = []) => {
+  try {
+    const formData = new FormData();
+
+    // Append text fields from updateData object
+    for (const key in updateData) {
+      formData.append(key, updateData[key]);
+    }
+
+    // Append images
+    imageFiles.forEach(file => {
+      formData.append("images", file);
+    });
+
+    const response = await apiClient.put(
+      `/admin/edit/restaurant/${restaurantId}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    return response.data;
+
+  } catch (error) {
+    console.error("Error updating restaurant:", error.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+
+
+export const fetchRestaurantCategories = async (restaurantId) => {
+  try {
+    const response = await apiClient.get(`/admin/restaurant/${restaurantId}/category`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching restaurant categories:", error.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+export const fetchCategoryProducts = async (restaurantId, categoryId, status = '', search = '') => {
+  try {
+    const params = new URLSearchParams();
+    // if (status) params.append("status", status);
+    if (search) params.append("search", search);
+
+    const response = await apiClient.get(
+      `/admin/restaurant/${restaurantId}/category/${categoryId}?${params.toString()}`
+    );
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching category products:", error.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+
+export const addCategory = async (restaurantId, categoryData) => {
+  try {
+    const formData = new FormData();
+    formData.append("name", categoryData.name);
+    formData.append("restaurantId", restaurantId);
+    formData.append("active", categoryData.active);
+    formData.append("autoOnOff", categoryData.autoOnOff);
+    formData.append("description", categoryData.description);
+
+    // Append images if any
+    if (categoryData.images && categoryData.images.length > 0) {
+      categoryData.images.forEach((file) => {
+        formData.append("images", file);
+      });
+    }
+
+    const response = await apiClient.post(
+      `/admin/restaurant/${restaurantId}/category`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error creating category:", error.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+
+
+export const addProduct = async (restaurantId, productData) => {
+  try {
+    const formData = new FormData();
+    formData.append("name", productData.name);
+    formData.append("description", productData.description);
+    formData.append("price", productData.price);
+    formData.append("categoryId", productData.categoryId);
+    formData.append("foodType", productData.foodType);
+    formData.append("unit", productData.unit || "piece");
+    formData.append("stock", productData.stock);
+    formData.append("reorderLevel", productData.reorderLevel);
+
+    formData.append(
+      "revenueShare",
+      JSON.stringify(productData.revenueShare || { type: "percentage", value: 10 })
+    );
+
+    if (productData.addOns) {
+      formData.append("addOns", JSON.stringify(productData.addOns));
+    }
+
+    if (productData.attributes) {
+      formData.append("attributes", JSON.stringify(productData.attributes));
+    }
+
+    // Append images
+    if (productData.images && productData.images.length > 0) {
+      productData.images.forEach((file) => {
+        formData.append("images", file);
+      });
+    }
+
+    const response = await apiClient.post(
+      `/admin/restaurant/${restaurantId}/product`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error adding product:", error.response?.data?.message || error.message);
+    throw error;
+  }
+};
