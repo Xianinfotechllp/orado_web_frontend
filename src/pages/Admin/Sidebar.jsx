@@ -587,6 +587,43 @@ const Sidebar = () => {
                     </div>
                   )}
                 </div>
+
+
+
+
+
+
+
+
+
+
+                {/* Inside the Configure section, after General Settings */}
+<div className="mb-2">
+  <div 
+    className="flex justify-between items-center px-4 py-2 hover:text-[#FC8019] hover:bg-orange-50 rounded cursor-pointer"
+    onClick={() => toggleSection('cityConfig')}
+  >
+    <span>City Configuration</span>
+    {expandedSections.cityConfig ? <FiChevronUp size={14} /> : <FiChevronDown size={14} />}
+  </div>
+  {expandedSections.cityConfig && (
+    <div className="ml-4 mt-1">
+      <Link 
+        to="/admin/dashboard/city/list" 
+        className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+      >
+        City Management
+      </Link>
+      <Link 
+        to="/admin/dashboard/geofence" 
+        className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+      >
+        Geofence Management
+      </Link>
+     
+    </div>
+  )}
+</div>
               </div>
             )}
           </div>

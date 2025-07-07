@@ -126,6 +126,50 @@ const MerchantCataloguePage = () => {
       {/* Header Section (unchanged) */}
       {/* ... */}
 
+
+      <div className="border-b border-gray-200">
+              <div className="container mx-auto px-4">
+                <ul className="flex space-x-8">
+                  <li>
+                    <Link
+                      to={`/admin/dashboard/merchants/merchant-config/${id}`}
+                      className={`px-4 py-3 block ${
+                        location.pathname === `/admin/dashboard/merchants/merchant-config/${id}`
+                          ? "border-b-2 border-orange-500 text-orange-500 font-medium"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Configurations
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to={`/admin/dashboard/merchants/merchant-catelogue/${id}`}
+                      className={`px-4 py-3 block ${
+                        location.pathname === `/admin/dashboard/merchants/merchant-catelogue/${id}`
+                          ? "border-b-2 border-orange-500 text-orange-500 font-medium"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Catalogue
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to={`/admin/dashboard/merchants/merchant-details/${id}`}
+                      className={`px-4 py-3 block ${
+                        location.pathname === `/admin/dashboard/merchants/merchant-details/${id}`
+                          ? "border-b-2 border-orange-500 text-orange-500 font-medium"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Merchant
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
       {/* Filters and Controls */}
       <div className="flex flex-col md:flex-row justify-between mb-6">
         <div className="mb-4 md:mb-0">

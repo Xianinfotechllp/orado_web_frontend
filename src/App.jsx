@@ -84,6 +84,9 @@ import CustomerDetailsPage from "./pages/Admin/customer/CustomerDetails";
 import MerchantDetailsPage from "./pages/Admin/Restaurants/MerchantDetailsPage";
 import MerchantConfiguration from "./pages/Admin/Restaurants/MerchantConfiguration";
 import MerchantCataloguePage from "./pages/Admin/Restaurants/CataloguePage";
+import GeofencePage from "./pages/Admin/configure/cityConfig/GeofencePage";
+import GeofenceAdder from "./pages/Admin/configure/cityConfig/GeofenceAdder";
+import CityList from "./pages/Admin/configure/cityConfig/CityList";
 
 function App() {
   // const [count, setCount] = useState(0);
@@ -216,6 +219,10 @@ function App() {
              <Route path="general/preference" element={<PreferencesPage/>} />
 
 
+            {/* city config */}
+            <Route path="geofence" element={<GeofencePage/>} />
+            <Route path="geofence/add" element={<GeofenceAdder/>} />
+            <Route path="city/list" element={<CityList/>} />
 
 
             <Route path="admin-tax-management" element={<TaxManagementPanel />}    />
