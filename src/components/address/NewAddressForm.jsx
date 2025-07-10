@@ -35,11 +35,13 @@ export default function NewAddressForm({ userId, onClose, onAdd }) {
 
   const handleSubmit = async () => {
     try {
+
       const newAddress = {
         addressId: "",
         ...form,
       };
 
+    
       onAdd(newAddress); // send new address back to parent
       onClose();
     } catch (error) {

@@ -24,7 +24,13 @@ const ReviewsManagement = () => {
   const [filterRating, setFilterRating] = useState("all");
   const [activeTab, setActiveTab] = useState("Restaurant");
   const currentRestaurantId = selectedRestaurant?.id;
+const [lightboxOpen, setLightboxOpen] = useState(false);
+const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+const openImageLightbox = (index) => {
+  setCurrentImageIndex(index);
+  setLightboxOpen(true);
+};
   // Handle restaurants load from RestaurantSlider
   const handleRestaurantsLoad = (restaurantData) => {
     setRestaurants(restaurantData);
@@ -410,33 +416,56 @@ const ReviewsManagement = () => {
                   key={review.id}
                   className="bg-white p-6 rounded-lg shadow-sm border"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        {review.profileImage ? (
-                          <img
-                            src={review.profileImage}
-                            alt={review.customerName}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <User className="w-5 h-5 text-gray-600" />
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">
-                          {review.customerName}
-                        </h4>
-                        <p className="text-sm text-gray-600">{review.date}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex">{renderStars(review.rating)}</div>
-                      <span className="text-sm font-medium text-gray-600">
-                        ({review.rating}.0)
-                      </span>
-                    </div>
-                  </div>
+                <div className="flex items-start justify-between mb-4">
+  <div className="flex items-center gap-3">
+    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+      {review.profileImage ? (
+        <img
+          src={review.profileImage}
+          alt={review.customerName}
+          className="w-full h-full rounded-full object-cover"
+        />
+      ) : (
+        <User className="w-5 h-5 text-gray-600" />
+      )}
+    </div>
+    <div>
+      <h4 className="font-semibold text-gray-900">
+        {review.customerName}
+      </h4>
+      <p className="text-sm text-gray-600">{review.date}</p>
+    </div>
+  </div>
+  <div className="flex items-center gap-2">
+    <div className="flex">{renderStars(review.rating)}</div>
+    <span className="text-sm font-medium text-gray-600">
+      ({review.rating}.0)
+    </span>
+  </div>
+</div>
+
+{review.images && review.images.length > 0 && (
+  <div className="mb-4">
+    <div className="flex flex-wrap gap-2">
+
+   
+      {review.images.map((image, index) => (
+        <div 
+          key={index} 
+          className="relative group w-24 h-24 rounded-lg overflow-hidden cursor-pointer"
+          onClick={() => openImageLightbox(index)} // Implement lightbox function
+        >
+          <img
+            src={image}
+            alt={`Review image ${index + 1}`}
+            className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+          />
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200" />
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
                   {activeTab === "Product" && review.product && (
                     <div className="mb-3">

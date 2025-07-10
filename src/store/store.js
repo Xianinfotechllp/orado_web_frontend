@@ -29,19 +29,23 @@ const persistConfig = {
   key: "root",
   storage: storageSession,
   whitelist: ["auth", "location", "address", "cart"],
-  migrate: (state) => {
-    if (state.cart?._persistCleared) {
-      return Promise.resolve({
-        ...state,
-        cart: {
-          cartId: null,
-          items: [],
-          _persistCleared: false // Reset the flag
-        }
-      });
-    }
-    return Promise.resolve(state);
+ migrate: (state) => {
+  // if no persisted state yet, return it directly
+  if (!state) return Promise.resolve(state);
+
+  if (state.cart?._persistCleared) {
+    return Promise.resolve({
+      ...state,
+      cart: {
+        cartId: null,
+        items: [],
+        _persistCleared: false
+      }
+    });
   }
+
+  return Promise.resolve(state);
+}
 };
 
 // Create a persisted reducer

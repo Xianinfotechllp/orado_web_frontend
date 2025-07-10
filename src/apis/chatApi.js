@@ -64,3 +64,70 @@ export const markMessagesAsRead = async (chatId) => {
     throw error;
   }
 };
+
+
+// ====================== Restruant-CUSTOMER CHAT ====================== //
+
+// 1. Get all restaurant-customer chats
+export const getRestaurantCustomerChats = async () => {
+  try {
+    const response = await apiClient.get('/chat/restaurant/chats');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching restaurant-customer chats:', error);
+    throw error;
+  }
+};
+
+// 2. Get a specific chat from a customer to restaurant (restaurant POV)
+export const getRestaurantCustomerChat = async (userId) => {
+  try {
+    const response = await apiClient.get(`/chat/restaurant/chat/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching chat with user ${userId}:`, error);
+    throw error;
+  }
+};
+
+// 3. Send a message from restaurant to customer
+export const sendRestaurantMessageToCustomer = async (userId, content, attachments = []) => {
+  try {
+    const response = await apiClient.post(`/chat/restaurant/user/${userId}`, {
+      content,
+      attachments
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error sending message to user ${userId}:`, error);
+    throw error;
+  }
+};
+
+
+// ====================== Restruant-admin CHAT ====================== //
+
+export const getRestaurantAdminChat = async () => {
+  try {
+    const response = await apiClient.get('/chat/restaurants/admin');
+    console.log('getrestchat', response.data)
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching restaurant-admin chat:', error);
+    throw error;
+  }
+};
+
+export const sendRestaurantMessageToAdmin = async (content, attachments = []) => {
+  try {
+    const response = await apiClient.post('/chat/restaurant/admins/message', {
+      content,
+      attachments
+    });
+    console.log('sendMesg', response.data)
+    return response.data;
+  } catch (error) {
+    console.error('Error sending message to admin:', error);
+    throw error;
+  }
+};

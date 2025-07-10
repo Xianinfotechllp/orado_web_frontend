@@ -1,7 +1,7 @@
 // src/components/AddCategoryModal.jsx
 import React, { useState } from "react";
 import { createCategory } from "../../../../apis/restaurantApi";
-import { toast } from "react-toastify";
+import { toast } from 'react-hot-toast';
 
 const AddCategoryModal = ({
   showAddModal,

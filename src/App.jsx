@@ -30,7 +30,7 @@ import WalletTopUpPage from "./pages/UserProfile/WalletTopUpPage";
 
 import AdminLogin from "./pages/Admin/AdminLogin";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
-import { ToastContainer } from "react-toastify";
+import { Toaster } from 'react-hot-toast';
 import RestaurantApprovalsPage from "./pages/Admin/RestaurantApprovalsPage";
 import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDetails";
 
@@ -44,10 +44,11 @@ function App() {
 
   return (
     <>
+        <Toaster />
       <Routes>
 
         {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
+        {/* <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/" element={<Home />} />
         <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils />} />
@@ -56,7 +57,7 @@ function App() {
         <Route path="/search" element={<RestaurantSearchPage />} />
 
         {/* Protected Routes */}
-        <Route path="/add-to-cart" element={
+        {/* <Route path="/add-to-cart" element={
           <ProtectedRoute><AddToCart /></ProtectedRoute>
         } />
         <Route path="/order-management" element={
@@ -70,7 +71,7 @@ function App() {
         } />
 
         {/* User Profile Protected Routes */}
-        <Route path="/my-account" element={
+        {/* <Route path="/my-account" element={
           <ProtectedRoute><OrdersPage /></ProtectedRoute>
         } />
         <Route path="/my-account/orders" element={
@@ -100,7 +101,11 @@ function App() {
           element={<RestaurantDeatils />}
         />
         <Route path="/faq" element={<Faq />} />
-        <Route path="/notifications" element={<NotificationPage />} />
+        <Route path="/notifications" element={<NotificationPage />} />  */}
+
+
+
+
 
         {/* Merchant side */}
         <Route path="/merchant-detail" element={<About />} />
@@ -108,20 +113,20 @@ function App() {
         <Route path="/merchant" element={<MerchantDashboard />} />
 
         {/* Admin-Side */}
-        <Route path="admin/login" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />}>
-          <Route
+        {/* <Route path="admin/login" element={<AdminLogin />} /> */}
+        {/* <Route path="/admin/dashboard" element={<AdminDashboard />}> */}
+          {/* <Route
             path="restaurant-approvals"
             element={<RestaurantApprovalsPage />}
           />
           <Route
             path="restaurant-approvals/:id"
             element={<RestaurantApplicationDetails />}
-          />
+          /> */}
           {/* Add more nested routes as needed */}
-        </Route>
+        {/* </Route> */}
       </Routes>
-      <ToastContainer />
+    <Toaster />
     </>
   );
 }

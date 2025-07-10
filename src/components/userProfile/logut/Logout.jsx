@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, LogOut } from 'lucide-react';
 import { logoutUser, logoutAllDevices } from '../../../apis/authApi';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../../slices/authSlice';
