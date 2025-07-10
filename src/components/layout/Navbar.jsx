@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   FiSearch,
   FiShoppingBag,
@@ -9,18 +9,19 @@ import {
 } from "react-icons/fi";
 import axios from "axios";
 import logo from "../../assets/oradoLogo.png";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { setLocation } from "../../slices/locationSlice";
-
-import { selectCartItemCount } from "../../slices/cartSlice";
-
 import { Link } from "react-router-dom";
 import { VscAccount } from "react-icons/vsc";
 import { useNavigate } from "react-router-dom";
-import {getRestaurantsBySearchQuery} from "../../apis/restaurantApi";
-
+import { getRestaurantsBySearchQuery } from "../../apis/restaurantApi";
+import { initMapbox, mapboxToLocation } from "../../utility/mapbox";
+import { selectCartItemCount } from '../../slices/cartSlice';
 function Navbar() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  
+  // State declarations
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -28,77 +29,98 @@ function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mobileLocationOpen, setMobileLocationOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  // New state for food search
   const [isFoodSearchOpen, setIsFoodSearchOpen] = useState(false);
   const [foodSearchQuery, setFoodSearchQuery] = useState("");
-  // Get current location from Redux store or use default
-  const location = useSelector((state) => state.location.location);
-
   
-  
-  const user = useSelector((state) => state.auth.user);
-    const cart = useSelector((state) => state.cart);
-
- 
- 
-
-  const cartItemsCount = useSelector(selectCartItemCount)
- 
+  // Refs
   const locationRef = useRef(null);
   const foodSearchRef = useRef(null);
-  const navigate = useNavigate()
 
-  const toggleMenu = () => setMenuOpen(!menuOpen);
+  // Memoized selectors
+  const { location, user, cart } = useSelector(state => ({
+    location: state.location.location,
+    user: state.auth.user,
+    cart: state.cart || { items: [] }
+  }), shallowEqual);
 
-  const fetchSuggestions = async (searchText) => {
-    if (!searchText) {
+  const cartItemsCount = useSelector(selectCartItemCount);
+
+  // Constants
+  const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w';
+
+  // Initialize Mapbox
+  useEffect(() => {
+    if (MAPBOX_ACCESS_TOKEN) {
+      initMapbox(MAPBOX_ACCESS_TOKEN);
+    } else {
+      console.error("Mapbox access token is not set");
+    }
+  }, []);
+
+  // Set initial location from Redux store
+  useEffect(() => {
+    setSelectedLocation(location);
+    setQuery(location?.name || "");
+  }, [location]);
+
+  // Toggle menu function
+  const toggleMenu = useCallback(() => {
+    setMenuOpen(prev => !prev);
+  }, []);
+
+  // Fetch location suggestions from Mapbox
+  const fetchSuggestions = useCallback(async (searchText) => {
+    if (!searchText || !MAPBOX_ACCESS_TOKEN) {
       setSuggestions([]);
       return;
     }
+    
     try {
-      const res = await axios.get(
-        `https://nominatim.openstreetmap.org/search?q=${searchText}&format=json&addressdetails=1`
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchText)}.json?` +
+        `access_token=${MAPBOX_ACCESS_TOKEN}&` +
+        `country=IN&` +
+        `types=address,place,postcode,locality,neighborhood&` +
+        `autocomplete=true`
       );
-      console.log(res.data)
-      setSuggestions(res.data);
+      
+      const data = await response.json();
+      setSuggestions(data.features || []);
     } catch (error) {
-      console.error("Error fetching location suggestions:", error);
+      console.error('Mapbox geocoding error:', error);
       setSuggestions([]);
     }
-  };
+  }, [MAPBOX_ACCESS_TOKEN]);
 
+  // Debounce the search input
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       fetchSuggestions(query);
     }, 400);
 
     return () => clearTimeout(delayDebounce);
-  }, [query]);
+  }, [query, fetchSuggestions]);
 
-  const handleSelect = (place) => {
-    const locationData = {
-      name: place.display_name,
-      lat: place.lat,
-      lon: place.lon,
-    };
-    
+  // Handle location selection
+  const handleSelect = useCallback((place) => {
+    const locationData = mapboxToLocation(place);
     setSelectedLocation(locationData);
     dispatch(setLocation(locationData));
-    setQuery(place.display_name);
+    setQuery(locationData.name);
     setSuggestions([]);
     setIsSearchOpen(false);
     setMobileLocationOpen(false);
-  };
+  }, [dispatch]);
 
   // Handle food search
-  const handleFoodSearch = () => {
-    setIsFoodSearchOpen(!isFoodSearchOpen);
+  const handleFoodSearch = useCallback(() => {
+    setIsFoodSearchOpen(prev => !prev);
     if (!isFoodSearchOpen) {
       setFoodSearchQuery("");
     }
-  };
+  }, [isFoodSearchOpen]);
 
-  const handleFoodSearchSubmit = async (e) => {
+  const handleFoodSearchSubmit = useCallback(async (e) => {
     e.preventDefault();
     if (foodSearchQuery.trim()) {
       try {
@@ -110,9 +132,7 @@ function Navbar() {
           page: 1,
           limit: 10
         });
-        console.log("Search results:", restaurants);
         
-
         navigate(`/search`, { 
           state: { 
             searchResults: restaurants,
@@ -124,20 +144,20 @@ function Navbar() {
         setFoodSearchQuery("");
       } catch (error) {
         console.error("Error searching restaurants:", error);
-        // Optionally show error to user
       }
     }
-  };
+  }, [foodSearchQuery, location, navigate]);
 
+  // Scroll detection
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Click outside handlers
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (locationRef.current && !locationRef.current.contains(event.target)) {
@@ -148,7 +168,6 @@ function Navbar() {
         }
       }
       
-      // Handle food search click outside
       if (foodSearchRef.current && !foodSearchRef.current.contains(event.target)) {
         setIsFoodSearchOpen(false);
         setFoodSearchQuery("");
@@ -160,8 +179,6 @@ function Navbar() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [query]);
-
-
 
   return (
     <div className={`w-full fixed top-0 z-50 transition-all duration-300 ${
@@ -190,7 +207,7 @@ function Navbar() {
             </span>
           </div>
 
-          {/* Desktop Location Search - moved to left */}
+          {/* Desktop Location Search */}
           <div className="hidden lg:flex items-center relative" ref={locationRef}>
             <div className="flex items-center gap-2 text-gray-600">
               <span className="text-sm font-medium">Deliver to:</span>
@@ -226,13 +243,13 @@ function Navbar() {
               <ul className="absolute z-20 top-14 left-20 bg-white border-2 border-orange-200 w-80 mt-1 max-h-64 overflow-auto shadow-2xl rounded-2xl">
                 {suggestions.map((place) => (
                   <li
-                    key={place.place_id}
+                    key={place.id}
                     onClick={() => handleSelect(place)}
                     className="px-4 py-3 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 cursor-pointer border-b border-orange-100 last:border-b-0 transition-all duration-200 text-gray-800 font-medium"
                   >
                     <div className="flex items-center gap-3">
                       <FiMapPin size={16} className="text-orange-600" />
-                      <span className="truncate">{place.display_name}</span>
+                      <span className="truncate">{place.place_name}</span>
                     </div>
                   </li>
                 ))}
@@ -282,7 +299,7 @@ function Navbar() {
           )}
         </div>
 
-        {/* Desktop Navigation - Updated */}
+        {/* Desktop Navigation */}
         <ul className="hidden md:flex items-center gap-6 text-gray-700 font-medium">
           <Link to="/">
             <li className="hover:text-orange-600 cursor-pointer transition-all duration-300 hover:scale-105 relative group">
@@ -343,9 +360,7 @@ function Navbar() {
             </button>
           </div>
         ) : (
-          /* Normal Mobile Menu Button and Icons */
           <div className="md:hidden flex items-center gap-3">
-            {/* Mobile Food Search */}
             <button
               onClick={handleFoodSearch}
               className="p-2 hover:bg-orange-50 rounded-lg transition-all duration-300 hover:text-orange-600"
@@ -353,7 +368,6 @@ function Navbar() {
               <FiSearch size={20} className="text-gray-700" />
             </button>
             
-            {/* Mobile Cart Icon */}
             <Link to="/add-to-cart" className="relative">
               <FiShoppingBag size={20} className="text-gray-700 hover:text-orange-600 transition-colors duration-300" />
               {cartItemsCount > 0 && (
@@ -372,10 +386,9 @@ function Navbar() {
         )}
       </div>
 
-      {/* Mobile Menu - Updated (removed search from menu) */}
+      {/* Mobile Menu */}
       {menuOpen && (
         <div className="md:hidden bg-white border-t border-orange-100 shadow-inner">
-          {/* Mobile Location Search */}
           <div className="px-4 py-4 border-b border-orange-100" ref={locationRef}>
             <div 
               onClick={() => setMobileLocationOpen(!mobileLocationOpen)}
@@ -408,13 +421,13 @@ function Navbar() {
                   <ul className="bg-white border-2 border-orange-200 max-h-48 overflow-auto shadow-xl rounded-xl">
                     {suggestions.map((place) => (
                       <li
-                        key={place.place_id}
+                        key={place.id}
                         onClick={() => handleSelect(place)}
                         className="px-4 py-3 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 cursor-pointer border-b border-orange-100 last:border-b-0 transition-all duration-200 text-gray-800 font-medium"
                       >
                         <div className="flex items-center gap-3">
                           <FiMapPin size={16} className="text-orange-600" />
-                          <span className="truncate">{place.display_name}</span>
+                          <span className="truncate">{place.place_name}</span>
                         </div>
                       </li>
                     ))}
@@ -438,6 +451,7 @@ function Navbar() {
               <Link to={user ? "/my-account" : "/login"} onClick={() => setMenuOpen(false)}>
                 <button className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white px-4 py-4 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
                   <VscAccount size={20} />
+                    {console.log(user,"navbar")}
                   {user ? "My Account" : "Login / Register"}
                 </button>
               </Link>

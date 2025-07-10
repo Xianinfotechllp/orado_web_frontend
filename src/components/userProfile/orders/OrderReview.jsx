@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Star, Camera, Send, X } from 'lucide-react';
-import { submitItemFeedback } from '../../../apis/feedbackApi';
+import { submitRestaurantFeedback} from '../../../apis/feedbackApi';
 
 const ReviewModal = ({ isOpen, onClose, order }) => {
   const [reviews, setReviews] = useState({});

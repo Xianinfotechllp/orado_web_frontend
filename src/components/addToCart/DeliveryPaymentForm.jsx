@@ -275,8 +275,7 @@ export default function DeliveryPaymentForm({ useWallet }) {
             }}
           />
         )}
-              handleAddressUpdate(form);
-
+         
         {showNewAddressForm && (
           <NewAddressForm
             userId={user._id}
@@ -313,7 +312,7 @@ export default function DeliveryPaymentForm({ useWallet }) {
       </button>
 
       {/* Payment Method Section */}
-      <div className="bg-white border border-gray-300 rounded-lg p-4">
+      {/* <div className="bg-white border border-gray-300 rounded-lg p-4">
         <h2 className="text-black font-medium text-base mb-4">Choose Payment Method</h2>
 
         <div className="space-y-3">
@@ -357,7 +356,7 @@ export default function DeliveryPaymentForm({ useWallet }) {
             "Proceed To Pay"
           )}
         </button>
-      </div>
+      </div> */}
     </div>
   );
 }

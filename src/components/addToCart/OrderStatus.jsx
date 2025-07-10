@@ -46,8 +46,8 @@ export default function OrderStatusPage() {
       return;
     }
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
-    console.log("Connecting to socket at:", socketUrl);
+    const socketUrl = import.meta.env.VITE_SOCKET_URL ;
+    console.log("Connecting to socket at:", socketUrl); 
 
     const socketInstance = io(socketUrl, {
       withCredentials: true,
@@ -453,26 +453,41 @@ export default function OrderStatusPage() {
                 </div>
 
                 {/* Bill Summary */}
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-gray-600">
-                    <span>Subtotal</span>
-                    <span>₹{orderData.subtotal?.toFixed(2) || '0.00'}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Delivery Fee</span>
-                    <span>₹{orderData.deliveryCharge?.toFixed(2) || '0.00'}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>GST & Other Charges</span>
-                    <span>₹{orderData.tax?.toFixed(2) || '0.00'}</span>
-                  </div>
-                  <div className="border-t pt-3">
-                    <div className="flex justify-between text-lg font-semibold text-gray-800">
-                      <span>Total Paid</span>
-                      <span>₹{orderData.totalAmount?.toFixed(2) || '0.00'}</span>
-                    </div>
-                  </div>
-                </div>
+               <div className="space-y-4 mb-6">
+  {/* Subtotal */}
+  <div className="flex justify-between">
+    <span className="text-gray-600">Subtotal</span>
+    <span className="text-gray-800 font-medium">₹{orderData.subtotal?.toFixed(2) || '0.00'}</span>
+  </div>
+
+  {/* Discount */}
+  {orderData.offerDiscount > 0 && (
+    <div className="flex justify-between">
+      <span className="text-gray-600">Offer discount</span>
+      <span className="text-green-600 font-medium">-₹{orderData.offerDiscount?.toFixed(2) || '0.00'}</span>
+    </div>
+  )}
+
+  {/* Delivery Fee */}
+  <div className="flex justify-between">
+    <span className="text-gray-600">Delivery Fee</span>
+    <span className="text-gray-800 font-medium">₹{orderData.deliveryCharge?.toFixed(2) || '0.00'}</span>
+  </div>
+
+  {/* Taxes */}
+  <div className="flex justify-between">
+    <span className="text-gray-600">GST & Other Charges</span>
+    <span className="text-gray-800 font-medium">₹{orderData.tax?.toFixed(2) || '0.00'}</span>
+  </div>
+
+  {/* Total */}
+  <div className="border-t border-gray-200 pt-4 mt-2">
+    <div className="flex justify-between">
+      <span className="text-lg font-bold text-gray-900">Total Paid</span>
+      <span className="text-lg font-bold text-gray-900">₹{orderData.totalAmount?.toFixed(2) || '0.00'}</span>
+    </div>
+  </div>
+</div>
 
                 {/* Payment Method */}
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">

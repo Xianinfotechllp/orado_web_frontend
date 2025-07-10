@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import LocationPicker from "../map/LocationPicker";
 
 export default function EditAddressForm({ address, onClose, onUpdate }) {
@@ -11,16 +11,21 @@ export default function EditAddressForm({ address, onClose, onUpdate }) {
     displayName: address.displayName || "",
     latitude: address.location?.latitude || "",
     longitude: address.location?.longitude || "",
-    addressId: address.addressId,  // fixed here
+    addressId: address.addressId,
   });
 
+  // Add this missing function
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handleLocationSelect = (location) => {
-  
-    setForm((prev) => ({
+  // Memoize the location handler to prevent unnecessary recreations
+  const handleLocationSelect = useCallback((location) => {
+    setForm(prev => ({
       ...prev,
       street: location.street,
       city: location.city,
@@ -28,15 +33,14 @@ export default function EditAddressForm({ address, onClose, onUpdate }) {
       zip: location.zip,
       latitude: location.latitude,
       longitude: location.longitude,
-      displayName: location.displayName,
+      displayName: location.street,
     }));
-  };
+  }, []);
 
   const handleSubmit = async () => {
     try {
-      console.log("fomrt",form)
-    
-      onUpdate(form); // send updated form back to parent
+      console.log("form", form);
+      onUpdate(form);
       onClose();
     } catch (error) {
       console.error("Failed to update address", error);

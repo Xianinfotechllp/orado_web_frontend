@@ -42,6 +42,7 @@ import MerchantDashboard from "./pages/Merchant/MerchantDashboard";
 import 'react-toastify/dist/ReactToastify.css';
 
 import TicketSystemPage from "./pages/UserProfile/TicketSytemPage";
+import LoginWithOtp from "./pages/Auth/LoginwithOtp";
 
 
 
@@ -55,6 +56,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/login-with-otp" element={<LoginWithOtp/>} />
         <Route path="/" element={<Home />} />
         <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils />} />
         <Route path="/faq" element={<Faq />} />
