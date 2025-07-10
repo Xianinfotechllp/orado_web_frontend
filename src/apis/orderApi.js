@@ -57,3 +57,55 @@ export const reorderOrder = async (orderId) => {
   }
 };
 
+// order section for merchant
+// Get orders by merchant/restaurant
+export const getOrdersByMerchant = async (restaurantId) => {
+  try {
+    if (!restaurantId) {
+      throw new Error("restaurantId is required");
+    }
+
+    const response = await apiClient.get(`/order/restaurant/${restaurantId}`);
+    return response.data;
+  } catch (error) {
+    console.error("getOrdersByMerchant error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Update order status
+export const updateOrderStatus = async (orderId, newStatus) => {
+  try {
+    const response = await apiClient.put(`/order/${orderId}/status`, {
+      newStatus
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "updateOrderStatus error:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+
+export const sendOrderDelayReason = async (orderId, delayReason, preparationTime = null) => {
+  try {
+    const requestBody = { delayReason };
+    
+    // Only include preparationTime if it's provided and valid
+    if (preparationTime !== null && typeof preparationTime === 'number' && preparationTime > 0) {
+      requestBody.preparationTime = preparationTime;
+    }
+
+    const response = await apiClient.patch(`/order/${orderId}/delay-reason`, requestBody);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "sendOrderDelayReason error:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
