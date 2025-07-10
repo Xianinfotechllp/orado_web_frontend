@@ -94,6 +94,7 @@ import AutoAllocationPage from "./pages/AgentAdminDashboard/AutoAllocationPage";
 import ThemeSettingsPage from "./pages/AgentAdminDashboard/settings/ThemeSettingsPage/ThemeSettingsPage";
 import MerchantCampaigns from "./pages/Admin/Marketing/pushCampaigns/MerchantCampaigns";
 import AddTemplate from "./pages/AgentAdminDashboard/settings/templates/AddTemplate";
+import TaxesFeesCharges from "./pages/Admin/configure/orderSettings/TaxFeesCharge/TaxesFeesCharges";
 
 function App() {
   // const [count, setCount] = useState(0);
@@ -222,6 +223,9 @@ function App() {
                 <Route path="commission/setup" element={<CommissionPage/>}  />
 
                 <Route path="delivery-settings"  element={<DeliverySettings/>}  />
+
+                <Route path="taxes-charges"  element={<TaxesFeesCharges/>}  />
+
                     
              {/* general settings */}
              <Route path="general/terminology" element={<TerminologyPage/>} />

@@ -566,6 +566,16 @@ const Sidebar = () => {
                       >
                         Commission
                       </Link>
+
+
+    <Link 
+                        to="/admin/dashboard/taxes-charges" 
+                        className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+                      >
+                       Tax,Fee, & Charges
+                      </Link>
+
+
                     </div>
                   )}
                 </div>

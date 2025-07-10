@@ -49,7 +49,7 @@ const AdminLogin = () => {
       } else {
         sessionStorage.setItem("adminToken", token);
       }
-      Navigate("/admin/dashboard");
+      Navigate("/admin/dashboard/order/table");
       toast.success("Login successFull");
       // Redirect to admin dashboard or homepage
     } catch (err) {
