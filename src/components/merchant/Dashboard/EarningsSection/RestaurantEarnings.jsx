@@ -273,7 +273,7 @@ const RestaurantEarnings = () => {
                     </svg>
                   </div>
                 </div>
-                <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Total Revenue</h3>
+                <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Gross Revenue</h3>
                 <p className="text-3xl font-bold text-gray-900 mb-1">₹{actualData.summary?.totalCartTotal?.toLocaleString() ?? '0'}</p>
                 {/* <p className="text-sm text-green-600 font-medium">+12.5% from last month</p> */}
               </div>

@@ -188,7 +188,7 @@ const RestaurantCard = ({ restaurant: initialRestaurant, onClick, onEdit, onDele
         >
           <Info className="w-4 h-4" />
         </button>
-        <button 
+        {/* <button 
           onClick={(e) => {
             e.stopPropagation();
             onEdit(initialRestaurant);
@@ -197,8 +197,8 @@ const RestaurantCard = ({ restaurant: initialRestaurant, onClick, onEdit, onDele
           aria-label="Edit restaurant"
         >
           <Edit className="w-4 h-4" />
-        </button>
-        <button 
+        </button> */}
+        {/* <button 
           onClick={handleDelete}
           disabled={isDeleting}
           className={`p-2 ${isDeleting ? 'text-gray-400' : 'text-red-600 hover:text-red-800'} hover:bg-red-100 rounded-full transition-colors`}
@@ -209,7 +209,7 @@ const RestaurantCard = ({ restaurant: initialRestaurant, onClick, onEdit, onDele
           ) : (
             <Trash2 className="w-4 h-4" />
           )}
-        </button>
+        </button> */}
       </div>
     </div>
   );

@@ -16,14 +16,18 @@ import {
 } from "../../../../apis/restaurantApi";
 import { toast } from 'react-hot-toast';
 import LocationInput from "../Input/LocationInput";
+import RestaurantSlider from "../Slider/RestaurantSlider";
 
-const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
+const RestaurantEdit = ({ onBack, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [useMapLocation, setUseMapLocation] = useState(false);
+
+   const [restaurantId, setRestaurantId] = useState(null);
+  const [currentRestaurantIndex, setCurrentRestaurantIndex] = useState(0);
 
   // Initialize with default opening hours for all days
   const defaultOpeningHours = [
@@ -84,6 +88,49 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
     { value: "cash", label: "Cash on Delivery" },
     { value: "wallet", label: "Wallet" },
   ];
+const handleRestaurantSelect = (restaurant, index) => {
+    setRestaurantId(restaurant._id);
+    setCurrentRestaurantIndex(index);
+    // Reset form data when switching restaurants
+    setFormData({
+      name: "",
+      foodType: "both",
+      address: {
+        street: "",
+        city: "",
+        state: "",
+        zip: "",
+        longitude: "",
+        latitude: "",
+      },
+      openingHours: JSON.stringify(defaultOpeningHours),
+      paymentMethods: ["online"],
+      minOrderAmount: 100,
+      fssaiNumber: "",
+      gstNumber: "",
+      aadharNumber: "",
+      fssaiDoc: null,
+      gstDoc: null,
+      aadharDoc: null,
+      images: [],
+    });
+    setCurrentStep(1);
+    setCompletedSteps(new Set());
+  };
+
+  // Add this handler for when restaurants are loaded
+  const handleRestaurantsLoad = (restaurants) => {
+    if (restaurants.length > 0 && !restaurantId) {
+      setRestaurantId(restaurants[0]._id);
+    }
+  };
+
+
+
+
+
+
+
 
   useEffect(() => {
     const loadRestaurantData = async () => {
@@ -892,16 +939,16 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading restaurant data...</p>
-        </div>
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+  //         <p className="text-gray-600">Loading restaurant data...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -924,6 +971,17 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
             </p>
           </div>
           <div className="w-32"></div> {/* Spacer for balance */}
+        </div>
+
+
+
+           <div className="mb-8">
+          <RestaurantSlider 
+            onRestaurantSelect={handleRestaurantSelect}
+            onRestaurantsLoad={handleRestaurantsLoad}
+            selectedIndex={currentRestaurantIndex}
+            className="mb-6"
+          />
         </div>
 
         {/* Step Progress */}

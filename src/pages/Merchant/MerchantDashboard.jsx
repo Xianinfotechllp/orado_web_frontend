@@ -11,11 +11,10 @@ import OffersManagement from "../../components/merchant/Dashboard/OffersAndCoupo
 import ServiceAreaManagement from "../../components/merchant/Dashboard/ServiceSection/ServiceAreaManagement";
 
 import RestaurantEarnings from "../../components/merchant/Dashboard/EarningsSection/RestaurantEarnings";
-
 import RestaurantChatDashboard from "../../components/merchant/CustomerChats/RestruantChatDashboard";
 import RestaurantAdminChat from "../../components/merchant/AdminRestaurantChat/RestaurantAdminChat";
 import { Menu } from "lucide-react";
-
+import RestaurantEditSection from "../../components/merchant/Dashboard/RestaurantEdit/RestaurantEditSection"
 const MerchantDashboard = () => {
   const [activeTab, setActiveTab] = useState("restaurant");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -25,7 +24,9 @@ const MerchantDashboard = () => {
       case "dashboard":
         return <DashboardOverview />;
       case "earnigs":
-        return <RestaurantEarnings  />;
+        return <RestaurantEarnings  />
+      case "restaurantManagement":
+         return <RestaurantEditSection/>;
       case "menu":
         return <MenuManagement />;
       case "orders":

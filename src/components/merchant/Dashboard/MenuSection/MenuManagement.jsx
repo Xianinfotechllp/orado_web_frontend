@@ -8,16 +8,20 @@ import {
   toggleProductStatus,
 } from "../../../../apis/restaurantApi";
 import { Plus, Edit, Trash2, Utensils, Download, Upload } from "lucide-react";
-import { toast } from 'react-hot-toast';
+import { toast } from "react-hot-toast";
 import MenuAddModal from "./MenuAddModal";
 import MenuEditModal from "./MenuEditModal";
 import RestaurantSlider from "../Slider/RestaurantSlider";
+import CategoryList from "./CategoryList";
+import ProductList from "./ProductList";
+import ProductDetailsCard from "./ProductDetailsCard";
 
 const MenuManagement = () => {
   const [restaurants, setRestaurants] = useState([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [selectedRestaurantIndex, setSelectedRestaurantIndex] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -26,6 +30,7 @@ const MenuManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const fileInputRef = useRef(null);
 
   const currentRestaurantId = selectedRestaurant?.id || null;
@@ -45,6 +50,16 @@ const MenuManagement = () => {
     }
   };
 
+
+
+
+    const handleAddProduct = () => {
+    if (!selectedCategory) {
+      toast.error("Please select a category first");
+      return;
+    }
+    setShowAddModal(true);
+  };
   const fetchRestaurantProducts = async (restaurantId) => {
     try {
       setLoading(true);
@@ -95,19 +110,23 @@ const MenuManagement = () => {
     try {
       setLoading(true);
       const response = await toggleProductStatus(productId);
-      
+
       if (response?.product) {
-        setMenuItems(prevItems => 
-          prevItems.map(item => 
-            item._id === productId 
-              ? { ...item, active: response.product.active } 
+        setMenuItems((prevItems) =>
+          prevItems.map((item) =>
+            item._id === productId
+              ? { ...item, active: response.product.active }
               : item
           )
         );
-        toast.success(`Item is now ${response.product.active ? 'available' : 'unavailable'}`);
+        toast.success(
+          `Item is now ${response.product.active ? "available" : "unavailable"}`
+        );
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to toggle availability");
+      toast.error(
+        error.response?.data?.message || "Failed to toggle availability"
+      );
       console.error("Toggle error:", error);
     } finally {
       setLoading(false);
@@ -115,7 +134,10 @@ const MenuManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!id || !window.confirm("Are you sure you want to delete this product?")) {
+    if (
+      !id ||
+      !window.confirm("Are you sure you want to delete this product?")
+    ) {
       return;
     }
 
@@ -127,7 +149,9 @@ const MenuManagement = () => {
         toast.success("Product deleted successfully");
         setMenuItems((prev) => prev.filter((item) => item._id !== id));
       } else if (response?.message?.includes("permission")) {
-        toast.info("Your deletion request has been submitted for admin approval");
+        toast.info(
+          "Your deletion request has been submitted for admin approval"
+        );
       } else {
         throw new Error(response?.message || "Failed to delete product");
       }
@@ -140,41 +164,48 @@ const MenuManagement = () => {
     }
   };
 
-  const handleCreateProduct = async (productData) => {
-    try {
-      if (!currentRestaurantId) throw new Error("No restaurant selected");
+ const handleCreateProduct = async (productData) => {
+  try {
+    if (!currentRestaurantId) throw new Error("No restaurant selected");
+    if (!productData.categoryId) throw new Error("No category selected");
 
-      const response = await createProduct(currentRestaurantId, productData);
-      const newProduct =
-        response?.data?.product || response?.product || productData;
+    const response = await createProduct(currentRestaurantId, productData);
+    const newProduct = response?.data?.product || response?.product || productData;
 
-      setMenuItems((prev) => [
-        ...prev,
-        {
-          _id: newProduct?._id || Math.random().toString(36).substring(2, 9),
-          name: newProduct?.name || "New Item",
-          description: newProduct?.description || "",
-          price: newProduct?.price || 0,
-          images: Array.isArray(newProduct?.images) ? newProduct.images : [],
-          active: newProduct?.active !== false,
-          foodType: newProduct?.foodType || "Uncategorized",
-          categoryId: newProduct?.categoryId || "",
-          categoryName: newProduct?.categoryName || "Uncategorized",
-        },
-      ]);
+    // Find the category name
+    const category = categories.find(c => c._id === productData.categoryId);
 
-      setShowAddModal(false);
-      toast.success("Menu item created successfully");
-      return response;
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to create product"
-      );
-      throw error;
-    }
-  };
+    setMenuItems((prev) => [
+      ...prev,
+      {
+        _id: newProduct?._id || Math.random().toString(36).substring(2, 9),
+        name: newProduct?.name || "New Item",
+        description: newProduct?.description || "",
+        price: newProduct?.price || 0,
+        images: Array.isArray(newProduct?.images) ? newProduct.images : [],
+        active: newProduct?.active !== false,
+        foodType: newProduct?.foodType || "Uncategorized",
+        categoryId: productData.categoryId,
+        categoryName: category?.name || "Uncategorized",
+        stock: newProduct?.stock ?? "",
+        reorderLevel: newProduct?.reorderLevel ?? "",
+        unit: newProduct?.unit || "piece",
+      },
+    ]);
+
+    setShowAddModal(false);
+    toast.success("Menu item created successfully");
+    return response;
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to create product"
+    );
+    throw error;
+  }
+};
+
 
   const handleAddMenuClick = () => {
     if (currentRestaurantId) {
@@ -187,8 +218,8 @@ const MenuManagement = () => {
   const handleUpdateSuccess = (updatedProduct) => {
     if (!updatedProduct?._id) return;
 
-    setMenuItems(prevItems => 
-      prevItems.map(item => 
+    setMenuItems((prevItems) =>
+      prevItems.map((item) =>
         item._id === updatedProduct._id
           ? {
               ...item,
@@ -202,55 +233,57 @@ const MenuManagement = () => {
               stock: updatedProduct.stock ?? item.stock,
               reorderLevel: updatedProduct.reorderLevel ?? item.reorderLevel,
               unit: updatedProduct.unit || item.unit,
-              images: Array.isArray(updatedProduct.images) 
-                ? updatedProduct.images 
+              images: Array.isArray(updatedProduct.images)
+                ? updatedProduct.images
                 : item.images,
               active: updatedProduct.active !== false,
             }
           : item
       )
     );
-    
+
     if (!updatedProduct.isOptimistic) {
       setEditingProduct(null);
       setShowEditModal(false);
     }
   };
 
-const handleExportToExcel = async () => {
-  if (!currentRestaurantId) {
-    toast.warning("Please select a restaurant first");
-    return;
-  }
+  const handleExportToExcel = async () => {
+    if (!currentRestaurantId) {
+      toast.warning("Please select a restaurant first");
+      return;
+    }
 
-  try {
-    setIsExporting(true);
-    const blob = await exportRestaurantProducts(currentRestaurantId);
+    try {
+      setIsExporting(true);
+      const blob = await exportRestaurantProducts(currentRestaurantId);
 
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute(
-      'download',
-      `products-${currentRestaurantId}-${new Date().toISOString().split('T')[0]}.xlsx`
-    );
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `products-${currentRestaurantId}-${
+          new Date().toISOString().split("T")[0]
+        }.xlsx`
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
 
-    toast.success("Products exported successfully");
-  } catch (error) {
-    console.log(error)
-    toast.error(
-      error.response?.data?.message ||
-      error.message ||
-      "Failed to export products"
-    );
-  } finally {
-    setIsExporting(false);
-  }
-};
+      toast.success("Products exported successfully");
+    } catch (error) {
+      console.log(error);
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to export products"
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleImportClick = () => {
     if (!currentRestaurantId) {
@@ -260,34 +293,34 @@ const handleExportToExcel = async () => {
     fileInputRef.current.click();
   };
 
-const handleFileUpload = async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-  try {
-    setIsImporting(true);
-    const formData = new FormData();
-    formData.append('file', file);
+    try {
+      setIsImporting(true);
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const response = await bulkUpdateProducts(currentRestaurantId, formData);
+      const response = await bulkUpdateProducts(currentRestaurantId, formData);
 
-    if (response.success) {
-      toast.success(`Updated ${response.updatedCount} products successfully`);
-      await fetchRestaurantProducts(currentRestaurantId);
-    } else {
-      throw new Error(response.message || "Bulk update failed");
+      if (response.success) {
+        toast.success(`Updated ${response.updatedCount} products successfully`);
+        await fetchRestaurantProducts(currentRestaurantId);
+      } else {
+        throw new Error(response.message || "Bulk update failed");
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to import products"
+      );
+    } finally {
+      setIsImporting(false);
+      event.target.value = "";
     }
-  } catch (error) {
-    toast.error(
-      error.response?.data?.message ||
-      error.message ||
-      "Failed to import products"
-    );
-  } finally {
-    setIsImporting(false);
-    event.target.value = '';
-  }
-};
+  };
 
   // Group menu items by category
   const groupedMenuItems = menuItems.reduce((acc, item) => {
@@ -330,11 +363,13 @@ const handleFileUpload = async (event) => {
       <div className="flex justify-end gap-4 mb-6">
         <button
           onClick={handleExportToExcel}
-          disabled={!currentRestaurantId || menuItems.length === 0 || isExporting}
+          disabled={
+            !currentRestaurantId || menuItems.length === 0 || isExporting
+          }
           className={`flex items-center gap-2 px-4 py-2 rounded-md ${
             !currentRestaurantId || menuItems.length === 0
-              ? 'bg-gray-300 cursor-not-allowed'
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
+              ? "bg-gray-300 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600 text-white"
           }`}
         >
           {isExporting ? (
@@ -365,11 +400,41 @@ const handleFileUpload = async (event) => {
         <div className="text-center py-12 text-red-500">{error}</div>
       ) : menuItems.length > 0 ? (
         <div className="space-y-8">
-          {Object.entries(groupedMenuItems).map(([categoryName, items]) => (
+          <div className="flex ">
+            <CategoryList
+              restaurantId={selectedRestaurant.id}
+              onSelectCategory={(category) => {
+                setSelectedCategory(category);
+                console.log(category, "222");
+              }}
+            />
+  <ProductList
+  selectedRestaurant={selectedRestaurant}
+  selectedCategory={selectedCategory}
+  onSelectProduct={(product) => {
+    setSelectedProduct(product);
+  }}
+  onEditProduct={(product) => {
+    setEditingProduct(product);
+    setShowEditModal(true);
+  }}
+  onDeleteProduct={handleDelete}
+  onToggleStatus={handleToggleAvailability}
+  categories={categories}
+  onAddProductClick={() => setShowAddModal(true)}
+/>
+
+              <ProductDetailsCard product={selectedProduct} />
+
+
+          </div>
+          {/* {Object.entries(groupedMenuItems).map(([categoryName, items]) => (
             <div key={categoryName} className="space-y-4">
               <h2 className="text-xl font-bold text-gray-800 border-b pb-2">
                 {categoryName}
               </h2>
+
+
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {items.map((item) => (
                   <div
@@ -451,7 +516,7 @@ const handleFileUpload = async (event) => {
                 ))}
               </div>
             </div>
-          ))}
+          ))} */}
         </div>
       ) : (
         <div className="text-center py-12">
@@ -463,7 +528,7 @@ const handleFileUpload = async (event) => {
       )}
 
       {/* Add New Item Button */}
-      <div className="fixed bottom-6 right-6 z-10">
+      {/* <div className="fixed bottom-6 right-6 z-10">
         <button
           className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center transition-all hover:shadow-xl"
           onClick={handleAddMenuClick}
@@ -478,7 +543,7 @@ const handleFileUpload = async (event) => {
             </>
           )}
         </button>
-      </div>
+      </div> */}
 
       {/* Modals */}
       {showAddModal && currentRestaurantId && (

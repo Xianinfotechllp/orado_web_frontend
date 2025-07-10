@@ -125,51 +125,131 @@ export const createRestaurant = async (formData) => {
 };
 
 
-  export const updateRestaurant = async (restaurantId, formData) => {
+
+export const updateRestaurantImages = async (restaurantId, formData) => {
   try {
-    // Create a new FormData object to ensure clean data
-    const requestData = new FormData();
-
-    // Process each field in the original formData
-    for (let [key, value] of formData.entries()) {
-      // Special handling for address object
-      if (key === 'address') {
-        try {
-          const address = typeof value === 'string' ? JSON.parse(value) : value;
-          // Ensure longitude and latitude are floats
-          if (address.longitude) address.longitude = parseFloat(address.longitude);
-          if (address.latitude) address.latitude = parseFloat(address.latitude);
-          requestData.append(key, JSON.stringify(address));
-        } catch (e) {
-          console.error('Error processing address:', e);
-          requestData.append(key, value); // Fallback to original value
-        }
+    const response = await apiClient.put(
+      `/restaurants/${restaurantId}/images`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       }
-      // Handle other fields normally
-      else {
-        requestData.append(key, value);
-      }
-    }
-
-    console.log("Updating restaurant with processed data:",requestData );
-    // Log the processed data for debugging
-    for (let [key, value] of requestData.entries()) {
-      console.log(key, value);
-    }
-
-    const response = await apiClient.put(`/restaurants/${restaurantId}`, requestData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-
-    console.log("Restaurant updated:", response.data);
+    );
     return response.data;
   } catch (error) {
-    console.error("Error updating restaurant:", error.response?.data || error.message);
-    throw error;
+    console.error("Error updating images:", error);
+    throw error.response?.data || error;
   }
 };
+
+
+
+
+export const updateRestaurant = async (restaurantId, formPayload) => {
+  try {
+    const response = await apiClient.put(`/restaurants/${restaurantId}`, formPayload, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error updating restaurant:", error.response?.data || error.message);
+    throw error; // rethrow so caller can handle it
+  }
+};
+
+
+
+
+export const updateRestaurantBasicInfo = async (restaurantId, basicData) => {
+  try {
+    const response = await apiClient.put(`/restaurants/${restaurantId}/basic`, basicData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating basic info:", error);
+    throw error.response?.data || error;
+  }
+};
+
+
+export const updateRestaurantLocation = async (restaurantId, locationData) => {
+  try {
+    const response = await apiClient.put(`/restaurants/${restaurantId}/location`, locationData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating restaurant location:", error);
+    throw error.response?.data || error;
+  }
+}
+
+
+export const updateRestaurantOpeningHours = async (restaurantId, openingHours) => {
+  try {
+    const response = await apiClient.put(
+      `/restaurants/${restaurantId}/opening-hours`,
+      { openingHours }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating opening hours:", error);
+    throw error.response?.data || error;
+  }
+};
+
+
+
+
+
+
+
+//   export const updateRestaurant = async (restaurantId, formData) => {
+//   try {
+//     // Create a new FormData object to ensure clean data
+//     const requestData = new FormData();
+
+//     // Process each field in the original formData
+//     for (let [key, value] of formData.entries()) {
+//       // Special handling for address object
+//       if (key === 'address') {
+//         try {
+//           const address = typeof value === 'string' ? JSON.parse(value) : value;
+//           // Ensure longitude and latitude are floats
+//           if (address.longitude) address.longitude = parseFloat(address.longitude);
+//           if (address.latitude) address.latitude = parseFloat(address.latitude);
+//           requestData.append(key, JSON.stringify(address));
+//         } catch (e) {
+//           console.error('Error processing address:', e);
+//           requestData.append(key, value); // Fallback to original value
+//         }
+//       }
+//       // Handle other fields normally
+//       else {
+//         requestData.append(key, value);
+//       }
+//     }
+
+//     console.log("Updating restaurant with processed data:",requestData );
+//     // Log the processed data for debugging
+//     for (let [key, value] of requestData.entries()) {
+//       console.log(key, value);
+//     }
+
+//     const response = await apiClient.put(`/restaurants/${restaurantId}`, requestData, {
+//       headers: {
+//         'Content-Type': 'multipart/form-data'
+//       }
+//     });
+
+//     console.log("Restaurant updated:", response.data);
+//     return response.data;
+//   } catch (error) {
+//     console.error("Error updating restaurant:", error.response?.data || error.message);
+//     throw error;
+//   }
+// };
 
 export const deleteRestaurant = async (restaurantId) => {
   try {
@@ -310,6 +390,28 @@ export const getRestaurantProducts = async (restaurantId) => {
     throw error;
   }
 };
+
+
+
+
+
+
+
+
+
+
+export const getCategoryProducts = async (restaurantId, categoryId) => {
+  try {
+    const response = await apiClient.get(`/restaurants/${restaurantId}/products/category/${categoryId}`);
+    return response.data.data; // return the products array directly
+  } catch (error) {
+    console.error("Error fetching category products:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+
 
 // update menu
 
@@ -472,7 +574,7 @@ export const deleteRestaurantCategory = async (categoryId, restaurantId) => {
 
 export const getRestaurantEarningSummary = async (restaurantId, timeFrame = '') => {
   try {
-    const response = await apiClient.get(`/restaurants/${restaurantId}/earnings`, {
+    const response = await apiClient.get(`/restaurants/${restaurantId}/earningsv2`, {
       params: { 
         period: timeFrame,
         page: 1,

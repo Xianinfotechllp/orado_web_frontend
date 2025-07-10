@@ -24,7 +24,9 @@ const MerchantSidebar = ({ activeTab, setActiveTab, mobileSidebarOpen, setMobile
     { id: "restaurant", label: "My Restaurant", icon: Home },
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
    { id: "earnigs", label: "Earnigs", icon: BarChart3 },
+   { id: "restaurantManagement", label: "Restaurant Edit", icon: BarChart3 },
 
+   
     { id: "menu", label: "Menu Management", icon: ShoppingBag },
     { id: "categories", label: "Category", icon: Grid3X3 },
     { id: "orders", label: "Orders", icon: ClipboardList },

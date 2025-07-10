@@ -3,11 +3,12 @@ import mapboxgl from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import axios from "axios";
 import "mapbox-gl/dist/mapbox-gl.css";
-import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css"
+import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
-mapboxgl.accessToken = "pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w";
+mapboxgl.accessToken =
+  "pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w";
 
-const LocationPicker = ({ onSelectLocation }) => {
+const LocationPicker = ({ onSelectLocation, initialCoordinates }) => {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -45,54 +46,64 @@ const LocationPicker = ({ onSelectLocation }) => {
   }, []);
 
   useEffect(() => {
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: [76.2673, 9.9312],
-      zoom: 13,
-    });
+  const map = new mapboxgl.Map({
+    container: mapContainerRef.current,
+    style: "mapbox://styles/mapbox/streets-v12",
+    center: [76.2673, 9.9312],
+    zoom: 13,
+  });
 
-    mapRef.current = map;
+  mapRef.current = map;
 
-    const geocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      mapboxgl: mapboxgl,
-      placeholder: "Search for a location",
-      countries: "IN",
-      marker: false,
-    });
+  const geocoder = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    mapboxgl: mapboxgl,
+    placeholder: "Search for a location",
+    countries: "IN",
+    marker: false,
+  });
 
-    map.addControl(geocoder, "top-left");
+  map.addControl(geocoder, "top-left");
 
-    geocoder.on("result", (e) => {
-      const { center } = e.result;
+  geocoder.on("result", (e) => {
+    const { center } = e.result;
 
-      if (markerRef.current) markerRef.current.remove();
+    if (markerRef.current) markerRef.current.remove();
 
-      const marker = new mapboxgl.Marker().setLngLat(center).addTo(map);
-      markerRef.current = marker;
+    const marker = new mapboxgl.Marker().setLngLat(center).addTo(map);
+    markerRef.current = marker;
 
-      map.flyTo({ center, zoom: 14 });
-      reverseGeocode(center[0], center[1]);
-    });
+    map.flyTo({ center, zoom: 14 });
+    reverseGeocode(center[0], center[1]);
+  });
 
-    map.on("click", (e) => {
-      const { lng, lat } = e.lngLat;
+  map.on("click", (e) => {
+    const { lng, lat } = e.lngLat;
 
-      if (markerRef.current) {
-        markerRef.current.remove();
-      }
+    if (markerRef.current) {
+      markerRef.current.remove();
+    }
 
-      const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
-      markerRef.current = marker;
+    const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
+    markerRef.current = marker;
 
-      reverseGeocode(lng, lat);
-    });
+    reverseGeocode(lng, lat);
+  });
 
-    return () => {
-      map.remove();
-    };
-  }, [reverseGeocode]);
+  // ✅ move this inside after map is initialized
+  if (initialCoordinates && initialCoordinates.length === 2) {
+    const [lng, lat] = initialCoordinates;
+    reverseGeocode(lng, lat);
+
+    const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
+    markerRef.current = marker;
+    map.flyTo({ center: [lng, lat], zoom: 14 });
+  }
+
+  return () => {
+    map.remove();
+  };
+}, [initialCoordinates, reverseGeocode]);
 
   const handleConfirmLocation = () => {
     if (selectedLocation) {
@@ -121,12 +132,17 @@ const LocationPicker = ({ onSelectLocation }) => {
       <div className="p-3 border-t text-sm bg-gray-50">
         {selectedLocation ? (
           <div>
-            <strong>📍 Selected Address:</strong><br />
-            {selectedLocation.street}<br />
-            {selectedLocation.city}, {selectedLocation.state} {selectedLocation.zip}
+            <strong>📍 Selected Address:</strong>
+            <br />
+            {selectedLocation.street}
+            <br />
+            {selectedLocation.city}, {selectedLocation.state}{" "}
+            {selectedLocation.zip}
           </div>
         ) : (
-          <span className="text-gray-500">Click or search on the map to select a location</span>
+          <span className="text-gray-500">
+            Click or search on the map to select a location
+          </span>
         )}
       </div>
     </div>
