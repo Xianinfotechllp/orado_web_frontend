@@ -53,3 +53,33 @@
 .animate-bounce {
   animation: bounce 1s infinite;
 }
+
+
+html, body, #root {
+  height: 100%;
+}
+
+/* Better sticky behavior */
+.sticky-sidebar {
+  position: sticky;
+  top: 4rem; /* 64px */
+  height: calc(100vh - 4rem);
+  overflow-y: auto;
+}
+
+/* Smooth scrolling */
+.main-content {
+  scroll-behavior: smooth;
+}
+
+/* Mobile optimization */
+@media (max-width: 1023px) {
+  .mobile-bottom-sheet {
+    max-height: 30vh;
+    transition: transform 0.3s ease-out;
+  }
+  
+  .mobile-bottom-sheet.closed {
+    transform: translateY(100%);
+  }
+}
