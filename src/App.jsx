@@ -87,6 +87,13 @@ import MerchantCataloguePage from "./pages/Admin/Restaurants/CataloguePage";
 import GeofencePage from "./pages/Admin/configure/cityConfig/GeofencePage";
 import GeofenceAdder from "./pages/Admin/configure/cityConfig/GeofenceAdder";
 import CityList from "./pages/Admin/configure/cityConfig/CityList";
+import TemplatesPage from "./pages/AgentAdminDashboard/settings/templates/TemplatesPage";
+import SettingsPageLayout from "./pages/AgentAdminDashboard/SettingsPageLayout";
+import AllocationMethodSelector from "./components/AgentAdminDashboard/SettingPage/AutoAllocation/AllocationMethodSelector";
+import AutoAllocationPage from "./pages/AgentAdminDashboard/AutoAllocationPage";
+import ThemeSettingsPage from "./pages/AgentAdminDashboard/settings/ThemeSettingsPage/ThemeSettingsPage";
+import MerchantCampaigns from "./pages/Admin/Marketing/pushCampaigns/MerchantCampaigns";
+import AddTemplate from "./pages/AgentAdminDashboard/settings/templates/AddTemplate";
 
 function App() {
   // const [count, setCount] = useState(0);
@@ -189,6 +196,8 @@ function App() {
                 {/* push campings */}
                 <Route path="campaigns-customer" element={<CustomerCampaigns/>} />
                 <Route path="campaigns-restaurant" element={<RestaurantCampaigns/>} />
+                <Route path="campaigns-merchant" element={<MerchantCampaigns/>} />
+                
 
 
 
@@ -265,9 +274,25 @@ function App() {
     
 </Route>
 
-<Route path="/admin/agent-dashboard/settings" element={<AgentDashboardSettings />} />
+{/* <Route path="/admin/agent-dashboard/settings" element={<AgentDashboardSettings />} /> */}
+
+{/* <Route path="/admin/agent-dashboard/settings/template"  element={<TemplatesPage/>}   /> */}
+
+<Route path="/admin/agent-dashboard/settings" element={<SettingsPageLayout />}>
 
 
+     <Route path="allocation-method" element={<AutoAllocationPage/>}  />
+     <Route path="template"  element={<TemplatesPage/>}/>
+     <Route path="template/add"  element={<AddTemplate/>}/>
+
+     <Route path="theme-settings" element={<ThemeSettingsPage/>}  />
+    
+  {/* <Route path="preferences" element={<PreferencesPage />} /> */}
+  {/* <Route path="theme" element={<ThemeSettingsPage />} />
+  <Route path="profile" element={<ProfilePage />} />
+  <Route path="geo-fence" element={<GeoFencePage />} />
+  <Route path="auto-allocation" element={<AutoAllocationPage />} /> */}
+</Route>
 
 {/* manager logins */}
     <Route path="/manger/login" element={<ManagerLogin/>}/>

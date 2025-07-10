@@ -253,6 +253,15 @@ const Sidebar = () => {
                       >
                         Promo codes
                       </Link>
+
+
+
+                         <Link 
+                        to="promotions-discount" 
+                        className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+                      >
+                     Discount
+                      </Link>
                       <Link 
                         to="promotion-loyalty-points" 
                         className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
@@ -285,10 +294,10 @@ const Sidebar = () => {
                         Customer
                       </Link>
                       <Link 
-                        to="campaigns-restaurant" 
+                        to="campaigns-merchant" 
                         className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
                       >
-                        Restaurant
+                        merchant
                       </Link>
                     </div>
                   )}

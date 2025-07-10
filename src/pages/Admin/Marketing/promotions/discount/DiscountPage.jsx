@@ -2,16 +2,23 @@ import React, { useEffect, useState } from "react";
 import EditDiscountModal from "./Editdscoutemodesl";
 import ProductWiseDiscount from "./ProductWiseDiscount";
 import { fetchRestaurantsDropdown } from "../../../../../apis/adminApis/adminFuntionsApi";
+import { getProductDiscounts, getRestaurantDiscounts } from "../../../../../apis/adminApis/discountApi";
+import SetRestaurantDiscountModal from "./SetRestaurantDiscountModal";
 
 const DiscountPage = () => {
   // State management
   const [showEditModal, setShowEditModal] = useState(false);
   const [showProductWiseModal, setShowProductWiseModal] = useState(false);
   const [restaurants, setRestaurants] = useState([]);
-  const [selectedRestaurant, setSelectedRestaurant] = useState("");
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDiscountLoading, setIsDiscountLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const [restaurantDiscounts, setRestaurantDiscounts] = useState([]);
+  const [productDiscounts, setProductDiscounts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
   // Fetch restaurants data
   useEffect(() => {
     const loadRestaurants = async () => {
@@ -31,9 +38,10 @@ const DiscountPage = () => {
           restaurantsData = response.data;
         }
 
-        setRestaurants(restaurantsData);
-        
-        if (restaurantsData.length > 0) {
+        if (restaurantsData.length === 0) {
+          setError("No restaurants available");
+        } else {
+          setRestaurants(restaurantsData);
           setSelectedRestaurant(restaurantsData[0]._id);
         }
       } catch (err) {
@@ -48,8 +56,55 @@ const DiscountPage = () => {
     loadRestaurants();
   }, []);
 
+  useEffect(() => {
+    if (!selectedRestaurant) return;
+
+    const fetchDiscounts = async () => {
+      try {
+        setIsDiscountLoading(true);
+        setError(null);
+        
+        const [restaurantDiscountRes, productDiscountRes] = await Promise.all([
+          getRestaurantDiscounts(selectedRestaurant),
+          getProductDiscounts(selectedRestaurant)
+        ]);
+
+        setRestaurantDiscounts(restaurantDiscountRes.data || []);
+        setProductDiscounts(productDiscountRes.data || []);
+      } catch (error) {
+        console.error("Error fetching discounts:", error);
+        setError("Failed to fetch discounts. Please try again.");
+        setRestaurantDiscounts([]);
+        setProductDiscounts([]);
+      } finally {
+        setIsDiscountLoading(false);
+      }
+    };
+
+    fetchDiscounts();
+  }, [selectedRestaurant]);
+
   const handleRestaurantChange = (e) => {
     setSelectedRestaurant(e.target.value);
+  };
+
+  // Pagination calculations
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProductDiscounts = productDiscounts.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(productDiscounts.length / itemsPerPage);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
   };
 
   return (
@@ -93,7 +148,7 @@ const DiscountPage = () => {
               <div className="text-red-500 text-sm mr-4">{error}</div>
             ) : (
               <select 
-                value={selectedRestaurant}
+                value={selectedRestaurant || ''}
                 onChange={handleRestaurantChange}
                 disabled={isLoading || restaurants.length === 0}
                 className={`border border-gray-300 rounded-md px-4 py-2 mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -101,13 +156,13 @@ const DiscountPage = () => {
                 }`}
               >
                 {isLoading ? (
-                  <option>Loading restaurants...</option>
+                  <option value="">Loading restaurants...</option>
                 ) : restaurants.length === 0 ? (
-                  <option>No restaurants available</option>
+                  <option value="">No restaurants available</option>
                 ) : (
                   restaurants.map((restaurant) => (
                     <option key={restaurant._id} value={restaurant._id}>
-                      {restaurant.name.trim()}
+                      {restaurant.name?.trim() || 'Unnamed Restaurant'}
                     </option>
                   ))
                 )}
@@ -116,81 +171,108 @@ const DiscountPage = () => {
           </div>
         </div>
 
-        <div className="flex justify-end mb-6 space-x-3">
-          <button 
-            onClick={() => setShowEditModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            disabled={isLoading || restaurants.length === 0}
-          >
-            Edit Discount
-          </button>
-          <button 
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
-            disabled={isLoading || restaurants.length === 0}
-          >
-            Delete
-          </button>
-          <button 
-            className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50"
-            disabled={isLoading || restaurants.length === 0}
-          >
-            Disable
-          </button>
-        </div>
+   {/* Main Discount Section - Updated Button Group */}
+<div className="flex justify-end mb-6 space-x-3">
+  {restaurantDiscounts.length === 0 ? (
+    <button 
+      onClick={() => setShowEditModal(true)}
+      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+      disabled={isLoading || isDiscountLoading || restaurants.length === 0 || !selectedRestaurant}
+    >
+      Set Discount
+    </button>
+  ) : (
+    <>
+      <button 
+        onClick={() => setShowEditModal(true)}
+        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+        disabled={isLoading || isDiscountLoading || restaurants.length === 0 || !selectedRestaurant}
+      >
+        Edit Discount
+      </button>
+      <button 
+        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+        disabled={isLoading || isDiscountLoading || restaurants.length === 0 || !selectedRestaurant}
+      >
+        Delete
+      </button>
+      <button 
+        className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50"
+        disabled={isLoading || isDiscountLoading || restaurants.length === 0 || !selectedRestaurant}
+      >
+        Disable
+      </button>
+    </>
+  )}
+</div>
 
-        {showEditModal && (
+        {showEditModal && selectedRestaurant && (
           <EditDiscountModal
             onClose={() => setShowEditModal(false)}
             onSave={(data) => {
               console.log("Saved data:", data);
               setShowEditModal(false);
+              // You might want to refetch discounts here
             }}
             selectedRestaurant={selectedRestaurant}
+            initialData={restaurantDiscounts[0]} // Pass existing data if editing
           />
         )}
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
-                  Value
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
-                  Valid From
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
-                  Valid To
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Test Discount
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  10%
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  Till *tee
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  June 26 2025
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  June 27 2025
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        {isDiscountLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        ) : restaurantDiscounts.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            No store discounts available for this restaurant
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
+                    Value
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
+                    Description
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
+                    Valid From
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
+                    Valid To
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {restaurantDiscounts.map((discount, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {discount.name || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {discount.value ? `${discount.value}%` : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {discount.description || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(discount.validFrom)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(discount.validTo)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       {/* Product Wise Discount Section */}
@@ -200,127 +282,168 @@ const DiscountPage = () => {
           <button 
             onClick={() => setShowProductWiseModal(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
-            disabled={isLoading || restaurants.length === 0}
+            disabled={isLoading || isDiscountLoading || restaurants.length === 0 || !selectedRestaurant}
           >
             Add Discount
           </button>
         </div>
 
-        {showProductWiseModal && (
+        {showProductWiseModal && selectedRestaurant && (
           <ProductWiseDiscount
             onClose={() => setShowProductWiseModal(false)}
             onSave={(data) => {
               console.log("Saving discount:", data);
               setShowProductWiseModal(false);
+              // You might want to refetch product discounts here
             }}
             selectedRestaurant={selectedRestaurant}
           />
         )}
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
-                  Value
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
-                  Valid From
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
-                  Valid To
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
-                  Max Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  You earned it.
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  20%
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  1st Anniversary gift for loyal customers.
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  May 10 2024
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  May 12 2024
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  ₹400.00
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                    </svg>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">1</span> to <span className="font-medium">1</span> of{' '}
-                <span className="font-medium">1</span> results
-              </p>
-            </div>
-            <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <button
-                  disabled
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <span className="sr-only">Previous</span>
-                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </button>
-                <button
-                  aria-current="page"
-                  className="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-                >
-                  1
-                </button>
-                <button
-                  disabled
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <span className="sr-only">Next</span>
-                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </nav>
-            </div>
+        {isDiscountLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           </div>
-        </div>
+        ) : productDiscounts.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            No product discounts available for this restaurant
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
+                      Value
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
+                      Description
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
+                      Valid From
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
+                      Valid To
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
+                      Max Amount
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/7">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {currentProductDiscounts.map((discount, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {discount.name || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {discount.value ? `${discount.value}%` : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {discount.description || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDate(discount.validFrom)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDate(discount.validTo)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {discount.maxAmount ? `₹${discount.maxAmount.toFixed(2)}` : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{' '}
+                      <span className="font-medium">{Math.min(indexOfLastItem, productDiscounts.length)}</span> of{' '}
+                      <span className="font-medium">{productDiscounts.length}</span> results
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                          currentPage === 1 ? 'text-gray-300' : 'text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="sr-only">Previous</span>
+                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            currentPage === page
+                              ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                          currentPage === totalPages ? 'text-gray-300' : 'text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="sr-only">Next</span>
+                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </section>
+     {showSetDiscountModal && (
+  <SetRestaurantDiscountModal
+    onClose={() => setShowSetDiscountModal(false)}
+    restaurantId={selectedRestaurant}
+    onDiscountCreated={(newDiscount) => {
+      // refresh your restaurant discounts state if you want
+      console.log("New discount created:", newDiscount);
+    }}
+  />
+)}
     </div>
   );
 };
