@@ -783,6 +783,8 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
           </label>
         </div>
 
+        
+
         {/* Checkout Button */}
         {items.length > 0 && (
           <button
