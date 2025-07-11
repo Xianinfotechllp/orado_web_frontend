@@ -14,11 +14,11 @@ function Login() {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
     if (!email || !password) {
       setMessage("Please fill in all fields");
       return;
@@ -73,16 +73,6 @@ function Login() {
                 className="border border-gray-300 p-3 rounded outline-none w-full focus:border-l-4 focus:border-[#EA4424]"
               />
 
-              <div className="flex items-center justify-between">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-4 w-4 text-[#EA4424] focus:ring-[#EA4424] border-gray-300 rounded"
-                  />
-                  <span className="text-gray-700 text-sm">Remember me</span>
-                </label>
               <div className="flex items-center justify-between">
                 <label className="flex items-center space-x-2">
                   <input
