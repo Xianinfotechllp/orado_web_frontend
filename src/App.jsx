@@ -43,6 +43,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import TicketSystemPage from "./pages/UserProfile/TicketSytemPage";
 import LoginWithOtp from "./pages/Auth/LoginwithOtp";
+import LoyalityPointsPage from "./pages/UserProfile/LoyalityPointsPage";
 
 
 
@@ -101,6 +102,9 @@ function App() {
         } />
         <Route path="/my-account/wallet" element={
           <ProtectedRoute><WalletTopUpPage /></ProtectedRoute>
+        } />
+        <Route path="/my-account/loyality" element={
+          <ProtectedRoute><LoyalityPointsPage /></ProtectedRoute>
         } />
 
         <Route

@@ -9,7 +9,8 @@ import {
   Settings,
   LogOut,
   Wallet,
-  Ticket 
+  Ticket ,
+  BadgeCheck
 } from 'lucide-react';
 
 const SidebarItem = ({ name, path }) => {
@@ -33,6 +34,8 @@ const SidebarItem = ({ name, path }) => {
         return <Ticket className={iconClass} />;
       case 'settings':
         return <Settings className={iconClass} />;
+      case 'loyality points':
+        return <BadgeCheck className={iconClass} />;
       default:
         return <LogOut className={iconClass} />;
     }

@@ -8,6 +8,7 @@ import RestaurantReviews from "../../components/home/RestaurantReview";
 import { Star, MessageSquare, X } from "lucide-react";
 import RestaurantMenuSidebar from "../../components/restaurantDetails/MenuSidebar";
 import MyBasket from "../../components/addToCart/MyBasket";
+import CartSummary from "../../components/addToCart/CartSummary";
 
 function RestaurantDetails() {
   const { restaurantId } = useParams();
@@ -243,7 +244,7 @@ function RestaurantDetails() {
             <p className="text-sm text-gray-500">Review your selections</p>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
-            <MyBasket useWallet={useWallet} setUseWallet={setUseWallet} />
+            <CartSummary useWallet={useWallet} setUseWallet={setUseWallet} />
           </div>
         </div>
 
@@ -293,7 +294,7 @@ function RestaurantDetails() {
 
             {/* Cart Content */}
             <div className="max-h-[60vh] overflow-y-auto">
-              <MyBasket useWallet={useWallet} setUseWallet={setUseWallet} />
+              <CartSummary useWallet={useWallet} setUseWallet={setUseWallet} />
             </div>
           </div>
         </div>

@@ -11,6 +11,7 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
+  Gift
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { getBillSummary, placeOrder } from "../../apis/orderApi";
@@ -47,10 +48,37 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [estimatedDelivery, setEstimatedDelivery] = useState("60-70 mins");
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0); 
+  const [useLoyaltyPoints, setUseLoyaltyPoints] = useState(false);
 
   const user = useSelector((state) => state.auth.user);
   const cartId = useSelector((state) => state.cart.cartId);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
+
+  // Fetch wallet balance and loyalty points
+  const fetchWalletData = async () => {
+    try {
+      setError(null);
+      setWalletLoading(true);
+      
+      // Fetch wallet balance
+      const walletRes = await getWalletBalance();
+      setWalletBalance(walletRes.walletBalance);
+      
+      // Fetch loyalty points (new)
+      const loyaltyRes = await getLoyaltyPoints();
+      setLoyaltyPoints(loyaltyRes.points || 0);
+      
+      if (walletRes.walletBalance <= 0) {
+        setUseWallet(false);
+      }
+    } catch (err) {
+      console.error("Failed to load wallet data:", err);
+      setError("Failed to load wallet data.");
+    } finally {
+      setWalletLoading(false);
+    }
+  };
 
   // Fetch bill summary
   const fetchBill = async (cartId) => {
@@ -116,6 +144,10 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   }
 };
 
+  useEffect(() => {
+      fetchWalletData();
+    }, []);
+
   // Fetch cart data
   const fetchCartData = async () => {
     if (!user?._id) return;
@@ -146,26 +178,26 @@ export default function MyBasket({ useWallet, setUseWallet }) {
     }
   };
 
-  const fetchWalletBalance = async () => {
-    try {
-      setError(null);
-      setWalletLoading(true);
-      const res = await getWalletBalance();
-      setWalletBalance(res.walletBalance);
-      if (res.walletBalance <= 0) {
-        setUseWallet(false);
-      }
-    } catch (err) {
-      console.error("Failed to load wallet balance:", err);
-      setError("Failed to load wallet balance.");
-    } finally {
-      setWalletLoading(false);
-    }
-  };
+  // const fetchWalletBalance = async () => {
+  //   try {
+  //     setError(null);
+  //     setWalletLoading(true);
+  //     const res = await getWalletBalance();
+  //     setWalletBalance(res.walletBalance);
+  //     if (res.walletBalance <= 0) {
+  //       setUseWallet(false);
+  //     }
+  //   } catch (err) {
+  //     console.error("Failed to load wallet balance:", err);
+  //     setError("Failed to load wallet balance.");
+  //   } finally {
+  //     setWalletLoading(false);
+  //   }
+  // };
 
-  useEffect(() => {
-    fetchWalletBalance();
-  }, []);
+  // useEffect(() => {
+  //   fetchWalletBalance();
+  // }, []);
 
   useEffect(() => {
     fetchCartData();
@@ -188,7 +220,7 @@ useEffect(() => {
     }, 500); // 500ms debounce
     
     return () => clearTimeout(timer);
-  }, [selectedAddress]);
+  }, [selectedAddress, useLoyaltyPoints]);
 
 
 
@@ -214,6 +246,7 @@ const handlePlaceOrder = async () => {
         userId: user._id,
         paymentMethod,
         useWallet,
+        useLoyaltyPoints,
         cookingInstructions,
         longitude: selectedAddress.location.longitude,
         latitude: selectedAddress.location.latitude,
@@ -278,6 +311,7 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
             paymentStatus: "success",
             razorpayPaymentId: response.razorpay_payment_id,
             useWallet,
+            useLoyaltyPoints,
             cookingInstructions,
             longitude: selectedAddress.location.longitude,
             latitude: selectedAddress.location.latitude,
@@ -324,6 +358,11 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
   }
 };
 
+ // Add loyalty points checkbox handler
+  const handleLoyaltyPointsToggle = (e) => {
+    if (loyaltyPoints <= 0) return;
+    setUseLoyaltyPoints(e.target.checked);
+  };
 
   const handleOrderModalClose = () => {
     setOrderSuccess(false);
@@ -430,14 +469,8 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
                 ? "text-yellow-700" 
                 : "text-red-600"
             }>
-              {console.log(error)}
-             Sorry, we don’t deliver to this location yet
+              {error.message || "Sorry, we don't deliver to this location yet"}
             </p>
-            {error.code === "DELIVERY_UNAVAILABLE" && (
-              <p className="text-yellow-600 text-xs mt-1">
-                Please try a different delivery address
-              </p>
-            )}
           </div>
           <button 
             onClick={() => setError(null)} 
@@ -446,7 +479,6 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
                 ? "text-yellow-400 hover:text-yellow-600" 
                 : "text-red-400 hover:text-red-600"
             }`}
-            aria-label="Dismiss error"
           >
             &times;
           </button>
@@ -563,6 +595,7 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
           ))
         )}
       </div>
+
       {billLoading ? (
         <div className="p-4 space-y-3 animate-pulse">
           <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -652,6 +685,24 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
             </div>
           )}
 
+          {/* Loyalty Points Section */}
+          <div className="flex items-center justify-between text-sm sm:text-base pt-2">
+            <label className="font-medium flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                disabled={loyaltyPoints <= 0 || walletLoading}
+                checked={loyaltyPoints > 0 && useLoyaltyPoints}
+                onChange={handleLoyaltyPointsToggle}
+                className="cursor-pointer"
+              />
+              <div className="flex items-center gap-1">
+                <Gift size={16} className="text-purple-500" />
+                <span>Use Loyalty Points ({loyaltyPoints} pts available)</span>
+              </div>
+            </label>
+          </div>
+
+          {/* Wallet Section */}
           <div className="flex items-center justify-between text-sm sm:text-base pt-2">
             <label className="font-medium flex items-center gap-2 cursor-pointer">
               <input
@@ -670,6 +721,15 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
               <span className="font-medium text-green-600">Wallet Used:</span>
               <span className="font-medium text-green-600">
                 - ₹{bill.walletUsed.toFixed(2)}
+              </span>
+            </div>
+          )}
+
+          {bill?.loyaltyPointsUsed > 0 && (
+            <div className="flex justify-between text-sm sm:text-base mb-2">
+              <span className="font-medium text-purple-600">Loyalty Points Used:</span>
+              <span className="font-medium text-purple-600">
+                - ₹{bill.loyaltyPointsUsed.toFixed(2)}
               </span>
             </div>
           )}

@@ -6,6 +6,7 @@ const sidebarItems = [
   { name: 'Wallet', path: '/my-account/wallet' },
   { name: 'Orado One', path: '/my-account/premium' },
   { name: 'Favourites', path: '/my-account/favourites' },
+  { name: 'Loyality Points', path: '/my-account/loyality' },
   // { name: 'Payments', path: '/payments' },
   { name: 'Addresses', path: '/my-account/address' },
   { name: 'Tickets', path: '/my-account/tickets' },
