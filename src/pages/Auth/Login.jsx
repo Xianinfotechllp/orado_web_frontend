@@ -10,7 +10,6 @@ import { FaMotorcycle } from "react-icons/fa";
 
 function Login() {
   const [email, setEmail] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -27,20 +26,19 @@ function Login() {
 
     setIsLoading(true);
     setMessage("");
-    
-  const navigate = useNavigate();
 
-  const dispatch = useDispatch();
-  const handleLogin = async () => {
     try {
-      const res = await loginUser(email,password)
-           console.log(res);
-           dispatch(setUser({ token: res.token, user: res.user}))
-          navigate("/");
+      const res = await loginUser(email, password);
+      console.log(res);
 
+      dispatch(setUser({ token: res.token, user: res.user }));
+
+      navigate("/");
     } catch (error) {
       console.error("Login error", error);
-      setMessage(error.message || "Login failed"); // error message from backend
+      setMessage(error.message || "Login failed");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -54,15 +52,11 @@ function Login() {
           <div className="w-full md:w-1/2 lg:w-2/5 bg-white rounded-lg shadow-xl p-8 md:mr-8">
             <div className="text-center mb-8">
               <FaMotorcycle className="text-4xl text-[#EA4424] mx-auto mb-2" />
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                Welcome Back!
-              </h1>
-              <p className="text-gray-600">
-                Log in to get your favorite meals delivered fast
-              </p>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back!</h1>
+              <p className="text-gray-600">Log in to get your favorite meals delivered fast</p>
             </div>
 
-            <div className="flex flex-col gap-5 mt-6">
+            <form onSubmit={handleLogin} className="flex flex-col gap-5 mt-6">
               <input
                 type="text"
                 placeholder="Email"
@@ -79,77 +73,57 @@ function Login() {
                 className="border border-gray-300 p-3 rounded outline-none w-full focus:border-l-4 focus:border-[#EA4424]"
               />
 
-               <div className="flex items-center justify-between">
-  <label className="flex items-center space-x-2">
-    <input
-      type="checkbox"
-      checked={rememberMe}
-      onChange={(e) => setRememberMe(e.target.checked)}
-      className="h-4 w-4 text-[#EA4424] focus:ring-[#EA4424] border-gray-300 rounded"
-    />
-    <span className="text-gray-700 text-sm">Remember me</span>
-  </label>
+              <div className="flex items-center justify-between">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="h-4 w-4 text-[#EA4424] focus:ring-[#EA4424] border-gray-300 rounded"
+                  />
+                  <span className="text-gray-700 text-sm">Remember me</span>
+                </label>
 
-  <div className="flex flex-col items-end space-y-1">
-    {/* <Link
-      to="/forgot-password"
-      className="text-sm text-[#EA4424] hover:underline"
-    >
-      Forgot password?
-    </Link> */}
-    <Link
-      to="/login-with-otp"
-      className="text-sm text-[#EA4424] hover:underline"
-    >
-      Login with OTP
-    </Link>
-  </div>
-</div>
-
-                {message && (
-                  <div className="mt-2 text-center text-sm text-red-600 font-medium">
-                    {message}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-[#EA4424] hover:bg-[#d13b20] text-white py-3 px-4 rounded-lg font-medium transition duration-200 flex items-center justify-center"
-                >
-                  {isLoading ? (
-                    <>
-                      <FiLoader className="animate-spin mr-2" />
-                      Logging in...
-                    </>
-                  ) : (
-                    "Log in"
-                  )}
-                </button>
+                <div className="flex flex-col items-end space-y-1">
+                  <Link to="/login-with-otp" className="text-sm text-[#EA4424] hover:underline">
+                    Login with OTP
+                  </Link>
+                </div>
               </div>
-            </div>
-            <div className="flex  gap-5 mt-8">
+
+              {message && (
+                <div className="mt-2 text-center text-sm text-red-600 font-medium">
+                  {message}
+                </div>
+              )}
+
               <button
-                className="bg-[#EA4424] px-8 py-2 text-white"
-                onClick={handleLogin}
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-[#EA4424] hover:bg-[#d13b20] text-white py-3 px-4 rounded-lg font-medium transition duration-200 flex items-center justify-center"
               >
-                Login
+                {isLoading ? (
+                  <>
+                    <FiLoader className="animate-spin mr-2" />
+                    Logging in...
+                  </>
+                ) : (
+                  "Log in"
+                )}
               </button>
+            </form>
+
+            <div className="flex gap-5 mt-8">
               <Link to="/signup">
                 <button className="px-8 py-2 border-[#EA4424] border text-[#EA4424]">
                   Signup
                 </button>
               </Link>
             </div>
-            {message && (
-              <div className="mt-4 text-center text-[#EA4424] font-semibold">
-                {message}
-              </div>
-            )}
           </div>
 
           <div className="hidden md:block w-1/2 bg-[#FDFCDB] h-screen">
-            <img src={deliveryBoy} alt="" />
+            <img src={deliveryBoy} alt="Delivery" />
           </div>
         </div>
       </div>
