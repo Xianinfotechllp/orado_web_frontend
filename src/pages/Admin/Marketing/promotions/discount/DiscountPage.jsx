@@ -2,7 +2,11 @@ import React, { useEffect, useState } from "react";
 import EditDiscountModal from "./Editdscoutemodesl";
 import ProductWiseDiscount from "./ProductWiseDiscount";
 import { fetchRestaurantsDropdown } from "../../../../../apis/adminApis/adminFuntionsApi";
-import { getProductDiscounts, getRestaurantDiscounts } from "../../../../../apis/adminApis/discountApi";
+import {
+  createRestaurantDiscount,
+  getProductDiscounts,
+  getRestaurantDiscounts,
+} from "../../../../../apis/adminApis/discountApi";
 import SetRestaurantDiscountModal from "./SetRestaurantDiscountModal";
 
 const DiscountPage = () => {
@@ -18,16 +22,17 @@ const DiscountPage = () => {
   const [productDiscounts, setProductDiscounts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
+  const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
+
   // Fetch restaurants data
   useEffect(() => {
     const loadRestaurants = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         const response = await fetchRestaurantsDropdown();
-        
+
         // Handle different API response structures
         let restaurantsData = [];
         if (Array.isArray(response)) {
@@ -56,51 +61,68 @@ const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
     loadRestaurants();
   }, []);
 
-  useEffect(() => {
-    if (!selectedRestaurant) return;
+ const fetchDiscounts = async () => {
+  try {
+    setIsDiscountLoading(true);
+    setError(null);
 
-    const fetchDiscounts = async () => {
-      try {
-        setIsDiscountLoading(true);
-        setError(null);
-        
-        const [restaurantDiscountRes, productDiscountRes] = await Promise.all([
-          getRestaurantDiscounts(selectedRestaurant),
-          getProductDiscounts(selectedRestaurant)
-        ]);
+    const [restaurantDiscountRes, productDiscountRes] = await Promise.all([
+      getRestaurantDiscounts(selectedRestaurant),
+      getProductDiscounts(selectedRestaurant),
+    ]);
+     console.log(restaurantDiscountRes)
+    setRestaurantDiscounts(restaurantDiscountRes.data || []);
+    setProductDiscounts(productDiscountRes.data || []);
+  } catch (error) {
+    console.error("Error fetching discounts:", error);
+    setError("Failed to fetch discounts. Please try again.");
+    setRestaurantDiscounts([]);
+    setProductDiscounts([]);
+  } finally {
+    setIsDiscountLoading(false);
+  }
+};
 
-        setRestaurantDiscounts(restaurantDiscountRes.data || []);
-        setProductDiscounts(productDiscountRes.data || []);
-      } catch (error) {
-        console.error("Error fetching discounts:", error);
-        setError("Failed to fetch discounts. Please try again.");
-        setRestaurantDiscounts([]);
-        setProductDiscounts([]);
-      } finally {
-        setIsDiscountLoading(false);
-      }
-    };
-
-    fetchDiscounts();
-  }, [selectedRestaurant]);
+// Run it on restaurant change
+useEffect(() => {
+  if (!selectedRestaurant) return;
+  fetchDiscounts();
+}, [selectedRestaurant]);
 
   const handleRestaurantChange = (e) => {
     setSelectedRestaurant(e.target.value);
   };
 
+  
+const handleDiscountCreated = async (formData) => {
+  try {
+    const response = await createRestaurantDiscount(formData);
+    console.log("New discount created:", response.data);
+    
+ 
+   await fetchDiscounts()
+  } catch (error) {
+    console.error("Failed to create discount:", error);
+    alert(error.message || "Failed to create discount.");
+  }
+};
+
   // Pagination calculations
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProductDiscounts = productDiscounts.slice(indexOfFirstItem, indexOfLastItem);
+  const currentProductDiscounts = productDiscounts.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
   const totalPages = Math.ceil(productDiscounts.length / itemsPerPage);
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     } catch {
       return dateString;
@@ -142,13 +164,13 @@ const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
             </div>
             <h1 className="text-2xl font-bold text-gray-800">Discount</h1>
           </div>
-          
+
           <div className="flex items-center">
             {error ? (
               <div className="text-red-500 text-sm mr-4">{error}</div>
             ) : (
-              <select 
-                value={selectedRestaurant || ''}
+              <select
+                value={selectedRestaurant || ""}
                 onChange={handleRestaurantChange}
                 disabled={isLoading || restaurants.length === 0}
                 className={`border border-gray-300 rounded-md px-4 py-2 mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -162,7 +184,7 @@ const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
                 ) : (
                   restaurants.map((restaurant) => (
                     <option key={restaurant._id} value={restaurant._id}>
-                      {restaurant.name?.trim() || 'Unnamed Restaurant'}
+                      {restaurant.name?.trim() || "Unnamed Restaurant"}
                     </option>
                   ))
                 )}
@@ -171,40 +193,60 @@ const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
           </div>
         </div>
 
-   {/* Main Discount Section - Updated Button Group */}
-<div className="flex justify-end mb-6 space-x-3">
-  {restaurantDiscounts.length === 0 ? (
-    <button 
-      onClick={() => setShowEditModal(true)}
-      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-      disabled={isLoading || isDiscountLoading || restaurants.length === 0 || !selectedRestaurant}
-    >
-      Set Discount
-    </button>
-  ) : (
-    <>
-      <button 
-        onClick={() => setShowEditModal(true)}
-        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-        disabled={isLoading || isDiscountLoading || restaurants.length === 0 || !selectedRestaurant}
-      >
-        Edit Discount
-      </button>
-      <button 
-        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
-        disabled={isLoading || isDiscountLoading || restaurants.length === 0 || !selectedRestaurant}
-      >
-        Delete
-      </button>
-      <button 
-        className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50"
-        disabled={isLoading || isDiscountLoading || restaurants.length === 0 || !selectedRestaurant}
-      >
-        Disable
-      </button>
-    </>
-  )}
-</div>
+        {/* Main Discount Section - Updated Button Group */}
+        <div className="flex justify-end mb-6 space-x-3">
+          {restaurantDiscounts.length === 0 ? (
+            <button
+              onClick={() => setShowSetDiscountModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+              disabled={
+                isLoading ||
+                isDiscountLoading ||
+                restaurants.length === 0 ||
+                !selectedRestaurant
+              }
+            >
+              Set Discount
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                disabled={
+                  isLoading ||
+                  isDiscountLoading ||
+                  restaurants.length === 0 ||
+                  !selectedRestaurant
+                }
+              >
+                Edit Discount
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+                disabled={
+                  isLoading ||
+                  isDiscountLoading ||
+                  restaurants.length === 0 ||
+                  !selectedRestaurant
+                }
+              >
+                Delete
+              </button>
+              <button
+                className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50"
+                disabled={
+                  isLoading ||
+                  isDiscountLoading ||
+                  restaurants.length === 0 ||
+                  !selectedRestaurant
+                }
+              >
+                Disable
+              </button>
+            </>
+          )}
+        </div>
 
         {showEditModal && selectedRestaurant && (
           <EditDiscountModal
@@ -253,13 +295,13 @@ const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
                 {restaurantDiscounts.map((discount, index) => (
                   <tr key={index}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {discount.name || 'N/A'}
+                      {discount.name || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {discount.value ? `${discount.value}%` : 'N/A'}
+                      {discount.value ? `${discount.value}%` : "N/A"}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {discount.description || 'N/A'}
+                      {discount.description || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(discount.validFrom)}
@@ -278,11 +320,18 @@ const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
       {/* Product Wise Discount Section */}
       <section className="bg-white rounded-lg shadow-md p-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">Product Wise Discount</h2>
-          <button 
+          <h2 className="text-xl font-semibold text-gray-800">
+            Product Wise Discount
+          </h2>
+          <button
             onClick={() => setShowProductWiseModal(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
-            disabled={isLoading || isDiscountLoading || restaurants.length === 0 || !selectedRestaurant}
+            disabled={
+              isLoading ||
+              isDiscountLoading ||
+              restaurants.length === 0 ||
+              !selectedRestaurant
+            }
           >
             Add Discount
           </button>
@@ -341,13 +390,13 @@ const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
                   {currentProductDiscounts.map((discount, index) => (
                     <tr key={index}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {discount.name || 'N/A'}
+                        {discount.name || "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {discount.value ? `${discount.value}%` : 'N/A'}
+                        {discount.discountValue ? `${discount.discountValue}%` : "N/A"}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        {discount.description || 'N/A'}
+                        {discount.description || "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(discount.validFrom)}
@@ -356,7 +405,9 @@ const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
                         {formatDate(discount.validTo)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {discount.maxAmount ? `₹${discount.maxAmount.toFixed(2)}` : 'N/A'}
+                        {discount.maxAmount
+                          ? `₹${discount.maxAmount.toFixed(2)}`
+                          : "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
@@ -382,48 +433,93 @@ const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm text-gray-700">
-                      Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{' '}
-                      <span className="font-medium">{Math.min(indexOfLastItem, productDiscounts.length)}</span> of{' '}
-                      <span className="font-medium">{productDiscounts.length}</span> results
+                      Showing{" "}
+                      <span className="font-medium">
+                        {indexOfFirstItem + 1}
+                      </span>{" "}
+                      to{" "}
+                      <span className="font-medium">
+                        {Math.min(indexOfLastItem, productDiscounts.length)}
+                      </span>{" "}
+                      of{" "}
+                      <span className="font-medium">
+                        {productDiscounts.length}
+                      </span>{" "}
+                      results
                     </p>
                   </div>
                   <div>
-                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <nav
+                      className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                      aria-label="Pagination"
+                    >
                       <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(prev - 1, 1))
+                        }
                         disabled={currentPage === 1}
                         className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-                          currentPage === 1 ? 'text-gray-300' : 'text-gray-500 hover:bg-gray-50'
+                          currentPage === 1
+                            ? "text-gray-300"
+                            : "text-gray-500 hover:bg-gray-50"
                         }`}
                       >
                         <span className="sr-only">Previous</span>
-                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="h-5 w-5"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </button>
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                            currentPage === page
-                              ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      ))}
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (page) => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              currentPage === page
+                                ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        )
+                      )}
                       <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(prev + 1, totalPages)
+                          )
+                        }
                         disabled={currentPage === totalPages}
                         className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-                          currentPage === totalPages ? 'text-gray-300' : 'text-gray-500 hover:bg-gray-50'
+                          currentPage === totalPages
+                            ? "text-gray-300"
+                            : "text-gray-500 hover:bg-gray-50"
                         }`}
                       >
                         <span className="sr-only">Next</span>
-                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="h-5 w-5"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </button>
                     </nav>
@@ -434,16 +530,18 @@ const [showSetDiscountModal, setShowSetDiscountModal] = useState(false);
           </>
         )}
       </section>
-     {showSetDiscountModal && (
-  <SetRestaurantDiscountModal
-    onClose={() => setShowSetDiscountModal(false)}
-    restaurantId={selectedRestaurant}
-    onDiscountCreated={(newDiscount) => {
-      // refresh your restaurant discounts state if you want
-      console.log("New discount created:", newDiscount);
-    }}
-  />
-)}
+      {showSetDiscountModal && (
+        <SetRestaurantDiscountModal
+          onClose={() => setShowSetDiscountModal(false)}
+          restaurantId={selectedRestaurant}
+          onDiscountCreated={handleDiscountCreated}
+        />
+      )}
+
+
+
+
+
     </div>
   );
 };

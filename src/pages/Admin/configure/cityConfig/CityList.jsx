@@ -81,9 +81,8 @@ const CityList = () => {
     }
   };
 
- const handleSave = async (formData) => {
+const handleSave = async (formData) => {
   try {
-    // Map the form data to match the backend API structure
     const cityData = {
       name: formData.name,
       description: formData.description,
@@ -102,16 +101,20 @@ const CityList = () => {
       status: formData.status
     };
 
+    // Clean empty string ObjectId fields
+    ["dynamicChargesTemplateNormalOrders", "dynamicChargesTemplateScheduleOrder", "earningTemplateNormalOrder"].forEach(field => {
+      if (cityData[field] === "") cityData[field] = null;
+    });
+
     if (editingCity) {
-      // Update existing city
       const updatedCity = await updateCity(editingCity._id, cityData);
       setCities(cities.map(c => c._id === editingCity._id ? updatedCity.data : c));
     } else {
-      // Add new city
+      console.log(cityData);
       const createdCity = await createCity(cityData);
       setCities([...cities, createdCity.data]);
     }
-    
+
     setShowAddCityModal(false);
     setEditingCity(null);
     toast.success(`City ${editingCity ? 'updated' : 'created'} successfully!`);
@@ -120,6 +123,7 @@ const CityList = () => {
     toast.error(err.response?.data?.message || `Failed to ${editingCity ? 'update' : 'create'} city`);
   }
 };
+
   const toggleStatus = async (id) => {
     try {
       // Optimistically update the UI

@@ -8,6 +8,7 @@ import { createRestaurantDiscount } from "../../../../../apis/adminApis/discount
 
 const SetRestaurantDiscountModal = ({ onClose, restaurantId, onDiscountCreated }) => {
   const [formData, setFormData] = useState({
+    name: "", // Added discount name field
     discountType: "Percentage",
     discountValue: "",
     maxDiscountValue: "",
@@ -20,8 +21,6 @@ const SetRestaurantDiscountModal = ({ onClose, restaurantId, onDiscountCreated }
     { label: "Percentage", value: "Percentage" },
     { label: "Flat", value: "Flat" },
   ];
-
-
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,19 +40,22 @@ const SetRestaurantDiscountModal = ({ onClose, restaurantId, onDiscountCreated }
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate required fields
+    if (!formData.name || !formData.discountValue || !formData.validFrom || !formData.validTo) {
+      alert("Please fill all required fields");
+      return;
+    }
+
     try {
       const payload = {
         ...formData,
         restaurant: restaurantId,
       };
 
-      const response = await createRestaurantDiscount(payload);
-      if (response.success) {
-        onDiscountCreated(response.data);  // callback to refresh parent data if needed
-        onClose();
-      } else {
-        alert("Failed to create discount.");
-      }
+      // Send this payload back to parent
+      onDiscountCreated(payload);
+      onClose();
+
     } catch (error) {
       console.error("Error creating discount:", error);
       alert("Error creating discount. Check console.");
@@ -68,6 +70,23 @@ const SetRestaurantDiscountModal = ({ onClose, restaurantId, onDiscountCreated }
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Added Discount Name Field */}
+          <div className="form-group">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Discount Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              maxLength={100}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter discount name"
+            />
+          </div>
+
           <div className="form-group">
             <label className="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
             <Dropdown
@@ -80,7 +99,9 @@ const SetRestaurantDiscountModal = ({ onClose, restaurantId, onDiscountCreated }
           </div>
 
           <div className="form-group">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Discount Value</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Discount Value <span className="text-red-500">*</span>
+            </label>
             <input
               type="number"
               name="discountValue"
@@ -89,6 +110,7 @@ const SetRestaurantDiscountModal = ({ onClose, restaurantId, onDiscountCreated }
               required
               min={0}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+              placeholder={formData.discountType === "Percentage" ? "0-100%" : "Enter amount"}
             />
           </div>
 
@@ -101,6 +123,7 @@ const SetRestaurantDiscountModal = ({ onClose, restaurantId, onDiscountCreated }
               onChange={handleChange}
               min={0}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+              placeholder="Optional maximum amount"
             />
           </div>
 
@@ -113,28 +136,35 @@ const SetRestaurantDiscountModal = ({ onClose, restaurantId, onDiscountCreated }
               rows={2}
               maxLength={150}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter description (max 150 characters)"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Valid From</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Valid From <span className="text-red-500">*</span>
+              </label>
               <Calendar
                 value={formData.validFrom}
                 onChange={(e) => handleDateChange("validFrom", e.value)}
                 showTime
                 hourFormat="12"
                 className="w-full"
+                required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Valid To</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Valid To <span className="text-red-500">*</span>
+              </label>
               <Calendar
                 value={formData.validTo}
                 onChange={(e) => handleDateChange("validTo", e.value)}
                 showTime
                 hourFormat="12"
                 className="w-full"
+                required
               />
             </div>
           </div>
@@ -156,9 +186,6 @@ const SetRestaurantDiscountModal = ({ onClose, restaurantId, onDiscountCreated }
           </div>
         </form>
       </div>
-
-
-    
     </div>
   );
 };

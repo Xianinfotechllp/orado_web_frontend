@@ -81,8 +81,7 @@ const CityModal = ({
     const fetchTemplates = async () => {
       try {
         const result = await getAllTemplates();
-        console.log(result.templates);
-        setTemplates(result.templates); // assuming your API returns { data: [...] }
+        setTemplates(result.templates);
       } catch (error) {
         console.error("Failed to fetch templates", error);
       }
@@ -157,6 +156,11 @@ const CityModal = ({
         geofences: formData.assigningGeofences,
       });
     }
+  };
+
+  const getTemplateName = (templateId) => {
+    const template = templates.find((t) => t._id === templateId);
+    return template ? template.name : "";
   };
 
   return (
@@ -428,8 +432,9 @@ const CityModal = ({
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-left flex justify-between items-center"
                           >
                             <span>
-                              {formData.dynamic_charges_template_normal_orders ||
-                                "Choose"}
+                              {getTemplateName(
+                                formData.dynamic_charges_template_normal_orders
+                              ) || "Choose"}
                             </span>
                             {dropdowns.dynamic_charges_template_normal_orders ? (
                               <FiChevronUp />
@@ -439,11 +444,15 @@ const CityModal = ({
                           </button>
                           {dropdowns.dynamic_charges_template_normal_orders && (
                             <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                              {/* Populate with actual template options */}
                               {templates.map((template) => (
                                 <div
                                   key={template._id}
-                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                  className={`px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center ${
+                                    formData.dynamic_charges_template_normal_orders ===
+                                    template._id
+                                      ? "bg-gray-100"
+                                      : ""
+                                  }`}
                                   onClick={() => {
                                     setFormData({
                                       ...formData,
@@ -455,6 +464,15 @@ const CityModal = ({
                                     );
                                   }}
                                 >
+                                  <input
+                                    type="checkbox"
+                                    checked={
+                                      formData.dynamic_charges_template_normal_orders ===
+                                      template._id
+                                    }
+                                    readOnly
+                                    className="h-4 w-4 text-[#FC8019] rounded border-gray-300 focus:ring-[#FC8019] mr-2"
+                                  />
                                   {template.name}
                                 </div>
                               ))}
@@ -478,8 +496,9 @@ const CityModal = ({
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-left flex justify-between items-center"
                           >
                             <span>
-                              {formData.dynamic_charges_template_schedule_order ||
-                                "Choose"}
+                              {getTemplateName(
+                                formData.dynamic_charges_template_schedule_order
+                              ) || "Choose"}
                             </span>
                             {dropdowns.dynamic_charges_template_schedule_order ? (
                               <FiChevronUp />
@@ -489,22 +508,35 @@ const CityModal = ({
                           </button>
                           {dropdowns.dynamic_charges_template_schedule_order && (
                             <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                              {/* Populate with actual template options */}
-                             {templates.map((template) => (
+                              {templates.map((template) => (
                                 <div
                                   key={template._id}
-                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                  className={`px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center ${
+                                    formData.dynamic_charges_template_schedule_order ===
+                                    template._id
+                                      ? "bg-gray-100"
+                                      : ""
+                                  }`}
                                   onClick={() => {
                                     setFormData({
                                       ...formData,
-                                      dynamic_charges_template_normal_orders:
+                                      dynamic_charges_template_schedule_order:
                                         template._id,
                                     });
                                     toggleDropdown(
-                                      "dynamic_charges_template_normal_orders"
+                                      "dynamic_charges_template_schedule_order"
                                     );
                                   }}
                                 >
+                                  <input
+                                    type="checkbox"
+                                    checked={
+                                      formData.dynamic_charges_template_schedule_order ===
+                                      template._id
+                                    }
+                                    readOnly
+                                    className="h-4 w-4 text-[#FC8019] rounded border-gray-300 focus:ring-[#FC8019] mr-2"
+                                  />
                                   {template.name}
                                 </div>
                               ))}
@@ -527,8 +559,9 @@ const CityModal = ({
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-left flex justify-between items-center"
                           >
                             <span>
-                              {formData.earning_template_normal_order ||
-                                "Choose"}
+                              {getTemplateName(
+                                formData.earning_template_normal_order
+                              ) || "Choose"}
                             </span>
                             {dropdowns.earning_template_normal_order ? (
                               <FiChevronUp />
@@ -538,22 +571,34 @@ const CityModal = ({
                           </button>
                           {dropdowns.earning_template_normal_order && (
                             <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                              {/* Populate with actual template options */}
                               {templates.map((template) => (
                                 <div
                                   key={template._id}
-                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                  className={`px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center ${
+                                    formData.earning_template_normal_order ===
+                                    template._id
+                                      ? "bg-gray-100"
+                                      : ""
+                                  }`}
                                   onClick={() => {
                                     setFormData({
                                       ...formData,
-                                      dynamic_charges_template_normal_orders:
-                                        template._id,
+                                      earning_template_normal_order: template._id,
                                     });
                                     toggleDropdown(
-                                      "dynamic_charges_template_normal_orders"
+                                      "earning_template_normal_order"
                                     );
                                   }}
                                 >
+                                  <input
+                                    type="checkbox"
+                                    checked={
+                                      formData.earning_template_normal_order ===
+                                      template._id
+                                    }
+                                    readOnly
+                                    className="h-4 w-4 text-[#FC8019] rounded border-gray-300 focus:ring-[#FC8019] mr-2"
+                                  />
                                   {template.name}
                                 </div>
                               ))}

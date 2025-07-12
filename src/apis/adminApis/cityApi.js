@@ -54,3 +54,41 @@ export const updateCity = async (cityId, updatedData) => {
     throw error.response?.data || { message: "Something went wrong" };
   }
 };
+
+
+
+
+
+
+export const getCityDeliveryFeeSetting = async (cityId) => {
+  try {
+    const response = await apiClient.get(`/city/cities/${cityId}/delivery-fee-setting`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Failed to fetch city delivery fee setting:", error);
+    throw error;
+  }
+};
+
+export const updateCityDeliveryFeeSetting = async (cityId, payload) => {
+  try {
+    // Send the payload directly (not nested under cityDeliveryFeeSetting)
+    const response = await apiClient.put(`/city/cities/${cityId}/delivery-fee-setting`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to update city delivery fee setting:", error);
+    throw error;
+  }
+};
+
+export const createCityDeliveryFeeSetting = async (cityId, payload) => {
+  try {
+    const response = await apiClient.post(`/city/cities/${cityId}/delivery-fee-setting`, {
+      cityDeliveryFeeSetting: payload
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error("Failed to create city delivery fee setting:", error);
+    throw error;
+  }
+};

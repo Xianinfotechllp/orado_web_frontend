@@ -99,7 +99,7 @@ const AddProductPage = ({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Blurred Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+        className="fixed inset-0 bgOp  backdrop-blur-sm"
         onClick={onClose}
       ></div>
 

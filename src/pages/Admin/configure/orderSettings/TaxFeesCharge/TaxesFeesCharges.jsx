@@ -1,401 +1,500 @@
-import { useEffect, useState } from 'react';
-import AddTaxModal from './AddTaxModal';
-import { fetchRestaurantsDropdown } from '../../../../../apis/adminApis/adminFuntionsApi';
-import { createTax, getTaxes } from '../../../../../apis/adminApis/taxAndChargeApi';
-import { getCities } from '../../../../../apis/adminApis/cityApi';
+import React, { useState } from 'react';
+import { 
+  DollarSign, 
+  Receipt, 
+  Building2,
+  Package,
+  Store,
+  CreditCard,
+  Plus
+} from 'lucide-react';
+import DataTable from '../../../../../components/admin/configure/orderSettings/TaxFeesCharge/DataTable';
+import SectionHeader from '../../../../../components/admin/configure/orderSettings/TaxFeesCharge/SectionHeader';
+import Toggle from '../../../../../components/admin/configure/orderSettings/TaxFeesCharge/Toggle';
 
-export default function TaxesFeesCharges() {
-  const [selectedStore, setSelectedStore] = useState("");
-  const [selectedRestaurantId, setSelectedRestaurantId] = useState("");
-  const [allowMerchantTaxes, setAllowMerchantTaxes] = useState(false);
-  const [showAddTaxModal, setShowAddTaxModal] = useState(false);
-  const [modalType, setModalType] = useState("");
-  const [allTaxes, setAllTaxes] = useState([]);
-  const [restaurants, setRestaurants] = useState([]);
-  const [cities, setCities] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+function TaxesFeesCharges() {
+  // Marketplace Taxes State
+  // Marketplace Taxes State
+  const [marketplaceTaxes, setMarketplaceTaxes] = useState([
+    {
+      id: 'TX001',
+      name: 'GST',
+      value: '18%',
+      type: 'Percentage',
+      applicableOn: 'Food Items',
+      status: 'Active'
+    },
+    {
+      id: 'TX002',
+      name: 'Service Tax',
+      value: '12%',
+      type: 'Percentage',
+      applicableOn: 'All Orders',
+      status: 'Active'
+    },
+    {
+      id: 'TX003',
+      name: 'Platform Fee',
+      value: '₹10',
+      type: 'Fixed',
+      applicableOn: 'Per Order',
+      status: 'Inactive'
+    }
+  ]);
 
-  // Filtered taxes based on type and restaurant
-  const marketplaceTaxes = allTaxes.filter(tax => tax.taxType === 'Marketplace');
-  const additionalCharges = allTaxes.filter(tax => tax.taxType === 'AdditionalCharge');
-  const subscriptionTaxes = allTaxes.filter(tax => tax.taxType === 'Subscription');
+  // Merchant Taxes State
+  const [merchantTaxesEnabled, setMerchantTaxesEnabled] = useState(true);
+  const [selectedMerchant, setSelectedMerchant] = useState('all');
   
-  // Merchant taxes filtered by selected restaurant
-  const merchantTaxes = allTaxes.filter(tax => 
-    tax.taxType === 'Restaurant' && 
-    (tax.restaurant === selectedRestaurantId || 
-     tax.restaurants?.some(r => r._id === selectedRestaurantId))
-  );
+  // Available merchants list
+  const merchants = [
+    { id: 'all', name: 'All Merchants' },
+    { id: 'pizza-palace', name: 'Pizza Palace' },
+    { id: 'burger-king', name: 'Burger King' },
+    { id: 'sweet-treats', name: 'Sweet Treats' },
+    { id: 'quick-bites', name: 'Quick Bites' },
+    { id: 'cake-corner', name: 'Cake Corner' },
+    { id: 'night-owl-diner', name: 'Night Owl Diner' },
+    { id: 'elite-eats', name: 'Elite Eats' },
+    { id: 'cold-delights', name: 'Cold Delights' },
+    { id: 'gourmet-express', name: 'Gourmet Express' }
+  ];
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const [restaurantData, citiesData, taxesData] = await Promise.all([
-          fetchRestaurantsDropdown(),
-          getCities(),
-          getTaxes()
-        ]);
-        
-        setRestaurants(restaurantData.data);
-        setCities(citiesData.data);
-        setAllTaxes(taxesData.data);
-        
-        if (restaurantData.data.length > 0) {
-          setSelectedStore(restaurantData.data[0].name);
-          setSelectedRestaurantId(restaurantData.data[0]._id);
-        }
-      } catch (error) {
-        console.error("Failed to load data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadData();
-  }, []);
-
-  const handleRestaurantChange = (e) => {
-    const selectedName = e.target.value;
-    const selectedRestaurant = restaurants.find(r => r.name === selectedName);
-    
-    if (selectedRestaurant) {
-      setSelectedStore(selectedName);
-      setSelectedRestaurantId(selectedRestaurant._id);
+  const [merchantTaxes, setMerchantTaxes] = useState([
+    {
+      id: 'MTX001',
+      name: 'Local Tax',
+      value: '5%',
+      type: 'Percentage',
+      applicableOn: 'Beverages',
+      merchantName: 'Pizza Palace',
+      status: 'Active'
+    },
+    {
+      id: 'MTX002',
+      name: 'State Tax',
+      value: '8%',
+      type: 'Percentage',
+      applicableOn: 'All Items',
+      merchantName: 'Burger King',
+      status: 'Active'
+    },
+    {
+      id: 'MTX003',
+      name: 'Special Levy',
+      value: '₹5',
+      type: 'Fixed',
+      applicableOn: 'Desserts',
+      merchantName: 'Sweet Treats',
+      status: 'Inactive'
     }
+  ]);
+
+  // Marketplace Packing Charges State
+  const [marketplacePackingCharges, setMarketplacePackingCharges] = useState([
+    {
+      id: 'PC001',
+      name: 'Standard Packaging',
+      amount: '₹15',
+      type: 'Fixed',
+      applicableOn: 'All Orders',
+      status: 'Active'
+    },
+    {
+      id: 'PC002',
+      name: 'Eco-Friendly Pack',
+      amount: '₹25',
+      type: 'Fixed',
+      applicableOn: 'Opt-in Orders',
+      status: 'Active'
+    },
+    {
+      id: 'PC003',
+      name: 'Premium Packaging',
+      amount: '5%',
+      type: 'Percentage',
+      applicableOn: 'Orders > ₹500',
+      status: 'Inactive'
+    }
+  ]);
+
+  // Merchant Packing Charges State
+  const [merchantPackingEnabled, setMerchantPackingEnabled] = useState(true);
+  const [merchantPackingCharges, setMerchantPackingCharges] = useState([
+    {
+      id: 'MPC001',
+      name: 'Custom Box',
+      amount: '₹20',
+      type: 'Fixed',
+      applicableOn: 'Pizza Orders',
+      merchantName: 'Pizza Palace',
+      status: 'Active'
+    },
+    {
+      id: 'MPC002',
+      name: 'Insulated Bag',
+      amount: '₹30',
+      type: 'Fixed',
+      applicableOn: 'Ice Cream',
+      merchantName: 'Cold Delights',
+      status: 'Active'
+    },
+    {
+      id: 'MPC003',
+      name: 'Branded Packaging',
+      amount: '3%',
+      type: 'Percentage',
+      applicableOn: 'All Orders',
+      merchantName: 'Gourmet Express',
+      status: 'Inactive'
+    }
+  ]);
+
+  // Marketplace Additional Charges State
+  const [marketplaceAdditionalCharges, setMarketplaceAdditionalCharges] = useState([
+    {
+      id: 'AC001',
+      name: 'Delivery Fee',
+      amount: '₹40',
+      type: 'Fixed',
+      applicableOn: 'All Orders',
+      status: 'Active'
+    },
+    {
+      id: 'AC002',
+      name: 'Peak Hour Surcharge',
+      amount: '15%',
+      type: 'Percentage',
+      applicableOn: 'Peak Hours',
+      status: 'Active'
+    },
+    {
+      id: 'AC003',
+      name: 'Distance Charge',
+      amount: '₹5/km',
+      type: 'Variable',
+      applicableOn: 'Long Distance',
+      status: 'Active'
+    },
+    {
+      id: 'AC004',
+      name: 'Rain Fee',
+      amount: '₹20',
+      type: 'Fixed',
+      applicableOn: 'Bad Weather',
+      status: 'Inactive'
+    }
+  ]);
+
+  // Merchant Additional Charges State
+  const [merchantAdditionalEnabled, setMerchantAdditionalEnabled] = useState(true);
+  const [merchantAdditionalCharges, setMerchantAdditionalCharges] = useState([
+    {
+      id: 'MAC001',
+      name: 'Express Delivery',
+      amount: '₹60',
+      type: 'Fixed',
+      applicableOn: '< 30 min',
+      merchantName: 'Quick Bites',
+      status: 'Active'
+    },
+    {
+      id: 'MAC002',
+      name: 'Special Handling',
+      amount: '10%',
+      type: 'Percentage',
+      applicableOn: 'Fragile Items',
+      merchantName: 'Cake Corner',
+      status: 'Active'
+    },
+    {
+      id: 'MAC003',
+      name: 'Late Night Fee',
+      amount: '₹25',
+      type: 'Fixed',
+      applicableOn: 'After 11 PM',
+      merchantName: 'Night Owl Diner',
+      status: 'Active'
+    },
+    {
+      id: 'MAC004',
+      name: 'Premium Service',
+      amount: '8%',
+      type: 'Percentage',
+      applicableOn: 'VIP Orders',
+      merchantName: 'Elite Eats',
+      status: 'Inactive'
+    }
+  ]);
+
+  // Column definitions
+  const taxColumns = [
+    { key: 'id', label: 'Tax ID', sortable: true },
+    { key: 'name', label: 'Tax Name', sortable: true },
+    { key: 'value', label: 'Tax Value', sortable: true },
+    { key: 'type', label: 'Type', sortable: true },
+    { key: 'applicableOn', label: 'Applicable On', sortable: true },
+    { key: 'status', label: 'Status', sortable: false }
+  ];
+
+  const merchantTaxColumns = [
+    { key: 'id', label: 'Tax ID', sortable: true },
+    { key: 'name', label: 'Tax Name', sortable: true },
+    { key: 'value', label: 'Tax Value', sortable: true },
+    { key: 'type', label: 'Type', sortable: true },
+    { key: 'applicableOn', label: 'Applicable On', sortable: true },
+    { key: 'merchantName', label: 'Merchant Name', sortable: true },
+    { key: 'status', label: 'Status', sortable: false }
+  ];
+
+  const chargeColumns = [
+    { key: 'id', label: 'Charge ID', sortable: true },
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'amount', label: 'Amount', sortable: true },
+    { key: 'type', label: 'Type', sortable: true },
+    { key: 'applicableOn', label: 'Applicable On', sortable: true },
+    { key: 'status', label: 'Status', sortable: false }
+  ];
+
+  const merchantChargeColumns = [
+    { key: 'id', label: 'Charge ID', sortable: true },
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'amount', label: 'Amount', sortable: true },
+    { key: 'type', label: 'Type', sortable: true },
+    { key: 'applicableOn', label: 'Applicable On', sortable: true },
+    { key: 'merchantName', label: 'Merchant Name', sortable: true },
+    { key: 'status', label: 'Status', sortable: false }
+  ];
+
+  // Handler functions
+  const handleEdit = (item) => {
+    console.log('Edit item:', item);
   };
 
-  const handleSaveTax = async (taxData) => {
-    try {
-      const backendTaxData = {
-        name: taxData.name,
-        amount: parseFloat(taxData.amount),
-        type: taxData.type === 'percentage' ? 'Percentage' : 'Fixed',
-        appliedOn: taxData.applicableOn || (modalType === 'subscription' ? 'subscription' : undefined),
-        taxType: mapTaxType(modalType),
-        status: true,
-      };
-
-      if (modalType === 'merchant' && selectedRestaurantId) {
-        backendTaxData.restaurant = selectedRestaurantId;
-      }
-
-      await createTax(backendTaxData);
-      // Refresh the taxes list
-      const res = await getTaxes();
-      setAllTaxes(res.data);
-      setShowAddTaxModal(false);
-    } catch (error) {
-      console.error('Failed to save tax:', error);
-    }
+  const handleDelete = (item, setState, data) => {
+    setState(data.filter((d) => d.id !== item.id));
   };
 
-  const mapTaxType = (modalType) => {
-    switch(modalType) {
-      case "marketplace": return "Marketplace";
-      case "merchant": return "Restaurant";
-      case "additional": return "AdditionalCharge";
-      case "subscription": return "Subscription";
-      default: return "Marketplace";
-    }
-  };
-
-  const handleAddTax = (type) => {
-    setModalType(type);
-    setShowAddTaxModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowAddTaxModal(false);
-    setModalType("");
-  };
-
-  const toggleTaxStatus = async (taxId, currentStatus) => {
-    try {
-      // Here you would call an API to update the tax status
-      // For now, we'll just update the local state
-      setAllTaxes(allTaxes.map(tax => 
-        tax._id === taxId ? {...tax, status: !currentStatus} : tax
-      ));
-    } catch (error) {
-      console.error("Failed to update tax status:", error);
-    }
-  };
-
-  const renderTaxRows = (taxes) => {
-    if (isLoading) {
-      return (
-        <tr>
-          <td colSpan="7" className="py-8 text-center">
-            <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-          </td>
-        </tr>
-      );
-    }
-
-    if (taxes.length === 0) {
-      return (
-        <tr>
-          <td colSpan="7" className="py-6 text-center text-gray-500">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="mt-2 text-sm font-medium">No taxes found</p>
-          </td>
-        </tr>
-      );
-    }
-
-    return taxes.map((tax) => (
-      <tr key={tax._id} className="border-b hover:bg-gray-50 transition-colors">
-        <td className="py-4 px-4 text-sm text-gray-700 font-mono">{tax._id.slice(-6)}</td>
-        <td className="py-4 px-4 font-medium">{tax.name}</td>
-        <td className="py-4 px-4">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            tax.type === 'Percentage' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-          }`}>
-            {tax.amount}{tax.type === 'Percentage' ? '%' : ''}
-          </span>
-        </td>
-        <td className="py-4 px-4 text-gray-600">{tax.type}</td>
-        <td className="py-4 px-4 capitalize text-gray-600">{tax.appliedOn || '-'}</td>
-        <td className="py-4 px-4">
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
-              className="sr-only peer" 
-              checked={tax.status} 
-              onChange={() => toggleTaxStatus(tax._id, tax.status)} 
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </td>
-        <td className="py-4 px-4">
-          <button className="text-gray-500 hover:text-gray-700 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
-            </svg>
-          </button>
-        </td>
-      </tr>
+  const handleStatusToggle = (item, setState, data) => {
+    setState(data.map((d) => 
+      d.id === item.id 
+        ? { ...d, status: d.status === 'Active' ? 'Inactive' : 'Active' }
+        : d
     ));
   };
 
+  const handleAddNew = (section) => {
+    console.log('Add new:', section);
+  };
+
+  // Filter merchant taxes based on selected merchant
+  const filteredMerchantTaxes = selectedMerchant === 'all' 
+    ? merchantTaxes 
+    : merchantTaxes.filter(tax => {
+        const merchantName = tax.merchantName.toLowerCase().replace(/\s+/g, '-');
+        return merchantName === selectedMerchant;
+      });
+
   return (
-    <div className="dashboard-content-container" style={{ marginTop: "70px" }}>
-      <div className="content-container col-span-12 flex flex-col">
-        <div className="col-span-12 p-6">
-          {/* Header Section */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-            <div className="flex items-center">
-              <div className="p-3 rounded-lg bg-blue-50 text-blue-600">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-semibold ml-3">Taxes, Fees & Charges</h2>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
+              <DollarSign className="w-7 h-7 text-white" />
             </div>
-            
-            <div className="text-sm bg-blue-50 p-3 rounded-lg max-w-md">
-              <p className="text-blue-800">💡 Make sure taxes aren't duplicated under the same name on the platform</p>
-              <p className="text-red-500 font-medium mt-1">⚠️ Two taxes under the same name cannot coexist</p>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Orado Admin</h1>
+              <p className="text-gray-600 mt-1">Tax & Charges Management Dashboard</p>
             </div>
           </div>
-
-          {/* Marketplace Level Taxes */}
-          <section className="mb-10 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-6 py-4 border-b bg-gray-50">
-              <div className="mb-3 md:mb-0">
-                <h3 className="text-lg font-semibold text-gray-800">Marketplace Level Taxes</h3>
-                <p className="text-sm text-gray-500">Taxes applied at the marketplace level</p>
-              </div>
-              <button 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors"
-                onClick={() => handleAddTax("marketplace")}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-                Add Tax
-              </button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tax ID</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applied On</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {renderTaxRows(marketplaceTaxes)}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* Merchant Level Taxes */}
-          <section className="mb-10 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-6 py-4 border-b bg-gray-50">
-              <div className="mb-3 md:mb-0">
-                <h3 className="text-lg font-semibold text-gray-800">Merchant Level Taxes</h3>
-                <p className="text-sm text-gray-500">Taxes specific to individual merchants</p>
-              </div>
-              <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-                <select 
-                  className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={selectedStore}
-                  onChange={handleRestaurantChange}
-                >
-                  {restaurants.map(restaurant => (
-                    <option key={restaurant._id} value={restaurant.name}>
-                      {restaurant.name}
-                    </option>
-                  ))}
-                </select>
-                <button 
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors"
-                  onClick={() => handleAddTax("merchant")}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                  </svg>
-                  Add Tax
-                </button>
-              </div>
-            </div>
-
-            <div className="px-6 py-3 border-b bg-blue-50 flex items-center">
-              <label className="text-sm text-gray-700 mr-3">
-                Allow merchants to set their own taxes?
-              </label>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer" 
-                  checked={allowMerchantTaxes}
-                  onChange={() => setAllowMerchantTaxes(!allowMerchantTaxes)}
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tax ID</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applied On</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {renderTaxRows(merchantTaxes)}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* Additional Charge */}
-          <section className="mb-10 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-6 py-4 border-b bg-gray-50">
-              <div className="mb-3 md:mb-0">
-                <h3 className="text-lg font-semibold text-gray-800">Additional Charges</h3>
-                <p className="text-sm text-gray-500">Extra fees applied to orders</p>
-              </div>
-              <button 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors"
-                onClick={() => handleAddTax("additional")}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-                Add Charge
-              </button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applied On</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {renderTaxRows(additionalCharges)}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* Subscription Taxes */}
-          <section className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-6 py-4 border-b bg-gray-50">
-              <div className="mb-3 md:mb-0">
-                <h3 className="text-lg font-semibold text-gray-800">Subscription Taxes</h3>
-                <p className="text-sm text-gray-500">Taxes applied to subscription plans</p>
-              </div>
-              <button 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors"
-                onClick={() => handleAddTax("subscription")}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-                Add Tax
-              </button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {renderTaxRows(subscriptionTaxes)}
-                </tbody>
-              </table>
-            </div>
-          </section>
         </div>
       </div>
 
-      {/* Add Tax Modal */}
-      {showAddTaxModal && (
-        <AddTaxModal 
-          type={modalType}
-          restaurantId={selectedRestaurantId}
-          onClose={handleCloseModal}
-          onSave={handleSaveTax}
-          cities={cities}
-          restaurants={restaurants}
-        />
-      )}
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-12">
+        
+        {/* 1. Marketplace Level Taxes */}
+        <section>
+          <SectionHeader
+            title="Marketplace Level Taxes"
+            description="Manage taxes applied at the marketplace level across all merchants"
+            buttonText="Add New Marketplace Tax"
+            onAddNew={() => handleAddNew('marketplace-tax')}
+            icon={Receipt}
+          />
+          <DataTable
+            data={marketplaceTaxes}
+            columns={taxColumns}
+            onEdit={handleEdit}
+            onDelete={(item) => handleDelete(item, setMarketplaceTaxes, marketplaceTaxes)}
+            onStatusToggle={(item) => handleStatusToggle(item, setMarketplaceTaxes, marketplaceTaxes)}
+          />
+        </section>
+
+        {/* 2. Merchant Level Taxes */}
+        <section>
+          <SectionHeader
+            title="Merchant Level Taxes"
+            description="Manage taxes specific to individual merchants"
+            buttonText="Add New Merchant Tax"
+            onAddNew={() => handleAddNew('merchant-tax')}
+            icon={Building2}
+          />
+          <div className="mb-6 bg-white p-6 rounded-lg border border-gray-200">
+            <Toggle
+              enabled={merchantTaxesEnabled}
+              onChange={() => setMerchantTaxesEnabled(!merchantTaxesEnabled)}
+              label="Enable merchant-specific taxes"
+              size="md"
+            />
+            <p className="text-sm text-gray-500 mt-2">
+              Allow merchants to set their own tax rates and rules
+            </p>
+          </div>
+          {merchantTaxesEnabled && (
+            <>
+              {/* Merchant Selector */}
+              <div className="mb-6 bg-white p-6 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label htmlFor="merchant-select" className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Merchant
+                    </label>
+                    <select
+                      id="merchant-select"
+                      value={selectedMerchant}
+                      onChange={(e) => setSelectedMerchant(e.target.value)}
+                      className="block w-64 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    >
+                      {merchants.map((merchant) => (
+                        <option key={merchant.id} value={merchant.id}>
+                          {merchant.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {selectedMerchant === 'all' 
+                      ? `Showing ${filteredMerchantTaxes.length} taxes from all merchants`
+                      : `Showing ${filteredMerchantTaxes.length} taxes for ${merchants.find(m => m.id === selectedMerchant)?.name}`
+                    }
+                  </div>
+                </div>
+              </div>
+
+            <DataTable
+              data={filteredMerchantTaxes}
+              columns={merchantTaxColumns}
+              onEdit={handleEdit}
+              onDelete={(item) => handleDelete(item, setMerchantTaxes, merchantTaxes)}
+              onStatusToggle={(item) => handleStatusToggle(item, setMerchantTaxes, merchantTaxes)}
+            />
+            </>
+          )}
+        </section>
+
+        {/* 3. Marketplace Level Packing Charges */}
+        <section>
+          <SectionHeader
+            title="Marketplace Level Packing Charges"
+            description="Manage packing charges applied at the marketplace level"
+            buttonText="Add New Marketplace Packing Charge"
+            onAddNew={() => handleAddNew('marketplace-packing')}
+            icon={Package}
+          />
+          <DataTable
+            data={marketplacePackingCharges}
+            columns={chargeColumns}
+            onEdit={handleEdit}
+            onDelete={(item) => handleDelete(item, setMarketplacePackingCharges, marketplacePackingCharges)}
+            onStatusToggle={(item) => handleStatusToggle(item, setMarketplacePackingCharges, marketplacePackingCharges)}
+          />
+        </section>
+
+        {/* 4. Merchant Level Packing Charges */}
+        <section>
+          <SectionHeader
+            title="Merchant Level Packing Charges"
+            description="Manage packing charges specific to individual merchants"
+            buttonText="Add New Merchant Packing Charge"
+            onAddNew={() => handleAddNew('merchant-packing')}
+            icon={Store}
+          />
+          <div className="mb-6 bg-white p-6 rounded-lg border border-gray-200">
+            <Toggle
+              enabled={merchantPackingEnabled}
+              onChange={() => setMerchantPackingEnabled(!merchantPackingEnabled)}
+              label="Allow merchant packing charges"
+              size="md"
+            />
+            <p className="text-sm text-gray-500 mt-2">
+              Allow merchants to set their own packing charges and packaging options
+            </p>
+          </div>
+          {merchantPackingEnabled && (
+            <DataTable
+              data={merchantPackingCharges}
+              columns={merchantChargeColumns}
+              onEdit={handleEdit}
+              onDelete={(item) => handleDelete(item, setMerchantPackingCharges, merchantPackingCharges)}
+              onStatusToggle={(item) => handleStatusToggle(item, setMerchantPackingCharges, merchantPackingCharges)}
+            />
+          )}
+        </section>
+
+        {/* 5. Marketplace Level Additional Charges */}
+        <section>
+          <SectionHeader
+            title="Marketplace Level Additional Charges"
+            description="Manage additional charges applied at the marketplace level"
+            buttonText="Add New Marketplace Additional Charge"
+            onAddNew={() => handleAddNew('marketplace-additional')}
+            icon={CreditCard}
+          />
+          <DataTable
+            data={marketplaceAdditionalCharges}
+            columns={chargeColumns}
+            onEdit={handleEdit}
+            onDelete={(item) => handleDelete(item, setMarketplaceAdditionalCharges, marketplaceAdditionalCharges)}
+            onStatusToggle={(item) => handleStatusToggle(item, setMarketplaceAdditionalCharges, marketplaceAdditionalCharges)}
+          />
+        </section>
+
+        {/* 6. Merchant Level Additional Charges */}
+        <section>
+          <SectionHeader
+            title="Merchant Level Additional Charges"
+            description="Manage additional charges specific to individual merchants"
+            buttonText="Add New Merchant Additional Charge"
+            onAddNew={() => handleAddNew('merchant-additional')}
+            icon={Plus}
+          />
+          <div className="mb-6 bg-white p-6 rounded-lg border border-gray-200">
+            <Toggle
+              enabled={merchantAdditionalEnabled}
+              onChange={() => setMerchantAdditionalEnabled(!merchantAdditionalEnabled)}
+              label="Allow merchant-specific additional charges"
+              size="md"
+            />
+            <p className="text-sm text-gray-500 mt-2">
+              Allow merchants to set their own additional charges and special fees
+            </p>
+          </div>
+          {merchantAdditionalEnabled && (
+            <DataTable
+              data={merchantAdditionalCharges}
+              columns={merchantChargeColumns}
+              onEdit={handleEdit}
+              onDelete={(item) => handleDelete(item, setMerchantAdditionalCharges, merchantAdditionalCharges)}
+              onStatusToggle={(item) => handleStatusToggle(item, setMerchantAdditionalCharges, merchantAdditionalCharges)}
+            />
+          )}
+        </section>
+
+      </div>
     </div>
   );
 }
+export default TaxesFeesCharges;
