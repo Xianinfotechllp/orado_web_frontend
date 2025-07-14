@@ -44,6 +44,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import TicketSystemPage from "./pages/UserProfile/TicketSytemPage";
 import LoginWithOtp from "./pages/Auth/LoginwithOtp";
 import LoyalityPointsPage from "./pages/UserProfile/LoyalityPointsPage";
+import LandingPage from "./pages/LandinPage/LandingPage";
+import GroceryHome from "./pages/Grocery/Home";
+import StoreDetailPage from "./pages/Grocery/StoreDetailPage";
 
 
 
@@ -58,7 +61,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login-with-otp" element={<LoginWithOtp/>} />
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/restaurants" element={<Home />} />
         <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils />} />
         <Route path="/faq" element={<Faq />} />
         <Route path="/category/:categoryName" element={<CategoryRestaurants />} />
@@ -113,6 +117,13 @@ function App() {
         />
         <Route path="/faq" element={<Faq />} />
         <Route path="/notifications" element={<NotificationPage />} />
+
+
+        {/* Grocery Section  */}
+        <Route path="/grocery" element={<GroceryHome />} />
+        <Route path="/store/:id" element={<StoreDetailPage />} />
+
+
 
         {/* Merchant side */}
         <Route path="/merchant-detail" element={<About />} />
