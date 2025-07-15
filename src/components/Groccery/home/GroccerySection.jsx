@@ -77,54 +77,6 @@ const GrocerySection = () => {
       image: "https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=270/layout-engine/2022-11/Slice-14.png",
       description: "Organic and health-conscious products"
     },
-    // {
-    //   id: 13,
-    //   name: "Chicken, Meat & Fish",
-    //   image: "https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=270/layout-engine/2022-11/Slice-14.png",
-    //   description: "Organic and health-conscious products"
-    // },
-    // {
-    //   id: 14,
-    //   name: "Organic & Healthy Living",
-    //   image: "https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=270/layout-engine/2022-11/Slice-15.png",
-    //   description: "Organic and health-conscious products"
-    // },
-    // {
-    //   id: 15,
-    //   name: "Baby Care",
-    //   image: "https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=270/layout-engine/2022-11/Slice-16.png",
-    //   description: "Baby essentials and care products"
-    // },
-    // {
-    //   id: 16,
-    //   name: "Pharma & Wellness",
-    //   image: "https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=270/layout-engine/2022-11/Slice-17.png",
-    //   description: "Health and wellness products"
-    // },
-    // {
-    //   id: 17,
-    //   name: "Cleaning Essentials",
-    //   image: "https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=270/layout-engine/2022-11/Slice-18.png",
-    //   description: "Household cleaning supplies"
-    // },
-    // {
-    //   id: 18,
-    //   name: "Home & Office",
-    //   image: "https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=270/layout-engine/2022-11/Slice-19.png",
-    //   description: "Home and office essentials"
-    // },
-    // {
-    //   id: 19,
-    //   name: "Personal Care",
-    //   image: "https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=270/layout-engine/2022-11/Slice-20.png",
-    //   description: "Personal hygiene and beauty products"
-    // },
-    // {
-    //   id: 20,
-    //   name: "Pet Care",
-    //   image: "https://cdn.grofers.com/cdn-cgi/image/f=auto,fit=scale-down,q=70,metadata=none,w=270/layout-engine/2022-12/Pet-Care_Web.png",
-    //   description: "Pet food and care essentials"
-    // }
   ];
 
   return (

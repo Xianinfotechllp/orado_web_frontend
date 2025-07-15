@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Star, Clock, MapPin, Search, Plus, Minus, Heart, ShoppingBasket, Truck } from 'lucide-react';
 
-const StoreDetail = () => {
+const MeatStoreDetail = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [cart, setCart] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,73 +10,79 @@ const StoreDetail = () => {
   // Mock store data
   const store = {
     id: 1,
-    name: "FreshMart Grocery",
-    image: "https://images.unsplash.com/photo-1606787366850-de6330128bfc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    description: "Your neighborhood grocery store with fresh produce and quality items",
-    rating: 4.5,
-    deliveryTime: "15-25 min",
-    minOrder: 199,
-    location: "Downtown District",
+    name: "Prime Meat & Seafood",
+    image: "https://images.unsplash.com/photo-1588168333986-5078d3ae3976?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
+    description: "Premium quality fresh meat and seafood delivered to your door",
+    rating: 4.7,
+    deliveryTime: "20-30 min",
+    minOrder: 299,
+    location: "Central Market District",
     offers: [
       {
         type: "percentage",
         title: "First Order",
-        discountValue: 20,
-        maxDiscount: 100
+        discountValue: 15,
+        maxDiscount: 150
       },
       {
         type: "flat",
         title: "Free Delivery",
-        discountValue: 40,
-        minOrderValue: 299
+        discountValue: 60,
+        minOrderValue: 499
       }
     ]
   };
 
   // Mock categories and products data
   const categories = [
-    { id: 'all', name: 'All Items' },
-    { id: 'fruits', name: 'Fruits' },
-    { id: 'vegetables', name: 'Vegetables' },
-    { id: 'dairy', name: 'Dairy' },
-    { id: 'bakery', name: 'Bakery' },
-    { id: 'meat', name: 'Meat & Seafood' },
-    { id: 'beverages', name: 'Beverages' }
+    { id: 'all', name: 'All Items'},
+    { id: 'chicken', name: 'Chicken' },
+    { id: 'mutton', name: 'Mutton' },
+    { id: 'seafood', name: 'Seafood' },
+    { id: 'fish', name: 'Fresh Fish'},
+    { id: 'eggs', name: 'Eggs' },
+    { id: 'processed', name: 'Processed' }
   ];
 
   const products = {
-    fruits: [
-      { id: 1, name: 'Fresh Bananas', price: 2.99, unit: 'per lb', image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=150&h=150&fit=crop', inStock: true },
-      { id: 2, name: 'Red Apples', price: 3.49, unit: 'per lb', image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=150&h=150&fit=crop', inStock: true },
-      { id: 3, name: 'Fresh Oranges', price: 4.99, unit: 'per bag', image: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=150&h=150&fit=crop', inStock: true },
-      { id: 4, name: 'Strawberries', price: 5.99, unit: 'per container', image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=150&h=150&fit=crop', inStock: false }
+    chicken: [
+      { id: 1, name: 'Chicken Breast (Boneless)', price: 249, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=150&h=150&fit=crop', inStock: true },
+      { id: 2, name: 'Chicken Thighs (Bone-in)', price: 189, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=150&h=150&fit=crop', inStock: true },
+      { id: 3, name: 'Whole Chicken', price: 299, unit: 'per kg', image: 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=150&h=150&fit=crop', inStock: true },
+      { id: 4, name: 'Chicken Wings', price: 199, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=150&h=150&fit=crop', inStock: true },
+      { id: 5, name: 'Chicken Drumsticks', price: 179, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=150&h=150&fit=crop', inStock: true },
+      { id: 6, name: 'Minced Chicken', price: 229, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=150&h=150&fit=crop', inStock: false }
     ],
-    vegetables: [
-      { id: 5, name: 'Fresh Carrots', price: 1.99, unit: 'per lb', image: 'https://images.unsplash.com/photo-1445282768818-728615cc910a?w=150&h=150&fit=crop', inStock: true },
-      { id: 6, name: 'Broccoli', price: 2.49, unit: 'per head', image: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=150&h=150&fit=crop', inStock: true },
-    //   { id: 7, name: 'Bell Peppers', price: 3.99, unit: 'per lb', image: 'https://images.unsplash.com/photo-1525607551862-4d0b10775d86?w=150&h=150&fit=crop', inStock: true },
-    //   { id: 8, name: 'Fresh Spinach', price: 2.99, unit: 'per bunch', image: 'https://images.unsplash.com/photo-1576045057987-7a357b996551?w=150&h=150&fit=crop', inStock: true }
+    mutton: [
+      { id: 7, name: 'Mutton Chops', price: 699, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1594041680534-e8c8cdebd659?w=150&h=150&fit=crop', inStock: true },
+      { id: 8, name: 'Mutton Curry Cut', price: 649, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=150&h=150&fit=crop', inStock: true },
+      { id: 9, name: 'Goat Leg Piece', price: 749, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=150&h=150&fit=crop', inStock: true },
+      { id: 10, name: 'Minced Mutton', price: 599, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1551326844-4df70f78d0e9?w=150&h=150&fit=crop', inStock: true },
+      { id: 11, name: 'Mutton Ribs', price: 799, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=150&h=150&fit=crop', inStock: false }
     ],
-    dairy: [
-      { id: 9, name: 'Whole Milk', price: 3.49, unit: 'per gallon', image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=150&h=150&fit=crop', inStock: true },
-      { id: 10, name: 'Cheddar Cheese', price: 4.99, unit: 'per pack', image: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=150&h=150&fit=crop', inStock: true },
-      { id: 11, name: 'Greek Yogurt', price: 5.49, unit: 'per container', image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=150&h=150&fit=crop', inStock: true },
-      { id: 12, name: 'Butter', price: 4.29, unit: 'per pack', image: 'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=150&h=150&fit=crop', inStock: true }
+    seafood: [
+      { id: 12, name: 'Fresh Prawns (Large)', price: 899, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=150&h=150&fit=crop', inStock: true },
+      { id: 13, name: 'Crab (Whole)', price: 1299, unit: 'per kg', image: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&h=150&fit=crop', inStock: true },
+      { id: 14, name: 'Squid (Cleaned)', price: 449, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=150&h=150&fit=crop', inStock: true },
+      { id: 15, name: 'Mussels', price: 349, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=150&h=150&fit=crop', inStock: true },
+      { id: 16, name: 'Lobster', price: 1899, unit: 'per piece', image: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=150&h=150&fit=crop', inStock: false }
     ],
-    bakery: [
-      { id: 13, name: 'Sourdough Bread', price: 3.99, unit: 'per loaf', image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&h=150&fit=crop', inStock: true },
-    //   { id: 14, name: 'Croissants', price: 2.99, unit: 'per 4-pack', image: 'https://images.unsplash.com/photo-1555507036-ab794f1eb0b8?w=150&h=150&fit=crop', inStock: true },
-    //   { id: 15, name: 'Bagels', price: 4.49, unit: 'per 6-pack', image: 'https://images.unsplash.com/photo-1551198727-4c5e8f6e334e?w=150&h=150&fit=crop', inStock: true }
+    fish: [
+      { id: 18, name: 'Pomfret (Whole)', price: 799, unit: 'per kg', image: 'https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=150&h=150&fit=crop', inStock: true },
+      { id: 19, name: 'Kingfish Steaks', price: 649, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=150&h=150&fit=crop', inStock: true },
+      { id: 20, name: 'Mackerel', price: 299, unit: 'per 500g', image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop', inStock: true },
+      { id: 22, name: 'Sea Bass (Whole)', price: 549, unit: 'per kg', image: 'https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=150&h=150&fit=crop', inStock: false }
     ],
-    meat: [
-      { id: 16, name: 'Chicken Breast', price: 6.99, unit: 'per lb', image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=150&h=150&fit=crop', inStock: true },
-    //   { id: 17, name: 'Ground Beef', price: 5.99, unit: 'per lb', image: 'https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=150&h=150&fit=crop', inStock: true },
-    //   { id: 18, name: 'Salmon Fillet', price: 12.99, unit: 'per lb', image: 'https://images.unsplash.com/photo-1574781330855-d0db8cc2a4c1?w=150&h=150&fit=crop', inStock: true }
+    eggs: [
+      { id: 23, name: 'Farm Fresh Eggs', price: 79, unit: 'per 12 pieces', image: 'https://images.unsplash.com/photo-1518569656558-1f25e69d93d7?w=150&h=150&fit=crop', inStock: true },
+      { id: 25, name: 'Duck Eggs', price: 159, unit: 'per 6 pieces', image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=150&h=150&fit=crop', inStock: true },
     ],
-    beverages: [
-      { id: 19, name: 'Orange Juice', price: 3.99, unit: 'per bottle', image: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=150&h=150&fit=crop', inStock: true },
-    //   { id: 20, name: 'Sparkling Water', price: 4.99, unit: 'per 12-pack', image: 'https://images.unsplash.com/photo-1581098365948-6a661f41a184?w=150&h=150&fit=crop', inStock: true },
-      { id: 21, name: 'Coffee', price: 8.99, unit: 'per bag', image: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=150&h=150&fit=crop', inStock: true }
+    processed: [
+      { id: 27, name: 'Chicken Sausages', price: 199, unit: 'per 250g', image: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=150&h=150&fit=crop', inStock: true },
+      { id: 28, name: 'Chicken Salami', price: 249, unit: 'per 200g', image: 'https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=150&h=150&fit=crop', inStock: true },
+      { id: 29, name: 'Fish Fingers', price: 279, unit: 'per 300g', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=150&h=150&fit=crop', inStock: true },
+      { id: 30, name: 'Chicken Nuggets', price: 229, unit: 'per 400g', image: 'https://images.unsplash.com/photo-1562967916-eb82221dfb92?w=150&h=150&fit=crop', inStock: true },
+      { id: 31, name: 'Smoked Salmon', price: 1499, unit: 'per 200g', image: 'https://images.unsplash.com/photo-1574781330855-d0db8cc2a4c1?w=150&h=150&fit=crop', inStock: false }
     ]
   };
 
@@ -156,20 +162,7 @@ const StoreDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      {/* <div className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="px-4 py-3 flex items-center justify-between">
-          <ArrowLeft className="w-6 h-6 cursor-pointer text-gray-700" />
-          <h1 className="text-lg font-semibold text-gray-900">Store Details</h1>
-          <div className="relative">
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold">{getTotalCartItems()}</span>
-            </div>
-          </div>
-        </div>
-      </div> */}
-
-      {/* Store Hero Section - Matching the card style */}
+      {/* Store Hero Section */}
       <div className="relative w-full h-96 overflow-hidden">
         <img 
           src={store.image} 
@@ -177,15 +170,15 @@ const StoreDetail = () => {
           className="w-full h-full object-cover"
         />
         
-        {/* Gradient overlay matching the card style */}
+        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
           {/* Favorite button */}
           <button
             onClick={handleFavoriteToggle}
             className={`absolute top-6 right-6 p-3 rounded-full shadow-lg transition-all z-10 ${
               isFavorite 
-                ? 'bg-orange-500 text-white shadow-orange-500/50 hover:bg-orange-600' 
-                : 'bg-white text-gray-700 hover:bg-orange-50'
+                ? 'bg-red-500 text-white shadow-red-500/50 hover:bg-red-600' 
+                : 'bg-white text-gray-700 hover:bg-red-50'
             }`}
           >
             <Heart className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`} />
@@ -202,7 +195,7 @@ const StoreDetail = () => {
                   key={index}
                   className="flex-shrink-0 bg-white/10 border border-white/20 rounded-lg px-3 py-2 flex items-center gap-2"
                 >
-                  <ShoppingBasket className="w-4 h-4 text-orange-300" />
+                  <ShoppingBasket className="w-4 h-4 text-red-300" />
                   <div className="min-w-0">
                     {formatOffer(offer)}
                   </div>
@@ -213,7 +206,7 @@ const StoreDetail = () => {
 
           {/* Action buttons */}
           <div className="flex gap-3 mb-4 flex-wrap">
-            <button className="bg-orange-500/90 border border-orange-400 py-2 px-4 rounded-full font-semibold text-sm hover:bg-orange-600 transition flex items-center gap-1">
+            <button className="bg-red-500/90 border border-red-400 py-2 px-4 rounded-full font-semibold text-sm hover:bg-red-600 transition flex items-center gap-1">
               <Truck className="w-4 h-4" />
               <span>Delivery in {store.deliveryTime}</span>
             </button>
@@ -234,8 +227,8 @@ const StoreDetail = () => {
           <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search products..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="Search meat & seafood..."
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -251,7 +244,7 @@ const StoreDetail = () => {
               onClick={() => setSelectedCategory(category.id)}
               className={`flex-shrink-0 px-4 py-2 mr-2 rounded-full text-sm font-medium transition-all ${
                 selectedCategory === category.id
-                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/50'
+                  ? 'bg-red-500 text-white shadow-lg shadow-red-500/50'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -294,7 +287,7 @@ const StoreDetail = () => {
                 {/* Stock indicator */}
                 {product.inStock && (
                   <div className="absolute top-3 left-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                    In Stock
+                    Fresh
                   </div>
                 )}
               </div>
@@ -311,7 +304,7 @@ const StoreDetail = () => {
                 {/* Price & Cart */}
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-lg sm:text-xl font-bold text-orange-500">
+                    <span className="text-lg sm:text-xl font-bold text-red-500">
                       ₹{product.price}
                     </span>
                     {product.originalPrice && (
@@ -324,19 +317,19 @@ const StoreDetail = () => {
                   {product.inStock && (
                     <div className="flex items-center">
                       {cart[product.id] ? (
-                        <div className="flex items-center bg-orange-50 rounded-full p-1">
+                        <div className="flex items-center bg-red-50 rounded-full p-1">
                           <button
                             onClick={() => removeFromCart(product.id)}
-                            className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+                            className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
                           >
                             <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
                           </button>
-                          <span className="text-sm sm:text-base font-bold text-orange-600 min-w-[24px] sm:min-w-[28px] text-center px-2">
+                          <span className="text-sm sm:text-base font-bold text-red-600 min-w-[24px] sm:min-w-[28px] text-center px-2">
                             {cart[product.id]}
                           </span>
                           <button
                             onClick={() => addToCart(product.id)}
-                            className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+                            className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
                           >
                             <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                           </button>
@@ -344,7 +337,7 @@ const StoreDetail = () => {
                       ) : (
                         <button
                           onClick={() => addToCart(product.id)}
-                          className="w-8 h-8 sm:w-9 sm:h-9 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 group-hover:scale-110"
+                          className="w-8 h-8 sm:w-9 sm:h-9 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 group-hover:scale-110"
                         >
                           <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
@@ -386,12 +379,12 @@ const StoreDetail = () => {
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-bold">{getTotalCartItems()}</span>
               </div>
               <span className="text-gray-700 font-medium">{getTotalCartItems()} items in cart</span>
             </div>
-            <button className="bg-orange-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-orange-600 transition-colors shadow-lg">
+            <button className="bg-red-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-red-600 transition-colors shadow-lg">
               View Cart
             </button>
           </div>
@@ -401,4 +394,4 @@ const StoreDetail = () => {
   );
 };
 
-export default StoreDetail;
+export default MeatStoreDetail;
