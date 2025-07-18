@@ -49,6 +49,9 @@ import GroceryHome from "./pages/Grocery/Home";
 import StoreDetailPage from "./pages/Grocery/StoreDetailPage";
 import MeatHome from "./pages/Meat/Home";
 import MeatStoreDetailPage from "./pages/Meat/MeatStoreDetailPage";
+import MedicineHome from "./pages/Medicine/Home"
+import MedicineStoreDetailPage from "./pages/Medicine/MedicineStoreDetailPage";
+import InviteEarnPage from "./pages/UserProfile/InviteEarnPage";
 
 
 
@@ -112,6 +115,9 @@ function App() {
         <Route path="/my-account/loyality" element={
           <ProtectedRoute><LoyalityPointsPage /></ProtectedRoute>
         } />
+        <Route path="/my-account/invite" element={
+          <ProtectedRoute><InviteEarnPage /></ProtectedRoute>
+        } />
 
         <Route
           path="/restaurant/details/:restaurantId"
@@ -130,6 +136,11 @@ function App() {
         {/* Meat Section */}
         <Route path="/meat-delivery" element={<MeatHome />} />
         <Route path="/meat-store/:id" element={<MeatStoreDetailPage />} />
+
+
+        {/* Medicine Sectione */}
+        <Route path="/medicine-delivery" element = {<MedicineHome />} />
+        <Route path="/medicine-store/:id" element= {<MedicineStoreDetailPage />} />
 
 
         {/* Merchant side */}

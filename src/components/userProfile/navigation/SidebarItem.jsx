@@ -10,7 +10,8 @@ import {
   LogOut,
   Wallet,
   Ticket ,
-  BadgeCheck
+  BadgeCheck,
+  SquareArrowDown
 } from 'lucide-react';
 
 const SidebarItem = ({ name, path }) => {
@@ -36,6 +37,8 @@ const SidebarItem = ({ name, path }) => {
         return <Settings className={iconClass} />;
       case 'loyality points':
         return <BadgeCheck className={iconClass} />;
+      case 'invite and earn':
+        return <SquareArrowDown className={iconClass} />;
       default:
         return <LogOut className={iconClass} />;
     }

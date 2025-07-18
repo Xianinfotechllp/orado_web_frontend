@@ -88,7 +88,7 @@ const LandingPage = () => {
                 description="Premium quality meat & seafood"
               />
               <Tile
-                href="/medicine"
+                href="/medicine-delivery"
                 img="https://media.istockphoto.com/id/1778918997/photo/background-of-a-large-group-of-assorted-capsules-pills-and-blisters.jpg?s=612x612&w=0&k=20&c=G6aeWKN1kHyaTxiNdToVW8_xGY0hcenWYIjjG_xwF_Q="
                 title="Medicine Delivery"
                 description="Healthcare essentials delivered fast"
