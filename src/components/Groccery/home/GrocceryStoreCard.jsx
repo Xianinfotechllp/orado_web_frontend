@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Heart, ShoppingBasket, Clock, Star, Truck } from "lucide-react";
+import { useSelector } from "react-redux";
+import { Heart, Truck } from "lucide-react";
 import groceryPlaceholder from "../../../assets/grocery-placeholder.jpg"; 
-import { getNearbyGroceryStores } from "../../../apis/storeApi";
+import { getNearbyStores } from "../../../apis/storeApi";
 
 function GroceryStoreCard({ store }) {
   const [isFavorite, setIsFavorite] = useState(false);
@@ -14,33 +15,6 @@ function GroceryStoreCard({ store }) {
       setIsFavorite(!isFavorite);
       setIsLoading(false);
     }, 300);
-  };
-
-  const formatOffer = (offer) => {
-    if (!offer) return null;
-    
-    switch (offer.type) {
-      case "percentage":
-        return (
-          <>
-            <div className="font-medium">{offer.title}</div>
-            <div className="text-sm text-white">
-              {offer.discountValue}% OFF up to ₹{offer.maxDiscount}
-            </div>
-          </>
-        );
-      case "flat":
-        return (
-          <>
-            <div className="font-medium">{offer.title}</div>
-            <div className="text-sm text-white">
-              Flat ₹{offer.discountValue} OFF
-            </div>
-          </>
-        );
-      default:
-        return <div className="font-medium">{offer.title}</div>;
-    }
   };
 
   return (
@@ -109,21 +83,31 @@ function GroceryStoresSection() {
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Get location from Redux store
+  const { location } = useSelector((state) => state.location);
 
   useEffect(() => {
     const fetchStores = async () => {
+      // Check if location exists and has the required lat/lon properties
+      if (!location?.lat || !location?.lon) {
+        setError("Location not available. Please select your location.");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        const latitude = 9.92;
-        const longitude = 76.25;
-
-        const res = await getNearbyGroceryStores({
-          latitude,
-          longitude,
+        setError(null);
+        
+        const res = await getNearbyStores({
+          latitude: location.lat,  // Changed from location.latitude to location.lat
+          longitude: location.lon, // Changed from location.longitude to location.lon
+          storeType: "grocery"
         });
 
         console.log("Fetched grocery stores:", res.data);
-        setStores(res.data);
+        setStores(res.data || []);
       } catch (err) {
         console.error("Error fetching nearby stores:", err);
         setError("Failed to load stores. Please try again later.");
@@ -133,7 +117,7 @@ function GroceryStoresSection() {
     };
 
     fetchStores();
-  }, []);
+  }, [location]);
 
   if (loading) {
     return (
@@ -169,6 +153,12 @@ function GroceryStoresSection() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h2 className="text-3xl font-bold mb-8 text-gray-900">Popular Grocery Stores</h2>
+      {/* Show current location */}
+      {location && (
+        <div className="mb-4 text-sm text-gray-600">
+          📍 Showing stores near: <span className="font-medium">{location.address || location.name}</span>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stores.map(store => (
           <GroceryStoreCard key={store._id} store={store} />
