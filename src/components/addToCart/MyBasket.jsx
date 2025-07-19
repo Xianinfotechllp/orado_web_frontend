@@ -11,10 +11,9 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
-  Gift
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { getBillSummary, placeOrder } from "../../apis/orderApi";
+import { getBillSummary, placeOrder, verifyPayment } from "../../apis/orderApi";
 import { getWalletBalance } from "../../apis/walletApi";
 import {
   clearCartApi,
@@ -48,38 +47,39 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [estimatedDelivery, setEstimatedDelivery] = useState("60-70 mins");
-  const [loyaltyPoints, setLoyaltyPoints] = useState(0); 
-  const [useLoyaltyPoints, setUseLoyaltyPoints] = useState(false);
 
   const user = useSelector((state) => state.auth.user);
   const cartId = useSelector((state) => state.cart.cartId);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
 
-  // Fetch wallet balance and loyalty points
-  const fetchWalletData = async () => {
-    try {
-      setError(null);
-      setWalletLoading(true);
-      
-      // Fetch wallet balance
-      const walletRes = await getWalletBalance();
-      setWalletBalance(walletRes.walletBalance);
-      
-      // Fetch loyalty points (new)
-      const loyaltyRes = await getLoyaltyPoints();
-      setLoyaltyPoints(loyaltyRes.points || 0);
-      
-      if (walletRes.walletBalance <= 0) {
-        setUseWallet(false);
-      }
-    } catch (err) {
-      console.error("Failed to load wallet data:", err);
-      setError("Failed to load wallet data.");
-    } finally {
-      setWalletLoading(false);
-    }
-  };
+  // Dummy data for coupon 
+  const coupons = [
+  {
+    code: 'FLAT125',
+    title: 'Get Flat Rs.125 off',
+    description: 'Use code FLAT125 & get flat ₹125 off on orders above ₹499.',
+  },
+  {
+    code: 'SPECIALS',
+    title: '60% off on select items',
+    description: 'Use code SPECIALS & get 60% off on orders above ₹299.',
+  },
+  {
+    code: 'FREEDISH',
+    title: 'Free Dish with Combo',
+    description: 'Use FREEDISH to get a free starter on orders above ₹399.',
+  },
+  {
+    code: 'SAVE30',
+    title: '30% off on all orders',
+    description: 'Use SAVE30 to get 30% off on any order above ₹199.',
+  },
+];
 
+// usestate to open and close add coupon button sidebar
+const [isOpen, setIsOpen] = useState(false);
+  
+  
   // Fetch bill summary
   const fetchBill = async (cartId) => {
   if (!cartId) {
@@ -144,10 +144,6 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   }
 };
 
-  useEffect(() => {
-      fetchWalletData();
-    }, []);
-
   // Fetch cart data
   const fetchCartData = async () => {
     if (!user?._id) return;
@@ -178,26 +174,26 @@ export default function MyBasket({ useWallet, setUseWallet }) {
     }
   };
 
-  // const fetchWalletBalance = async () => {
-  //   try {
-  //     setError(null);
-  //     setWalletLoading(true);
-  //     const res = await getWalletBalance();
-  //     setWalletBalance(res.walletBalance);
-  //     if (res.walletBalance <= 0) {
-  //       setUseWallet(false);
-  //     }
-  //   } catch (err) {
-  //     console.error("Failed to load wallet balance:", err);
-  //     setError("Failed to load wallet balance.");
-  //   } finally {
-  //     setWalletLoading(false);
-  //   }
-  // };
+  const fetchWalletBalance = async () => {
+    try {
+      setError(null);
+      setWalletLoading(true);
+      const res = await getWalletBalance();
+      setWalletBalance(res.walletBalance);
+      if (res.walletBalance <= 0) {
+        setUseWallet(false);
+      }
+    } catch (err) {
+      console.error("Failed to load wallet balance:", err);
+      setError("Failed to load wallet balance.");
+    } finally {
+      setWalletLoading(false);
+    }
+  };
 
-  // useEffect(() => {
-  //   fetchWalletBalance();
-  // }, []);
+  useEffect(() => {
+    fetchWalletBalance();
+  }, []);
 
   useEffect(() => {
     fetchCartData();
@@ -220,7 +216,7 @@ useEffect(() => {
     }, 500); // 500ms debounce
     
     return () => clearTimeout(timer);
-  }, [selectedAddress, useLoyaltyPoints]);
+  }, [selectedAddress]);
 
 
 
@@ -239,27 +235,27 @@ const handlePlaceOrder = async () => {
     setLoading(true);
     setError(null);
 
-    if (paymentMethod === "cash") {
-      // 👉 Cash order flow
-      const orderPayload = {
-        cartId,
-        userId: user._id,
-        paymentMethod,
-        useWallet,
-        useLoyaltyPoints,
-        cookingInstructions,
-        longitude: selectedAddress.location.longitude,
-        latitude: selectedAddress.location.latitude,
-        street: selectedAddress.street,
-        area: selectedAddress.area,
-        landmark: selectedAddress.landmark,
-        city: selectedAddress.city,
-        state: selectedAddress.state,
-        pincode: selectedAddress.zip,
-        country: selectedAddress.country,
-        instructions: cookingInstructions
-      };
+    // Common order payload for both payment methods
+    const orderPayload = {
+      cartId,
+      userId: user._id,
+      paymentMethod,
+      useWallet,
+      cookingInstructions,
+      longitude: selectedAddress.location.longitude,
+      latitude: selectedAddress.location.latitude,
+      street: selectedAddress.street,
+      area: selectedAddress.area,
+      landmark: selectedAddress.landmark,
+      city: selectedAddress.city,
+      state: selectedAddress.state,
+      pincode: selectedAddress.zip,
+      country: selectedAddress.country,
+      instructions: cookingInstructions
+    };
 
+    if (paymentMethod === "cash") {
+      // Cash on delivery flow
       const res = await placeOrder(orderPayload);
 
       if (res?.orderId) {
@@ -268,70 +264,57 @@ const handlePlaceOrder = async () => {
         setOrderSuccess(true);
         setOrderId(res.orderId);
       }
+    } else if (paymentMethod === "online") {
+      // Online payment flow
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        setError("Failed to load payment gateway. Please try again.");
+        return;
+      }
 
-    } else if (paymentMethod === "card") {  
-
-        const resScript = await loadRazorpayScript();
-
-
-
-  if (!resScript) {
-    alert("Failed to load Razorpay SDK. Please check your connection.");
-    setLoading(false);
-    return;
-  }
-      // 👉 Online payment flow
-const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
-      // 1️⃣ Create Razorpay order from backend
-      const { data } = await axios.post("http://localhost:5000/payments/create-order", {
-       amount: amountInPaise // your calculated cart total
+      // 1. Create order in backend
+      const orderResponse = await placeOrder({
+        ...orderPayload,
+        paymentStatus: "pending" // Mark as pending until payment completes
       });
 
-      // 2️⃣ Razorpay checkout options
+      if (!orderResponse?.orderId) {
+        throw new Error("Failed to create order");
+      }
+
+      // 2. Initialize Razorpay payment
+      const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0) * 100);
+      
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount:amountInPaise,
+        amount: amountInPaise,
         currency: "INR",
         name: "Orado Food Delivery",
         description: "Order Payment",
-        order_id: data.orderId,
+        order_id: orderResponse.razorpayOrderId,
         handler: async function (response) {
-          // 3️⃣ Verify payment at backend
-          await axios.post("http://localhost:5000/payments/verify", {
-            order_id: data.orderId,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature
-          });
+          try {
+            // 3. Verify payment with backend
 
-          // 4️⃣ Place the order now (after payment success)
-          const orderPayload = {
-            cartId,
-            userId: user._id,
-            paymentMethod,
-            paymentStatus: "success",
-            razorpayPaymentId: response.razorpay_payment_id,
-            useWallet,
-            useLoyaltyPoints,
-            cookingInstructions,
-            longitude: selectedAddress.location.longitude,
-            latitude: selectedAddress.location.latitude,
-            street: selectedAddress.street,
-            area: selectedAddress.area,
-            landmark: selectedAddress.landmark,
-            city: selectedAddress.city,
-            state: selectedAddress.state,
-            pincode: selectedAddress.zip,
-            country: selectedAddress.country,
-            instructions: cookingInstructions
-          };
+            await verifyPayment({ razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderId: orderResponse.orderId})
+            // await axios.post("/api/payments/verify", {
+            //   razorpay_order_id: response.razorpay_order_id,
+            //   razorpay_payment_id: response.razorpay_payment_id,
+            //   razorpay_signature: response.razorpay_signature,
+            //   orderId: orderResponse.orderId
+            // });
 
-          const res = await placeOrder(orderPayload);
-
-          if (res?.orderId) {
+            // Success - clear cart and show success
             dispatch(clearCart());
             await clearCartApi(user._id);
             setOrderSuccess(true);
-            setOrderId(res.orderId);
+            setOrderId(orderResponse.orderId);
+          } catch (error) {
+            console.error("Payment verification failed:", error);
+            setError("Payment verification failed. Please check your orders.");
           }
         },
         prefill: {
@@ -341,13 +324,18 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
         },
         theme: {
           color: "#ff5500",
+        },
+        modal: {
+          ondismiss: () => {
+            // Handle payment modal dismissal
+            setLoading(false);
+          }
         }
       };
 
       const rzp = new window.Razorpay(options);
       rzp.open();
     }
-
   } catch (error) {
     console.error("Failed to place order:", error);
     const errorMsg = error.response?.data?.message || 
@@ -357,12 +345,6 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
     setLoading(false);
   }
 };
-
- // Add loyalty points checkbox handler
-  const handleLoyaltyPointsToggle = (e) => {
-    if (loyaltyPoints <= 0) return;
-    setUseLoyaltyPoints(e.target.checked);
-  };
 
   const handleOrderModalClose = () => {
     setOrderSuccess(false);
@@ -450,35 +432,46 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
 
       {/* Error Message Display */}
       {error && (
-        <div className={`p-3 flex items-start gap-2 ${
-          error.code === "DELIVERY_UNAVAILABLE" 
-            ? "bg-yellow-50 border-l-4 border-yellow-400" 
-            : "bg-red-50 border-b border-red-100"
-        }`}>
-          <AlertCircle 
-            size={18} 
+        <div
+          className={`p-3 flex items-start gap-2 ${
+            error.code === "DELIVERY_UNAVAILABLE"
+              ? "bg-yellow-50 border-l-4 border-yellow-400"
+              : "bg-red-50 border-b border-red-100"
+          }`}
+        >
+          <AlertCircle
+            size={18}
             className={`mt-0.5 flex-shrink-0 ${
-              error.code === "DELIVERY_UNAVAILABLE" 
-                ? "text-yellow-500" 
+              error.code === "DELIVERY_UNAVAILABLE"
+                ? "text-yellow-500"
                 : "text-red-500"
-            }`} 
+            }`}
           />
           <div className="flex-1 text-sm">
-            <p className={
-              error.code === "DELIVERY_UNAVAILABLE" 
-                ? "text-yellow-700" 
-                : "text-red-600"
-            }>
-              {error.message || "Sorry, we don't deliver to this location yet"}
+            <p
+              className={
+                error.code === "DELIVERY_UNAVAILABLE"
+                  ? "text-yellow-700"
+                  : "text-red-600"
+              }
+            >
+              {console.log(error)}
+              Sorry, we don’t deliver to this location yet
             </p>
+            {error.code === "DELIVERY_UNAVAILABLE" && (
+              <p className="text-yellow-600 text-xs mt-1">
+                Please try a different delivery address
+              </p>
+            )}
           </div>
-          <button 
-            onClick={() => setError(null)} 
+          <button
+            onClick={() => setError(null)}
             className={`text-lg ${
-              error.code === "DELIVERY_UNAVAILABLE" 
-                ? "text-yellow-400 hover:text-yellow-600" 
+              error.code === "DELIVERY_UNAVAILABLE"
+                ? "text-yellow-400 hover:text-yellow-600"
                 : "text-red-400 hover:text-red-600"
             }`}
+            aria-label="Dismiss error"
           >
             &times;
           </button>
@@ -508,14 +501,17 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
       {selectedAddress && (
         <div className="bg-white border border-gray-300 rounded-lg p-4 m-4">
           <div className="flex justify-between items-start mb-3">
-            <h2 className="text-orange-600 font-medium text-base">Delivery Address</h2>
+            <h2 className="text-orange-600 font-medium text-base">
+              Delivery Address
+            </h2>
           </div>
           <div className="space-y-2">
             <h3 className="text-black font-medium text-base">
               {selectedAddress?.type || "Selected Address"}
             </h3>
             <p className="text-gray-600 text-sm leading-relaxed">
-              {selectedAddress.street}, {selectedAddress.city}, {selectedAddress.state}, {selectedAddress.zip}
+              {selectedAddress.street}, {selectedAddress.city},{" "}
+              {selectedAddress.state}, {selectedAddress.zip}
             </p>
           </div>
         </div>
@@ -594,7 +590,119 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
             </div>
           ))
         )}
+
+       
+{/*<p>------------------------hello there here shanky coupon sidebar start -------------------------</p> */}
+       
+       
+ 
+
+ <button
+  className="flex items-center gap-2 bg-orange-500 text-white px-4 py-3 font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/30 hover:scale-105 hover:bg-orange-600 shadow-md md:px-6 ml-17 md:ml-30 mb-0"
+  onClick={() => setIsOpen(true)}
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M17 9V7a2 2 0 00-2-2h-1.5a.5.5 0 01-.5-.5V3a2 2 0 00-2-2h-1a2 2 0 00-2 2v1.5a.5.5 0 01-.5.5H7a2 2 0 00-2 2v2a.5.5 0 01-.5.5H3a2 2 0 00-2 2v1a2 2 0 002 2h1.5a.5.5 0 01.5.5V17a2 2 0 002 2h2a.5.5 0 01.5.5V21a2 2 0 002 2h1a2 2 0 002-2v-1.5a.5.5 0 01.5-.5H17a2 2 0 002-2v-2a.5.5 0 01.5-.5H21a2 2 0 002-2v-1a2 2 0 00-2-2h-1.5a.5.5 0 01-.5-.5z"
+    />
+  </svg>
+  <span className="hidden sm:inline">Apply Coupon</span>
+  <span className="sm:hidden">Apply Coupons</span>
+</button>
+
+{/* Overlay with higher z-index */}
+{isOpen && (
+  <div
+    className="fixed inset-0 backdrop-blur-lg bg-black/30 z-50 transition-all duration-300 ease-out"
+    onClick={() => setIsOpen(false)}
+    style={{
+      height: 'calc(100% + 20px)', // Extends 20px beyond viewport
+      bottom: '-20px' // Pulls overlay down to cover gap
+    }}
+  />
+)}
+
+{/* Sidebar with highest z-index */}
+<div
+  className={`fixed top-0 right-0 h-full w-full max-w-full sm:max-w-md bg-white z-60 transform transition-all duration-300 ease-in-out ${
+    isOpen ? 'translate-x-0' : 'translate-x-full'
+  } shadow-xl`}
+  style={{
+    height: 'calc(100% + 20px)', // Extends 20px beyond viewport
+    bottom: '-20px' // Pulls sidebar down to cover gap
+  }}
+>
+  {/* Rest of your sidebar content remains exactly the same */}
+  {/* Header */}
+  <div className="flex justify-between items-center p-4 sm:p-6 bg-white border-b border-orange-300 relative">
+    <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+      Available Coupons
+    </h2>
+    <button
+      onClick={() => setIsOpen(false)}
+      className="text-gray-500 hover:text-gray-800 text-3xl w-12 h-12 flex items-center justify-center transition-all duration-200 hover:bg-orange-100 rounded-full focus:outline-none absolute right-2 top-2 sm:static sm:text-2xl sm:w-8 sm:h-8"
+    >
+      &times;
+    </button>
+  </div>
+
+  {/* Content Area */}
+  <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto h-[calc(100vh-64px)] sm:h-[calc(100vh-88px)]">
+    {/* Input Group */}
+    <div className="flex flex-col sm:flex-row gap-3 mb-4 sm:mb-6">
+      <input
+        type="text"
+        placeholder="Enter Coupon Code"
+        className="flex-1 px-4 py-3 rounded-lg sm:rounded-xl bg-white border-2 border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-500 transition-all duration-300 placeholder-gray-400 text-sm sm:text-base"
+      />
+      <button className="px-4 py-3 bg-orange-400 text-white font-semibold rounded-lg sm:rounded-xl hover:bg-orange-600 transition-all duration-300 text-sm sm:text-base">
+        Apply
+      </button>
+    </div>
+
+    {/* Coupons List */}
+    <div className="space-y-3 sm:space-y-4">
+      {coupons.map((coupon, idx) => (
+        <div 
+          key={idx} 
+          className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-xl transition-all duration-300 border border-orange-100 hover:border-orange-300 hover:-translate-y-1 hover:scale-[1.02] transform-gpu"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+            <div className="bg-orange-100 px-3 py-1.5 rounded-md sm:rounded-lg font-bold text-xs sm:text-sm text-orange-700 border border-orange-200">
+              {coupon.code}
+            </div>
+            <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
+              {coupon.title}
+            </h3>
+          </div>
+          <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 leading-relaxed">
+            {coupon.description}
+          </p>
+         <button 
+  className="w-full text-white bg-orange-400 hover:bg-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 border-2 border-orange-500 hover:border-orange-600 hover:shadow-lg active:scale-[0.98]"
+>
+  APPLY COUPON
+</button>
+        </div>
+      ))}
+
       </div>
+        </div>
+      </div>
+      </div>
+
+
+ {/*<p>----------------------hello there here shanky coupon sidebar ends----------------------</p> */}
+    
 
       {billLoading ? (
         <div className="p-4 space-y-3 animate-pulse">
@@ -633,7 +741,7 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
                   className="flex justify-between text-xs sm:text-sm pl-6"
                 >
                   <span className="text-green-600">
-                    {typeof offer === 'string' ? offer : offer?.name || "Offer"}
+                    {typeof offer === "string" ? offer : offer?.name || "Offer"}
                   </span>
                   {bill?.discount > 0 && index === 0 && (
                     <span className="text-green-600">
@@ -648,11 +756,16 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
           <div className="space-y-1">
             <div className="flex justify-between text-sm sm:text-base">
               <span className="font-medium">Tax Total:</span>
-              <span className="font-medium">₹{(bill?.tax || 0).toFixed(2)}</span>
+              <span className="font-medium">
+                ₹{(bill?.tax || 0).toFixed(2)}
+              </span>
             </div>
-            
+
             {bill?.taxes?.map((taxItem, index) => (
-              <div key={index} className="flex justify-between text-xs pl-4 text-gray-600">
+              <div
+                key={index}
+                className="flex justify-between text-xs pl-4 text-gray-600"
+              >
                 <span>
                   {taxItem.name} ({taxItem.percentage}%):
                 </span>
@@ -660,7 +773,7 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
               </div>
             ))}
           </div>
-          
+
           <div className="flex justify-between text-sm sm:text-base">
             <span className="font-medium">Delivery Fee:</span>
             <span className="font-medium">
@@ -685,24 +798,6 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
             </div>
           )}
 
-          {/* Loyalty Points Section */}
-          <div className="flex items-center justify-between text-sm sm:text-base pt-2">
-            <label className="font-medium flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                disabled={loyaltyPoints <= 0 || walletLoading}
-                checked={loyaltyPoints > 0 && useLoyaltyPoints}
-                onChange={handleLoyaltyPointsToggle}
-                className="cursor-pointer"
-              />
-              <div className="flex items-center gap-1">
-                <Gift size={16} className="text-purple-500" />
-                <span>Use Loyalty Points ({loyaltyPoints} pts available)</span>
-              </div>
-            </label>
-          </div>
-
-          {/* Wallet Section */}
           <div className="flex items-center justify-between text-sm sm:text-base pt-2">
             <label className="font-medium flex items-center gap-2 cursor-pointer">
               <input
@@ -721,15 +816,6 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
               <span className="font-medium text-green-600">Wallet Used:</span>
               <span className="font-medium text-green-600">
                 - ₹{bill.walletUsed.toFixed(2)}
-              </span>
-            </div>
-          )}
-
-          {bill?.loyaltyPointsUsed > 0 && (
-            <div className="flex justify-between text-sm sm:text-base mb-2">
-              <span className="font-medium text-purple-600">Loyalty Points Used:</span>
-              <span className="font-medium text-purple-600">
-                - ₹{bill.loyaltyPointsUsed.toFixed(2)}
               </span>
             </div>
           )}
@@ -756,7 +842,9 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
 
       {/* Payment Method Section */}
       <div className="bg-white border border-gray-300 rounded-lg p-4">
-        <h2 className="text-black font-medium text-base mb-4">Choose Payment Method</h2>
+        <h2 className="text-black font-medium text-base mb-4">
+          Choose Payment Method
+        </h2>
 
         <div className="space-y-3">
           <label className="flex items-center space-x-2 cursor-pointer">
@@ -774,16 +862,14 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
             <input
               type="radio"
               name="payment"
-              value="card"
-              checked={paymentMethod === "card"}
+              value="online"
+              checked={paymentMethod === "online"}
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="h-4 w-4 text-orange-600 focus:ring-orange-500"
             />
             <span className="text-gray-700">Pay online</span>
           </label>
         </div>
-
-        
 
         {/* Checkout Button */}
         {items.length > 0 && (
@@ -809,6 +895,38 @@ const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0));
           </button>
         )}
       </div>
+
+
+{/* <div 
+  className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50" 
+  role="dialog"
+>
+  <div className="bg-white rounded-xl p-6 max-w-xs w-full shadow-xl border border-gray-100">
+    <div className="flex items-start gap-4">
+      <img 
+        className="w-14 h-14 object-contain p-2 bg-orange-50 rounded-lg" 
+        src="https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_144/unified-discounting/CouponCartToast" 
+        alt="Coupon applied"
+      />
+      <div className="flex-1">
+        <div className="font-bold text-gray-800 text-lg">'DBSDC125' applied</div>
+        <div className="text-3xl font-bold text-gray-900 my-2">₹87</div>
+        <div className="text-gray-500 text-sm">Savings with this coupon</div>
+        <div className="text-green-600 font-medium mt-3 flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          Woohoo! Coupon applied
+        </div>
+      </div>
+    </div>
+    <button 
+      className="mt-6 w-full py-3 rounded-lg font-semibold bg-orange-100 hover:bg-orange-200 transition-colors duration-200 text-orange-500"
+    >
+      YAY!
+    </button>
+  </div>
+</div> */}
     </div>
   );
 }

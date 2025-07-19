@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Heart, ShoppingBasket, Clock, Star, Truck } from "lucide-react";
 import groceryPlaceholder from "../../../assets/grocery-placeholder.jpg"; 
+import { getNearbyGroceryStores } from "../../../apis/storeApi";
 
 function GroceryStoreCard({ store }) {
   const [isFavorite, setIsFavorite] = useState(false);
@@ -9,7 +10,6 @@ function GroceryStoreCard({ store }) {
   const handleFavoriteToggle = (e) => {
     e.stopPropagation();
     setIsLoading(true);
-    // Simulate API call
     setTimeout(() => {
       setIsFavorite(!isFavorite);
       setIsLoading(false);
@@ -47,7 +47,7 @@ function GroceryStoreCard({ store }) {
     <div className="relative w-full h-[22rem] overflow-hidden shadow-lg rounded-xl">
       {/* Background Image */}
       <img
-        src={store.image || groceryPlaceholder}
+        src={store.images?.[0] || groceryPlaceholder}
         alt={store.name}
         className="w-full h-full object-cover"
         onError={(e) => {
@@ -78,20 +78,13 @@ function GroceryStoreCard({ store }) {
         {/* Store name */}
         <h1 className="text-3xl font-bold mb-4 drop-shadow-md">{store.name}</h1>
 
-        {/* Offers Section */}
-        {store.offers?.length > 0 && (
-          <div className="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {store.offers.map((offer, index) => (
-              <div 
-                key={index}
-                className="flex-shrink-0 bg-white/10 border border-white/20 rounded-lg px-3 py-2 flex items-center gap-2"
-              >
-                <ShoppingBasket className="w-4 h-4 text-orange-300" />
-                <div className="min-w-0">
-                  {formatOffer(offer)}
-                </div>
-              </div>
-            ))}
+        {/* Address */}
+        {store.address && (
+          <div className="text-sm mb-2">
+            {store.address.street && <div>{store.address.street}</div>}
+            {store.address.city && store.address.state && (
+              <div>{store.address.city}, {store.address.state}</div>
+            )}
           </div>
         )}
 
@@ -99,104 +92,86 @@ function GroceryStoreCard({ store }) {
         <div className="flex gap-3 mb-4 flex-wrap">
           <button className="bg-orange-500/90 border border-orange-400 py-2 px-4 rounded-full font-semibold text-sm hover:bg-orange-600 transition flex items-center gap-1">
             <Truck className="w-4 h-4" />
-            <span>Delivery in {store.deliveryTime || "20-30 min"}</span>
+            <span>Delivery in 20-30 min</span>
           </button>
-          <button className="bg-white/10 border border-white/30 py-2 px-4 rounded-full font-semibold text-sm hover:bg-white/20 transition">
-            Min Order ₹{store.minOrder || 199}
-          </button>
+          {store.minOrderAmount && (
+            <button className="bg-white/10 border border-white/30 py-2 px-4 rounded-full font-semibold text-sm hover:bg-white/20 transition">
+              Min Order ₹{store.minOrderAmount}
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// Dummy data for grocery stores
-const groceryStores = [
-  {
-    id: 1,
-    name: "FreshMart Grocery",
-    image: "https://images.unsplash.com/photo-1606787366850-de6330128bfc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    deliveryTime: "15-25 min",
-    minOrder: 199,
-    rating: 4.5,
-    offers: [
-      {
-        type: "percentage",
-        title: "First Order",
-        discountValue: 20,
-        maxDiscount: 100
-      },
-      {
-        type: "flat",
-        title: "Free Delivery",
-        discountValue: 40,
-        minOrderValue: 299
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: "24/7 Supermarket",
-    image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80",
-    deliveryTime: "25-35 min",
-    minOrder: 249,
-    rating: 4.2,
-    offers: [
-      {
-        type: "percentage",
-        title: "Weekend Sale",
-        discountValue: 15,
-        maxDiscount: 150
-      }
-    ]
-  },
-  {
-    id: 3,
-    name: "Organic Harvest",
-    image: "https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80",
-    deliveryTime: "30-40 min",
-    minOrder: 349,
-    rating: 4.7,
-    offers: [
-      {
-        type: "flat",
-        title: "Organic Discount",
-        discountValue: 50,
-        minOrderValue: 499
-      }
-    ]
-  },
-  {
-    id: 4,
-    name: "QuickStop Grocers",
-    image: "https://images.unsplash.com/photo-1601593768793-21d9c01b340c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    deliveryTime: "10-20 min",
-    minOrder: 149,
-    rating: 4.3,
-    offers: [
-      {
-        type: "percentage",
-        title: "New Customer",
-        discountValue: 25,
-        maxDiscount: 120
-      },
-      {
-        type: "flat",
-        title: "Express Delivery",
-        discountValue: 30,
-        minOrderValue: 199
-      }
-    ]
-  }
-];
-
 function GroceryStoresSection() {
+  const [stores, setStores] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        setLoading(true);
+        const latitude = 9.92;
+        const longitude = 76.25;
+
+        const res = await getNearbyGroceryStores({
+          latitude,
+          longitude,
+        });
+
+        console.log("Fetched grocery stores:", res.data);
+        setStores(res.data);
+      } catch (err) {
+        console.error("Error fetching nearby stores:", err);
+        setError("Failed to load stores. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStores();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h2 className="text-3xl font-bold mb-8 text-gray-900">Loading Grocery Stores...</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-[22rem] bg-gray-200 rounded-xl animate-pulse"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h2 className="text-3xl font-bold mb-8 text-gray-900">Popular Grocery Stores</h2>
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
+  }
+
+  if (stores.length === 0) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h2 className="text-3xl font-bold mb-8 text-gray-900">Popular Grocery Stores</h2>
+        <div className="text-gray-500">No grocery stores available in your area.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h2 className="text-3xl font-bold mb-8 text-gray-900">Popular Grocery Stores</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {groceryStores.map(store => (
-          <GroceryStoreCard key={store.id} store={store} />
+        {stores.map(store => (
+          <GroceryStoreCard key={store._id} store={store} />
         ))}
       </div>
     </div>

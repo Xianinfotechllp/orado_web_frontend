@@ -109,3 +109,15 @@ export const sendOrderDelayReason = async (orderId, delayReason, preparationTime
     throw error;
   }
 };
+
+
+
+export const verifyPayment = async (paymentData) => {
+  try {
+    const response = await apiClient.post(`/order/payments/verify`, paymentData);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to verify payment:", error);
+    throw error;
+  }
+};

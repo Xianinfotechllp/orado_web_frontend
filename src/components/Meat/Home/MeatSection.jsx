@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import MeatHero from '../../../assets/meatHero.webp'
+import { Link } from 'react-router-dom';
+
 
 const MeatSection = () => {
   const [activeCategory, setActiveCategory] = useState(null);
@@ -162,6 +164,10 @@ const MeatSection = () => {
                 onMouseEnter={() => setActiveCategory(category.id)}
                 onMouseLeave={() => setActiveCategory(null)}
               >
+                
+                <Link to="/meat-store/2">
+              
+             
                 <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-red-200 transform hover:-translate-y-2 cursor-pointer">
                   <div className="relative overflow-hidden">
                     <div className="aspect-square p-4 bg-gradient-to-br from-red-50 to-white">
@@ -180,6 +186,9 @@ const MeatSection = () => {
                     </h3>
                   </div>
                 </div>
+
+
+                  </Link>
 
                 {/* Tooltip */}
                 {activeCategory === category.id && (

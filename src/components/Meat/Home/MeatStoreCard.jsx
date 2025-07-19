@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Heart, ShoppingBasket, Clock, Star, Truck } from "lucide-react";
+import { Heart, ShoppingBasket, Clock, Star, Truck, } from "lucide-react";
 import meatPlaceholder from "../../../assets/meat-placeholder.webp"; 
+import { Link } from "react-router-dom";
 
 function MeatStoreCard({ store }) {
   const [isFavorite, setIsFavorite] = useState(false);
@@ -266,7 +267,7 @@ function MeatStoresSection() {
       <h2 className="text-3xl font-bold mb-8 text-gray-900">Popular Meat Stores</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {meatStores.map(store => (
-          <MeatStoreCard key={store.id} store={store} />
+        <Link to="/meat-store/2"> <MeatStoreCard key={store.id} store={store} /> </Link> 
         ))}
       </div>
     </div>

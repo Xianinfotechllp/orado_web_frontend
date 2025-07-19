@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Wallet, CreditCard, Smartphone, Building2, Check, AlertCircle, Loader2, X } from 'lucide-react';
 import { initiateWalletTopUp, verifyAndCreditWallet, getWalletBalance } from '../../../apis/walletApi'; 
+import { loadRazorpayScript } from '../../../utility/razorpay';
 
 const WalletTopUp = () => {
   const [balance, setBalance] = useState(0);
@@ -68,36 +69,88 @@ const WalletTopUp = () => {
     }
   };
 
-  const handlePayment = async () => {
-    const amount = getSelectedAmount();
-    setLoading(true);
-    setStep('processing');
-    setError(null);
+  // const handlePayment = async () => {
+  //   const amount = getSelectedAmount();
+  //   setLoading(true);
+  //   setStep('processing');
+  //   setError(null);
 
-    try {
-      // Step 1: Initiate payment
-      const initiateResponse = await initiateWalletTopUp(amount);
-      setTransactionId(initiateResponse.payment.paymentId);
+  //   try {
+  //     // Step 1: Initiate payment
+  //     const initiateResponse = await initiateWalletTopUp(amount);
+  //     setTransactionId(initiateResponse.payment.paymentId);
 
-      // Step 2: Verify payment and credit wallet
-      const verifyResponse = await verifyAndCreditWallet({
-        paymentId: initiateResponse.payment.paymentId,
-        amount: amount,
-        userId: initiateResponse.payment.userId
-      });
+  //     // Step 2: Verify payment and credit wallet
+  //     const verifyResponse = await verifyAndCreditWallet({
+  //       paymentId: initiateResponse.payment.paymentId,
+  //       amount: amount,
+  //       userId: initiateResponse.payment.userId
+  //     });
       
-      if (verifyResponse.success) {
-        await fetchBalance(); // Refresh the balance
-        setStep('success');
+  //     if (verifyResponse.success) {
+  //       await fetchBalance(); // Refresh the balance
+  //       setStep('success');
+  //     }
+  //   } catch (error) {
+  //     console.error('Payment failed:', error);
+  //     setError('Payment failed. Please try again.');
+  //     setStep('amount');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
+  const handleTopUp = async (amount) => {
+  try {
+
+    const amount = 100;
+    // setLoading(true);
+    // setStep('processing');
+    setError(null);
+const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        setError("Failed to load payment gateway. Please try again.");
+        return;
       }
-    } catch (error) {
-      console.error('Payment failed:', error);
-      setError('Payment failed. Please try again.');
-      setStep('amount');
-    } finally {
-      setLoading(false);
-    }
-  };
+
+
+
+
+    const data = await initiateWalletTopUp(amount);
+    console.log(data)
+
+    const options = {
+      key: data.key,
+      amount: data.amount,
+      currency: data.currency,
+      name: 'Orado',
+      description: 'Wallet Top-up',
+      order_id: data.orderId,
+      handler: async function (response) {
+         const verifyPayload = {
+          razorpay_order_id: data.orderId,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+        }
+        console.log(response)
+        await verifyAndCreditWallet(verifyPayload);
+        alert('Wallet credited successfully!');
+      },
+      // prefill: {
+      //   name: user.name,
+      //   email: user.email,
+      //   contact: user.phone,
+      // },
+    };
+
+    const razorpay = new window.Razorpay(options);
+    razorpay.open();
+  } catch (error) {
+    console.log(error)
+    alert('Failed to initiate top-up');
+  }
+};
 
   const resetFlow = () => {
     setStep('amount');
@@ -416,7 +469,7 @@ const WalletTopUp = () => {
 
             {/* Pay Button */}
             <button
-              onClick={handlePayment}
+              onClick={handleTopUp}
               disabled={loading}
               className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-6 rounded-2xl font-light text-lg hover:shadow-2xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-300 flex items-center justify-center"
             >

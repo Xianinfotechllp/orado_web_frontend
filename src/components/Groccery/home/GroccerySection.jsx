@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import GroceryHero from '../../../assets/groceryHero.jpg'
+import { Link } from 'react-router-dom';
+
 
 const GrocerySection = () => {
   const [activeCategory, setActiveCategory] = useState(null);
@@ -162,7 +164,9 @@ const GrocerySection = () => {
                 onMouseEnter={() => setActiveCategory(category.id)}
                 onMouseLeave={() => setActiveCategory(null)}
               >
-                <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-orange-200 transform hover:-translate-y-2 cursor-pointer">
+
+                <Link to="/store/1">
+                  <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-orange-200 transform hover:-translate-y-2 cursor-pointer">
                   <div className="relative overflow-hidden">
                     <div className="aspect-square p-4 bg-gradient-to-br from-orange-50 to-white">
                       <img
@@ -180,6 +184,8 @@ const GrocerySection = () => {
                     </h3>
                   </div>
                 </div>
+                </Link>
+              
 
                 {/* Tooltip */}
                 {activeCategory === category.id && (

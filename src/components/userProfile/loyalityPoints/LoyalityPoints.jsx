@@ -1,47 +1,58 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronRight, Gift, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { getLoyaltyBalance, getLoyaltySettings, getLoyaltyTransactionHistory } from '../../../apis/userApi';
 
 const LoyaltyPoints = () => {
   const [activeTab, setActiveTab] = useState('points');
+  const [points, setPoints] = useState(0);
+  const [transactions, setTransactions] = useState([]);
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Dummy data - easily replaceable with API data
-  const loyaltyData = {
-    availablePoints: 120,
-    earnPoints: {
-      amount: 10,
-      minPurchase: 200.00
-    },
-    redeemPoints: {
-      points: 2,
-      value: 50.00,
-      minOrder: 5.00
-    },
-    conditions: [
-      { id: 1, text: "Minimum Order amount required for using Loyalty Points is $ 5.00." },
-      { id: 2, text: "Minimum Order amount for Earning Loyalty Points is $ 10.00." },
-      { id: 3, text: "Loyalty Points will expire after 7 Days." },
-      { id: 4, text: "Maximum 20 Loyalty Points can be earned per Order." },
-      { id: 5, text: "Maximum 10% of cart value can be paid with Loyalty Points." },
-      { id: 6, text: "Loyalty usage will be applicable with other offers." },
-      { id: 7, text: "All items & conditions are subject to change without prior information." }
-    ],
-    history: [
-      { id: 25615006, type: 'earned', points: 20, date: 'Jul 10 2025, 03:02 PM' },
-      { id: 25595482, type: 'used', points: -2, date: 'Jul 08 2025, 10:21 PM' },
-      { id: 25577764, type: 'earned', points: 20, date: 'Jul 07 2025, 11:20 AM' },
-      { id: 25577751, type: 'earned', points: 20, date: 'Jul 07 2025, 11:17 AM' },
-      { id: 25577708, type: 'earned', points: 20, date: 'Jul 07 2025, 11:09 AM' },
-      { id: 25475297, type: 'earned', points: 20, date: 'Jul 05 2025, 08:01 AM' },
-      { id: 25491241, type: 'earned', points: 20, date: 'Jul 05 2025, 08:01 AM' },
-      { id: 25511785, type: 'earned', points: 20, date: 'Jul 02 2025, 09:41 AM' }
-    ]
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch all data in parallel
+        const [balanceRes, transactionsRes, settingsRes] = await Promise.all([
+          getLoyaltyBalance(),
+          getLoyaltyTransactionHistory(),
+          getLoyaltySettings()
+        ]);
+
+        setPoints(balanceRes.data.loyaltyPoints);
+        setTransactions(transactionsRes.data);
+        setSettings(settingsRes.data);
+        
+      } catch (error) {
+        console.error('Error fetching loyalty data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const tabs = [
     { id: 'points', label: 'Loyalty Points', icon: Gift },
     { id: 'conditions', label: 'Rewards & Conditions', icon: CheckCircle },
     { id: 'history', label: 'History', icon: Clock }
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-600"></div>
+      </div>
+    );
+  }
+
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
 
   const renderPointsTab = () => (
     <div className="space-y-6">
@@ -50,7 +61,7 @@ const LoyaltyPoints = () => {
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="text-center">
             <div className="text-4xl font-bold text-orange-600 mb-2">
-              {loyaltyData.availablePoints}
+              {points}
             </div>
             <div className="text-gray-600 text-sm">Available Points</div>
             <div className="mt-4 flex justify-center">
@@ -65,10 +76,10 @@ const LoyaltyPoints = () => {
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-800 mb-2">
-              Get {loyaltyData.earnPoints.amount}
+              Get {1} points
             </div>
             <div className="text-gray-600 text-sm mb-4">
-              Loyalty Points on purchase of <span className="font-semibold">${loyaltyData.earnPoints.minPurchase}</span>
+              Loyalty Points on purchase of <span className="font-semibold">${settings?.minOrderAmountForEarning}</span>
             </div>
             <div className="mt-4 flex justify-center">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center">
@@ -84,7 +95,7 @@ const LoyaltyPoints = () => {
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="text-center">
             <div className="text-xl font-bold text-gray-800 mb-2">
-              {loyaltyData.redeemPoints.points} Loyalty Points = ${loyaltyData.redeemPoints.value}
+              {1} Points = ${settings?.valuePerPoint }
             </div>
             <div className="text-gray-600 text-sm mb-4">
               Use these Loyalty Points on your next Order
@@ -102,14 +113,21 @@ const LoyaltyPoints = () => {
       <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-2xl p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button className="bg-white rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+          <button 
+            className="bg-white rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-shadow"
+            disabled={points < settings?.minPointsForRedemption}
+          >
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center">
                 <Gift className="w-5 h-5 text-white" />
               </div>
               <div className="text-left">
                 <div className="font-medium text-gray-800">Redeem Points</div>
-                <div className="text-sm text-gray-600">Use your points now</div>
+                <div className="text-sm text-gray-600">
+                  {points >= settings?.minPointsForRedemption 
+                    ? "Use your points now" 
+                    : `Need ${settings?.minPointsForRedemption - points} more points`}
+                </div>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -131,21 +149,33 @@ const LoyaltyPoints = () => {
     </div>
   );
 
-  const renderConditionsTab = () => (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Reward Conditions</h2>
-      <div className="space-y-4">
-        {loyaltyData.conditions.map((condition, index) => (
-          <div key={condition.id} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
-            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-white text-xs font-bold">{index + 1}</span>
+  const renderConditionsTab = () => {
+    const conditions = [
+      { id: 1, text: `Minimum Order amount required for using Loyalty Points is $${settings?.minOrderAmountForRedemption}.` },
+      { id: 2, text: `Minimum Order amount for Earning Loyalty Points is $${settings?.minOrderAmountForEarning}.` },
+      { id: 3, text: `Loyalty Points will expire after ${settings?.expiryDurationDays} Days.` },
+      { id: 4, text: `Maximum ${settings?.maxEarningPoints} Loyalty Points can be earned per Order.` },
+      { id: 5, text: `Maximum ${settings?.maxRedemptionPercent}% of cart value can be paid with Loyalty Points.` },
+      { id: 6, text: "Loyalty usage will be applicable with other offers." },
+      { id: 7, text: "All items & conditions are subject to change without prior information." }
+    ];
+
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Reward Conditions</h2>
+        <div className="space-y-4">
+          {conditions.map((condition, index) => (
+            <div key={condition.id} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
+              <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white text-xs font-bold">{index + 1}</span>
+              </div>
+              <p className="text-gray-700 leading-relaxed">{condition.text}</p>
             </div>
-            <p className="text-gray-700 leading-relaxed">{condition.text}</p>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderHistoryTab = () => (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -163,27 +193,33 @@ const LoyaltyPoints = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {loyaltyData.history.map((transaction) => (
-              <tr key={transaction.id} className="hover:bg-gray-50">
+            {transactions.map((transaction) => (
+              <tr key={transaction._id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-2">
-                    {transaction.type === 'earned' ? (
+                    {transaction.transactionType === 'earned' ? (
                       <CheckCircle className="w-4 h-4 text-green-500" />
                     ) : (
                       <XCircle className="w-4 h-4 text-red-500" />
                     )}
-                    <span className="font-medium text-gray-800">{transaction.id}</span>
+                    <span className="font-medium text-gray-800">
+                      {transaction.orderId || 'N/A'}
+                    </span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-gray-700 capitalize">{transaction.type} by</span>
+                  <span className="text-gray-700 capitalize">
+                    {transaction.transactionType} {transaction.description ? `(${transaction.description})` : ''}
+                  </span>
                 </td>
                 <td className="px-6 py-4">
                   <span className={`font-bold ${transaction.points > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {transaction.points > 0 ? '+' : ''}{transaction.points}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-gray-600 text-sm">{transaction.date}</td>
+                <td className="px-6 py-4 text-gray-600 text-sm">
+                  {formatDate(transaction.createdAt)}
+                </td>
               </tr>
             ))}
           </tbody>

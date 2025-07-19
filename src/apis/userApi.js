@@ -74,3 +74,35 @@ export const updateUserProfile = async (updatedFields) => {
 
 
 
+export const getLoyaltyBalance = async () => {
+  try {
+    const response = await apiClient.get('/user/loyalty/balance');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching loyalty balance:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+
+export const getLoyaltyTransactionHistory = async () => {
+  try {
+    const response = await apiClient.get('/user/loyalty/history');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching loyalty transaction history:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+
+export const getLoyaltySettings = async () => {
+  try {
+    const response = await apiClient.get('/loyality');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching loyalty settings:', error.response?.data || error.message);
+    throw error;
+  }
+};
