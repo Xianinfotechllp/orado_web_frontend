@@ -23,14 +23,16 @@ const ReviewsManagement = () => {
   const [replyText, setReplyText] = useState({});
   const [filterRating, setFilterRating] = useState("all");
   const [activeTab, setActiveTab] = useState("Restaurant");
+  const [showReplyInput, setShowReplyInput] = useState({}); // New state for reply input visibility
   const currentRestaurantId = selectedRestaurant?.id;
-const [lightboxOpen, setLightboxOpen] = useState(false);
-const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-const openImageLightbox = (index) => {
-  setCurrentImageIndex(index);
-  setLightboxOpen(true);
-};
+  const openImageLightbox = (index) => {
+    setCurrentImageIndex(index);
+    setLightboxOpen(true);
+  };
+
   // Handle restaurants load from RestaurantSlider
   const handleRestaurantsLoad = (restaurantData) => {
     setRestaurants(restaurantData);
@@ -178,6 +180,7 @@ const openImageLightbox = (index) => {
       }
 
       setReplyText({ ...replyText, [reviewId]: "" });
+      setShowReplyInput({ ...showReplyInput, [reviewId]: false }); // Hide reply input after successful reply
       toast.success("Reply submitted successfully");
     } catch (error) {
       console.error("Failed to submit reply:", error);
@@ -189,6 +192,10 @@ const openImageLightbox = (index) => {
 
   const handleReplyChange = (reviewId, text) => {
     setReplyText({ ...replyText, [reviewId]: text });
+  };
+
+  const toggleReplyInput = (reviewId) => {
+    setShowReplyInput({ ...showReplyInput, [reviewId]: !showReplyInput[reviewId] });
   };
 
   // Handle tab change
@@ -250,7 +257,7 @@ const openImageLightbox = (index) => {
           onClick={() => handleTabChange("Restaurant")}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activeTab === "Restaurant"
-              ? "bg-orange-500 text-white"
+              ? "bg-[#0f172a] text-white"
               : "bg-white text-gray-700 hover:bg-gray-100"
           }`}
         >
@@ -260,7 +267,7 @@ const openImageLightbox = (index) => {
           onClick={() => handleTabChange("Product")}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activeTab === "Product"
-              ? "bg-orange-500 text-white"
+              ? "bg-[#0f172a] text-white"
               : "bg-white text-gray-700 hover:bg-gray-100"
           }`}
         >
@@ -279,21 +286,21 @@ const openImageLightbox = (index) => {
 
       {loading && restaurants.length === 0 ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-700"></div>
         </div>
       ) : error ? (
         <div className="text-center py-12 text-red-500">{error}</div>
       ) : (
         <>
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
+          {/* Stats Cards - Single Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
                     Total Reviews
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-[#0f172a]">
                     {currentReviews.length}
                   </p>
                 </div>
@@ -301,14 +308,14 @@ const openImageLightbox = (index) => {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
                     Average Rating
                   </p>
                   <div className="flex items-center gap-2">
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-2xl font-bold text-[#0f172a]">
                       {getAverageRating()}
                     </p>
                     <div className="flex">
@@ -320,13 +327,13 @@ const openImageLightbox = (index) => {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
                     Pending Replies
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-[#0f172a]">
                     {currentReviews.filter((r) => !r.reply).length}
                   </p>
                 </div>
@@ -334,13 +341,13 @@ const openImageLightbox = (index) => {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
                     Response Rate
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-[#0f172a]">
                     {currentReviews.length > 0
                       ? Math.round(
                           (currentReviews.filter((r) => r.reply).length /
@@ -356,116 +363,116 @@ const openImageLightbox = (index) => {
             </div>
           </div>
 
-          {/* Rating Distribution */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 className="text-lg font-semibold mb-4">Rating Distribution</h3>
-            <div className="space-y-2">
-              {[5, 4, 3, 2, 1].map((rating) => (
-                <div key={rating} className="flex items-center gap-3">
-                  <div className="flex items-center gap-1">
-                    <span className="text-sm font-medium">{rating}</span>
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+          {/* Rating Distribution and Filter - Single Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 group bg-white p-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
+              <h3 className="text-md font-semibold mb-3">Rating Distribution</h3>
+              <div className="space-y-1.5">
+                {[5, 4, 3, 2, 1].map((rating) => (
+                  <div key={rating} className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 min-w-[32px]">
+                      <span className="text-sm font-medium">{rating}</span>
+                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    </div>
+                    <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                      <div
+                        className="bg-yellow-400 h-1.5 rounded-full"
+                        style={{
+                          width: `${
+                            currentReviews.length > 0
+                              ? (ratingCounts[rating] / currentReviews.length) *
+                                100
+                              : 0
+                          }%`,
+                        }}
+                      ></div>
+                    </div>
+                    <span className="text-sm text-gray-600 min-w-[20px] text-right">
+                      {ratingCounts[rating]}
+                    </span>
                   </div>
-                  <div className="flex-1 bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-yellow-400 h-2 rounded-full"
-                      style={{
-                        width: `${
-                          currentReviews.length > 0
-                            ? (ratingCounts[rating] / currentReviews.length) *
-                              100
-                            : 0
-                        }%`,
-                      }}
-                    ></div>
-                  </div>
-                  <span className="text-sm text-gray-600">
-                    {ratingCounts[rating]}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            <div className="group bg-white p-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
+              <h3 className="text-md font-semibold mb-3">Filter Reviews</h3>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700">
+                  Filter by Rating:
+                </label>
+                <select
+                  value={filterRating}
+                  onChange={(e) => setFilterRating(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700 text-sm"
+                >
+                  <option value="all">All Ratings</option>
+                  <option value="5">5 Stars</option>
+                  <option value="4">4 Stars</option>
+                  <option value="3">3 Stars</option>
+                  <option value="2">2 Stars</option>
+                  <option value="1">1 Star</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* Filter */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-medium text-gray-700">
-                Filter by Rating:
-              </label>
-              <select
-                value={filterRating}
-                onChange={(e) => setFilterRating(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="all">All Ratings</option>
-                <option value="5">5 Stars</option>
-                <option value="4">4 Stars</option>
-                <option value="3">3 Stars</option>
-                <option value="2">2 Stars</option>
-                <option value="1">1 Star</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Reviews List */}
-          <div className="space-y-4">
+          {/* Reviews List - Three Cards per Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredReviews.length > 0 ? (
               filteredReviews.map((review) => (
                 <div
                   key={review.id}
-                  className="bg-white p-6 rounded-lg shadow-sm border"
+                  className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200 flex flex-col"
                 >
-                <div className="flex items-start justify-between mb-4">
-  <div className="flex items-center gap-3">
-    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-      {review.profileImage ? (
-        <img
-          src={review.profileImage}
-          alt={review.customerName}
-          className="w-full h-full rounded-full object-cover"
-        />
-      ) : (
-        <User className="w-5 h-5 text-gray-600" />
-      )}
-    </div>
-    <div>
-      <h4 className="font-semibold text-gray-900">
-        {review.customerName}
-      </h4>
-      <p className="text-sm text-gray-600">{review.date}</p>
-    </div>
-  </div>
-  <div className="flex items-center gap-2">
-    <div className="flex">{renderStars(review.rating)}</div>
-    <span className="text-sm font-medium text-gray-600">
-      ({review.rating}.0)
-    </span>
-  </div>
-</div>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                        {review.profileImage ? (
+                          <img
+                            src={review.profileImage}
+                            alt={review.customerName}
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-5 h-5 text-gray-600" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-[#0f172a]">
+                          {review.customerName}
+                        </h4>
+                        <p className="text-sm text-gray-600">{review.date}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex">{renderStars(review.rating)}</div>
+                      <span className="text-sm font-medium text-gray-600">
+                        ({review.rating}.0)
+                      </span>
+                    </div>
+                  </div>
 
-{review.images && review.images.length > 0 && (
-  <div className="mb-4">
-    <div className="flex flex-wrap gap-2">
-
-   
-      {review.images.map((image, index) => (
-        <div 
-          key={index} 
-          className="relative group w-24 h-24 rounded-lg overflow-hidden cursor-pointer"
-          onClick={() => openImageLightbox(index)} // Implement lightbox function
-        >
-          <img
-            src={image}
-            alt={`Review image ${index + 1}`}
-            className="w-full h-full object-cover hover:opacity-90 transition-opacity"
-          />
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200" />
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+                  {review.images && review.images.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex flex-wrap gap-2">
+                        {review.images.map((image, index) => (
+                          <div 
+                            key={index} 
+                            className="relative group w-16 h-16 rounded-lg overflow-hidden cursor-pointer"
+                            onClick={() => openImageLightbox(index)}
+                          >
+                            <img
+                              src={image}
+                              alt={`Review image ${index + 1}`}
+                              className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {activeTab === "Product" && review.product && (
                     <div className="mb-3">
@@ -478,17 +485,17 @@ const openImageLightbox = (index) => {
                     </div>
                   )}
 
-                  <div className="mb-3">
+                  <div className="mb-3 flex-grow">
                     {activeTab === "Restaurant" && (
                       <p className="text-sm text-gray-600 mb-1">
                         Order: {review.orderItem || "Not specified"}
                       </p>
                     )}
-                    <p className="text-gray-800">{review.comment}</p>
+                    <p className="text-gray-800 text-sm">{review.comment}</p>
                   </div>
 
                   {review.reply && (
-                    <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                    <div className="bg-gray-50 p-3 rounded-lg mb-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Reply className="w-4 h-4 text-orange-500" />
@@ -502,38 +509,56 @@ const openImageLightbox = (index) => {
                           </span>
                         )}
                       </div>
-                      <p className="text-gray-700">{review.reply}</p>
+                      <p className="text-gray-700 text-sm">{review.reply}</p>
                     </div>
                   )}
 
                   {!review.reply && (
-                    <div className="border-t pt-4">
-                      <div className="flex gap-3">
-                        <textarea
-                          value={replyText[review.id] || ""}
-                          onChange={(e) =>
-                            handleReplyChange(review.id, e.target.value)
-                          }
-                          placeholder="Write your reply to this review..."
-                          className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
-                          rows="3"
-                        />
+                    <div className="border-t pt-4 mt-auto">
+                      {!showReplyInput[review.id] ? (
                         <button
-                          onClick={() => handleReply(review.id)}
-                          disabled={!replyText[review.id]?.trim() || replying}
-                          className={`px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed h-fit ${
-                            replying ? "opacity-70" : ""
-                          }`}
+                          onClick={() => toggleReplyInput(review.id)}
+                          className="w-full px-4 py-2 bg-[#0f172a] text-white rounded-lg bg-gradient-to-r hover:from-gray-700 hover:to-gray-800 transition-colors flex items-center justify-center gap-2"
                         >
-                          {replying ? "Sending..." : "Reply"}
+                          <Reply className="w-4 h-4" />
+                          Reply
                         </button>
-                      </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <textarea
+                            value={replyText[review.id] || ""}
+                            onChange={(e) =>
+                              handleReplyChange(review.id, e.target.value)
+                            }
+                            placeholder="Write your reply to this review..."
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-700 resize-none text-sm"
+                            rows="3"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleReply(review.id)}
+                              disabled={!replyText[review.id]?.trim() || replying}
+                              className={`flex-1 px-4 py-2 bg-[#0f172a] text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed ${
+                                replying ? "opacity-70" : ""
+                              }`}
+                            >
+                              {replying ? "Sending..." : "Send Reply"}
+                            </button>
+                            <button
+                              onClick={() => toggleReplyInput(review.id)}
+                              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               ))
             ) : (
-              <div className="text-center py-12">
+              <div className="col-span-full text-center py-12">
                 <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">
                   {currentReviews.length === 0

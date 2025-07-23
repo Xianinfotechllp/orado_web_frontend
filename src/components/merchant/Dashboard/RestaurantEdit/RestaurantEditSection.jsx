@@ -399,7 +399,7 @@ const RestaurantEdit = () => {
       <button
         type="button"
         onClick={() => fileInputRefs[field].current?.click()}
-        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
+        className="bg-gray-800 hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-800 text-white px-4 py-2 rounded-md transition-colors"
       >
         Choose File{multiple ? "s" : ""}
       </button>
@@ -620,7 +620,7 @@ const handleSaveImages = async () => {
       <div className="flex justify-end gap-4 mt-6">
         <button
           onClick={() => handleSave("basic")}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          className="bg-gray-800 hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-800 text-white px-4 py-2 rounded  transition"
         >
           Save Basic Information
         </button>
@@ -710,14 +710,14 @@ const handleSaveImages = async () => {
           <button
             type="button"
             onClick={() => setShowLocationPicker(true)}
-            className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
+            className="bg-gray-800 hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-800 text-white px-3 py-1 rounded  transition"
           >
             Changelocation Location
           </button>
         </div>
         <button
           onClick={() => handleSave("location")}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          className="bg-gray-800 hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-800 text-white px-4 py-2 rounded transition"
         >
           Save Location
         </button>
@@ -941,7 +941,7 @@ const handleSaveImages = async () => {
       <button
         type="button"
         onClick={onSaveGallery}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        className="bg-gray-800 hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-800 text-white px-4 py-2 rounded  transition"
       >
         Save Gallery
       </button>
@@ -975,17 +975,10 @@ const handleSaveImages = async () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white shadow-sm ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Restaurant Management
-              </h1>
-              <p className="text-sm text-gray-500">
-                Edit and manage restaurant information
-              </p>
-            </div>
+           
             <div>
               <div>
                 <div>
@@ -1003,7 +996,7 @@ const handleSaveImages = async () => {
               <button
                 onClick={handleSave}
                 disabled={loading}
-                className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors disabled:opacity-50"
+                className="flex items-center px-4 py-2 bg-gray-900 hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-800 text-white rounded-md font-medium transition-colors disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -1022,7 +1015,7 @@ const handleSaveImages = async () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="bg-white rounded shadow-lg max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-8">
           {/* Sidebar Navigation */}
           <div className="w-64 flex-shrink-0">
@@ -1035,7 +1028,7 @@ const handleSaveImages = async () => {
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
                       activeTab === tab.id
-                        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-500"
+                        ? "bg-blue-50 text-gray-700 border-l-4 border-gray-900"
                         : "text-gray-600 hover:bg-gray-50"
                     }`}
                   >

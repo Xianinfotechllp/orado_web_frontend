@@ -131,3 +131,31 @@ export const sendRestaurantMessageToAdmin = async (content, attachments = []) =>
     throw error;
   }
 };
+
+
+
+export const fetchCustomersList = async (page = 1, limit = 20, search = '') => {
+  try {
+    const response = await apiClient.get('/admin/customer-list', {
+      params: {
+        page,
+        limit,
+        search,
+      },
+    });
+    
+
+    return response.data; // returns the API response data directly
+
+  } catch (error) {
+    console.error("Error fetching customers:", error);
+    throw error;
+  }
+};
+
+
+
+export const getCustomersByMerchantId = async (merchantId) => {
+  const response = await apiClient.get(`/chat/merchants/${merchantId}/customers`);
+  return response.data;
+};

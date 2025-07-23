@@ -369,7 +369,7 @@ const MenuManagement = () => {
           className={`flex items-center gap-2 px-4 py-2 rounded-md ${
             !currentRestaurantId || menuItems.length === 0
               ? "bg-gray-300 cursor-not-allowed"
-              : "bg-blue-500 hover:bg-blue-600 text-white"
+              : "bg-gray-900 hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-800 text-white"
           }`}
         >
           {isExporting ? (

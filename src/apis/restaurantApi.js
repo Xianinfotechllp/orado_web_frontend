@@ -882,3 +882,25 @@ export const bulkUpdateProducts = async (restaurantId, formData) => {
   );
   return response.data;
 };
+
+
+
+export const getOrderDetailById = async (orderId) => {
+  try {
+    const response = await apiClient.get(`/merchant/order-details/${orderId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching order by ID:", error);
+    throw error;
+  }
+};
+
+export const getCustomerOrdersHistory = async (userId) => {
+  try {
+    const response = await apiClient.get(`/merchant/customer/${userId}/orders-list`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching customer orders:", error);
+    throw error;
+  }
+};

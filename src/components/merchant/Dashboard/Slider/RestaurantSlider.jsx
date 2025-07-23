@@ -133,7 +133,7 @@ useEffect(() => {
                 <h3
                   className={`font-medium ${
                     index === selectedRestaurant
-                      ? "text-orange-600 text-lg"
+                      ? "text-gray-800 text-lg"
                       : "text-gray-700"
                   }`}
                 >
@@ -144,7 +144,7 @@ useEffect(() => {
           ))}
 
           <div
-            className="absolute bottom-0 h-1 bg-orange-500 rounded-full transition-all duration-500 ease-out"
+            className="absolute bottom-0 h-1 bg-gray-950 rounded-full transition-all duration-500 ease-out"
             style={{
               width: `${underlineWidth}px`,
               left: `${underlinePosition}px`,

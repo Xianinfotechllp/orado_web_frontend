@@ -144,7 +144,7 @@ const EditCategoryModal = ({
                     name: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-700"
                 placeholder="Enter category name"
                 disabled={isSubmitting}
               />
@@ -162,7 +162,7 @@ const EditCategoryModal = ({
                     description: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-700"
                 rows="4"
                 placeholder="Enter category description"
                 disabled={isSubmitting}
@@ -190,7 +190,7 @@ const EditCategoryModal = ({
               <input
                 type="file"
                 onChange={handleImageChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-700"
                 accept="image/*"
                 disabled={isSubmitting}
               />
@@ -213,7 +213,7 @@ const EditCategoryModal = ({
             <button
               onClick={handleEditCategory}
               disabled={isSubmitting || !editedCategory.name}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-gradient-to-r  text-white rounded-lg bg-gray-950 hover:from-gray-600 hover:to-gray-900 transition-all duration-200 disabled:opacity-50"
             >
               {isSubmitting ? "Updating..." : "Update Category"}
             </button>

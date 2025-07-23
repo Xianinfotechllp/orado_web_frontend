@@ -126,7 +126,7 @@ const RestaurantCard = ({ restaurant: initialRestaurant, onClick, onEdit, onDele
       <div onClick={() => onClick(restaurant)} className="cursor-pointer">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-r from-gray-700 to-gray-900 rounded-lg flex items-center justify-center">
               <Home className="w-6 h-6 text-white" />
             </div>
             <div>

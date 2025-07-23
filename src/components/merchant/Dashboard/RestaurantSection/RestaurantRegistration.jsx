@@ -270,7 +270,7 @@ const handleBusinessHoursChange = (day, field, value) => {
         return (
           <div className="space-y-6">
             <div className="flex items-center mb-6">
-              <div className="bg-gradient-to-r from-red-500 to-orange-500 p-3 rounded-full mr-4">
+              <div className="bg-gradient-to-r bg-gray-950 hover:bg-gray-600 p-3 rounded-full mr-4">
                 <Store className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -320,7 +320,7 @@ const handleBusinessHoursChange = (day, field, value) => {
         return (
           <div className="space-y-6">
             <div className="flex items-center mb-6">
-              <div className="bg-gradient-to-r from-red-500 to-orange-500 p-3 rounded-full mr-4">
+              <div className="bg-gradient-to-r bg-gray-950 hover:bg-gray-600 p-3 rounded-full mr-4">
                 <MapPin className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -423,7 +423,7 @@ const handleBusinessHoursChange = (day, field, value) => {
         return (
           <div className="space-y-6">
             <div className="flex items-center mb-6">
-              <div className="bg-gradient-to-r from-red-500 to-orange-500 p-3 rounded-full mr-4">
+              <div className="bg-gradient-to-r bg-gray-950 hover:bg-gray-600 p-3 rounded-full mr-4">
                 <Clock className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -511,7 +511,7 @@ const handleBusinessHoursChange = (day, field, value) => {
         return (
           <div className="space-y-6">
             <div className="flex items-center mb-6">
-              <div className="bg-gradient-to-r from-red-500 to-orange-500 p-3 rounded-full mr-4">
+              <div className="bg-gradient-to-r bg-gray-950 hover:bg-gray-600 p-3 rounded-full mr-4">
                 <CreditCard className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -557,7 +557,7 @@ const handleBusinessHoursChange = (day, field, value) => {
                         type="checkbox"
                         checked={formData.paymentMethods.includes(option.value)}
                         onChange={() => handlePaymentMethodToggle(option.value)}
-                        className="w-5 h-5 text-red-500 border-gray-300 rounded focus:ring-red-500"
+                        className="w-5 h-5 text-gray-800 border-gray-300 rounded "
                       />
                       <span className="text-sm text-gray-700 font-medium">
                         {option.label}
@@ -574,7 +574,7 @@ const handleBusinessHoursChange = (day, field, value) => {
         return (
           <div className="space-y-6">
             <div className="flex items-center mb-6">
-              <div className="bg-gradient-to-r from-red-500 to-orange-500 p-3 rounded-full mr-4">
+              <div className="bg-gradient-to-r bg-gray-950 hover:bg-gray-600 p-3 rounded-full mr-4">
                 <FileText className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -602,7 +602,7 @@ const handleBusinessHoursChange = (day, field, value) => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     FSSAI Document
                   </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-red-300 transition-colors">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-300 transition-colors">
                     <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600">
                       Upload FSSAI document
@@ -636,7 +636,7 @@ const handleBusinessHoursChange = (day, field, value) => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     GST Document
                   </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-red-300 transition-colors">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-300 transition-colors">
                     <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600">Upload GST document</p>
                     <input
@@ -668,7 +668,7 @@ const handleBusinessHoursChange = (day, field, value) => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Aadhar Document
                   </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-red-300 transition-colors">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-300 transition-colors">
                     <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600">
                       Upload Aadhar document
@@ -692,7 +692,7 @@ const handleBusinessHoursChange = (day, field, value) => {
         return (
           <div className="space-y-6">
             <div className="flex items-center mb-6">
-              <div className="bg-gradient-to-r from-red-500 to-orange-500 p-3 rounded-full mr-4">
+              <div className="bg-gradient-to-r bg-gray-950 hover:bg-gray-600 p-3 rounded-full mr-4">
                 <Camera className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -708,7 +708,7 @@ const handleBusinessHoursChange = (day, field, value) => {
               <label className="block text-sm font-medium text-gray-700 mb-4">
                 Restaurant Images
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-red-300 transition-colors">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-300 transition-colors">
                 <Camera className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-lg text-gray-600 mb-2">
                   Upload restaurant images
@@ -767,7 +767,7 @@ const handleBusinessHoursChange = (day, field, value) => {
             Back
           </button>
           <div className="text-center">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r bg-gray-950 hover:bg-gray-600 bg-clip-text text-transparent">
               Register Your Restaurant
             </h1>
             <p className="text-gray-600 mt-1">
@@ -788,9 +788,9 @@ const handleBusinessHoursChange = (day, field, value) => {
                     onClick={() => handleStepClick(step.id)}
                     className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all duration-300 cursor-pointer ${
                       completedSteps.has(step.id)
-                        ? "bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg scale-110"
+                        ? "bg-gradient-to-r bg-gray-950 hover:bg-gray-600 text-white shadow-lg scale-110"
                         : currentStep === step.id
-                        ? "bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg scale-110"
+                        ? "bg-gradient-to-r bg-gray-950 hover:bg-gray-600 text-white shadow-lg scale-110"
                         : "bg-white text-gray-400 hover:bg-gray-50 border-2 border-gray-200"
                     }`}
                   >
@@ -806,7 +806,7 @@ const handleBusinessHoursChange = (day, field, value) => {
                     <p
                       className={`text-sm font-semibold ${
                         completedSteps.has(step.id) || currentStep === step.id
-                          ? "text-red-600"
+                          ? "text-gray-600"
                           : "text-gray-500"
                       }`}
                     >
@@ -821,7 +821,7 @@ const handleBusinessHoursChange = (day, field, value) => {
                   <div
                     className={`w-20 h-2 mx-6 rounded-full transition-all duration-300 ${
                       completedSteps.has(step.id)
-                        ? "bg-gradient-to-r from-red-500 to-orange-500"
+                        ? "bg-gradient-to-r bg-gray-950 hover:bg-gray-600"
                         : "bg-gray-200"
                     }`}
                   />
@@ -864,7 +864,7 @@ const handleBusinessHoursChange = (day, field, value) => {
               disabled={!validateCurrentStep() || isSubmitting}
               className={`flex items-center px-10 py-4 rounded-xl font-semibold transition-all duration-200 ${
                 validateCurrentStep() && !isSubmitting
-                  ? "bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
+                  ? "bg-gradient-to-r bg-gray-950 hover:bg-gray-600 hover:from-gray-600 hover:to-gray-900 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed"
               }`}
             >
@@ -883,7 +883,7 @@ const handleBusinessHoursChange = (day, field, value) => {
               disabled={!validateCurrentStep()}
               className={`flex items-center px-8 py-4 rounded-xl font-semibold transition-all duration-200 ${
                 validateCurrentStep()
-                  ? "bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
+                  ? "bg-gradient-to-r bg-gray-950 hover:bg-gray-600 hover:from-gray-600 hover:to-gray-900 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed"
               }`}
             >

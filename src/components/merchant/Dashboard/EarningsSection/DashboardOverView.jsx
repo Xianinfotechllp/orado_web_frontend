@@ -219,16 +219,21 @@ const DashboardOverView = () => {
   };
 
   const chartData = prepareChartData();
-  const avgOrderValue = summaryData.orderCount > 0
-    ? (summaryData.totalOrderAmount / summaryData.orderCount).toFixed(2)
-    : "0.00";
+  const avgOrderValue =
+    summaryData.orderCount > 0
+      ? (summaryData.totalOrderAmount / summaryData.orderCount).toFixed(2)
+      : "0.00";
 
-  const avgCommissionRate = summaryData.orderCount > 0
-    ? ((summaryData.totalCommission / summaryData.totalOrderAmount) * 100).toFixed(1)
-    : "0";
+  const avgCommissionRate =
+    summaryData.orderCount > 0
+      ? (
+          (summaryData.totalCommission / summaryData.totalOrderAmount) *
+          100
+        ).toFixed(1)
+      : "0";
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6 p-4 ">
       {/* Restaurant Selection Slider */}
       <RestaurantSlider
         onRestaurantSelect={handleRestaurantSelect}
@@ -244,38 +249,74 @@ const DashboardOverView = () => {
       ) : (
         <>
           {/* Filter Controls */}
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Earnings Overview</h2>
-            <div className="relative">
-              <button
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="flex items-center gap-2 px-4 py-2 border rounded-md bg-white hover:bg-gray-50 transition-colors"
-              >
-                <Filter className="w-4 h-4" />
-                {filterOptions.find((f) => f.value === selectedFilter)?.label || "All Time"}
-              </button>
-
-              {isFilterOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white border rounded-md shadow-lg z-50">
-                  <div className="px-4 py-2 font-medium border-b">Filter by Time Period</div>
-                  <div className="py-1">
-                    {filterOptions.map((option) => (
-                      <div
-                        key={option.value}
-                        className={`px-4 py-2 cursor-pointer hover:bg-gray-50 ${
-                          selectedFilter === option.value ? "bg-gray-100" : ""
-                        }`}
-                        onClick={() => {
-                          setSelectedFilter(option.value);
-                          setIsFilterOpen(false);
-                        }}
-                      >
-                        {option.label}
-                      </div>
-                    ))}
+          <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-screen-md px-4 py-3 ">
+            <div className="flex justify-center items-center">
+              <div className="relative">
+                <div className="p-[2px] rounded-full bg-gradient-to-r from-gray-800 via-gray-500 to-gray-950 shadow-lg">
+                  <div className="bg-white rounded-full p-1">
+                    <div
+                      className="inline-flex rounded-full bg-gray-100 p-1"
+                      role="group"
+                    >
+                      {filterOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setSelectedFilter(option.value);
+                            if (option.value === "custom") {
+                              // Add your custom date picker logic here if needed
+                            }
+                          }}
+                          className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
+                            selectedFilter === option.value
+                              ? "bg-blue-600 text-white shadow-md"
+                              : "text-gray-700 hover:bg-gray-200"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              )}
+
+                {/* If you need the custom date picker functionality */}
+                {selectedFilter === "custom" && (
+                  <div className="absolute right-0 bottom-full mb-2 w-64 bg-white border rounded-md shadow-lg z-50 p-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center">
+                        <label className="mr-2 text-xs font-medium text-gray-600">
+                          From:
+                        </label>
+                        <DatePicker
+                          selected={startDate}
+                          onChange={(date) => setStartDate(date)}
+                          selectsStart
+                          startDate={startDate}
+                          endDate={endDate}
+                          className="border border-gray-300 rounded px-2 py-1 text-xs w-24"
+                          dateFormat="MM/dd"
+                        />
+                      </div>
+                      <div className="flex items-center">
+                        <label className="mr-2 text-xs font-medium text-gray-600">
+                          To:
+                        </label>
+                        <DatePicker
+                          selected={endDate}
+                          onChange={(date) => setEndDate(date)}
+                          selectsEnd
+                          startDate={startDate}
+                          endDate={endDate}
+                          minDate={startDate}
+                          className="border border-gray-300 rounded px-2 py-1 text-xs w-24"
+                          dateFormat="MM/dd"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -288,7 +329,7 @@ const DashboardOverView = () => {
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Total Cart Value Card */}
-                <div className="bg-white rounded-lg shadow p-4 border">
+                <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200  ">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-500">Gross Revenue</p>
@@ -306,7 +347,7 @@ const DashboardOverView = () => {
                 </div>
 
                 {/* Net Revenue Card */}
-                <div className="bg-white rounded-lg shadow p-4 border">
+                <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-500">Net Revenue</p>
@@ -324,7 +365,7 @@ const DashboardOverView = () => {
                 </div>
 
                 {/* Commission Card */}
-                <div className="bg-white rounded-lg shadow p-4 border">
+                <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-500">Total Commission</p>
@@ -342,7 +383,7 @@ const DashboardOverView = () => {
                 </div>
 
                 {/* Payment Methods Card */}
-                <div className="bg-white rounded-lg shadow p-4 border">
+                <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-500">Payment Methods</p>
@@ -371,7 +412,7 @@ const DashboardOverView = () => {
               {/* Charts Section */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
                 {/* Earnings Breakdown Chart */}
-                <div className="bg-white rounded-lg shadow p-4 border">
+                <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
                   <h3 className="font-medium flex items-center gap-2 text-sm mb-4">
                     <BarChart2 className="w-4 h-4" />
                     Earnings Breakdown
@@ -383,7 +424,9 @@ const DashboardOverView = () => {
                           <XAxis dataKey="name" />
                           <YAxis />
                           <Tooltip
-                            formatter={(value) => [`₹${value.toLocaleString()}`]}
+                            formatter={(value) => [
+                              `₹${value.toLocaleString()}`,
+                            ]}
                           />
                           <Bar
                             dataKey="totalCartTotal"
@@ -408,7 +451,7 @@ const DashboardOverView = () => {
                 </div>
 
                 {/* Time Series Chart */}
-                <div className="bg-white rounded-lg shadow p-4 border">
+                <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
                   <h3 className="font-medium flex items-center gap-2 text-sm mb-4">
                     <Calendar className="w-4 h-4" />
                     Earnings Trend
@@ -420,7 +463,9 @@ const DashboardOverView = () => {
                           <XAxis dataKey="name" />
                           <YAxis />
                           <Tooltip
-                            formatter={(value) => [`₹${value.toLocaleString()}`]}
+                            formatter={(value) => [
+                              `₹${value.toLocaleString()}`,
+                            ]}
                           />
                           <Line
                             type="monotone"
@@ -448,15 +493,22 @@ const DashboardOverView = () => {
               </div>
 
               {/* Additional Stats */}
-              <div className="bg-white rounded-lg shadow p-4 border mt-4">
-                <h3 className="font-medium text-sm mb-4">Additional Statistics</h3>
+              <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200 mt-4">
+                <h3 className="font-medium text-sm mb-4">
+                  Additional Statistics
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <h4 className="text-xs text-gray-500 mb-2">PAYMENT METHODS</h4>
+                    <h4 className="text-xs text-gray-500 mb-2">
+                      PAYMENT METHODS
+                    </h4>
                     <div className="space-y-1">
                       {paymentStats.length > 0 ? (
                         paymentStats.map((stat) => (
-                          <div key={stat._id} className="flex justify-between text-sm">
+                          <div
+                            key={stat._id}
+                            className="flex justify-between text-sm"
+                          >
                             <span>{stat._id || "Unknown"}</span>
                             <span>{stat.count} orders</span>
                           </div>
@@ -467,7 +519,9 @@ const DashboardOverView = () => {
                     </div>
                   </div>
                   <div>
-                    <h4 className="text-xs text-gray-500 mb-2">AVERAGE VALUES</h4>
+                    <h4 className="text-xs text-gray-500 mb-2">
+                      AVERAGE VALUES
+                    </h4>
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>Order Value</span>
@@ -485,7 +539,8 @@ const DashboardOverView = () => {
                       <div className="flex justify-between">
                         <span>Showing</span>
                         <span>
-                          {filterOptions.find((f) => f.value === selectedFilter)?.label || "All Time"}
+                          {filterOptions.find((f) => f.value === selectedFilter)
+                            ?.label || "All Time"}
                         </span>
                       </div>
                       <div className="flex justify-between">

@@ -177,7 +177,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.title ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
               />
               {errors.title && (
                 <p className="mt-1 text-sm text-red-600">{errors.title}</p>
@@ -193,7 +193,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700"
               />
             </div>
           </div>
@@ -209,7 +209,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.type ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
               >
                 <option value="percentage">Percentage Discount</option>
                 <option value="flat">Flat Discount</option>
@@ -233,7 +233,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-md ${
                     errors.discountValue ? "border-red-500" : "border-gray-300"
-                  } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                  } focus:outline-none focus:ring-2 focus:ring-gray-700`}
                   placeholder={
                     formData.type === "percentage" ? "e.g. 20" : "e.g. 100"
                   }
@@ -263,7 +263,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.maxDiscount ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
                 placeholder="e.g. 200"
                  onWheel={(e) => e.target.blur()} 
               />
@@ -290,7 +290,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
               onChange={handleChange}
               className={`w-full px-3 py-2 border rounded-md ${
                 errors.minOrderValue ? "border-red-500" : "border-gray-300"
-              } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+              } focus:outline-none focus:ring-2 focus:ring-gray-700`}
               placeholder="e.g. 500"
                onWheel={(e) => e.target.blur()} 
             />
@@ -315,7 +315,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                 minDate={new Date()}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.validFrom ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
                 placeholderText="Select start date"
               />
               {errors.validFrom && (
@@ -336,7 +336,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                 minDate={formData.validFrom || new Date()}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.validTill ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
                 placeholderText="Select end date"
               />
               {errors.validTill && (
@@ -359,7 +359,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                   errors.usageLimitPerUser
                     ? "border-red-500"
                     : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
                 placeholder="No limit if empty"
                  onWheel={(e) => e.target.blur()} 
               />
@@ -381,7 +381,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.totalUsageLimit ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
                 placeholder="No limit if empty"
                  onWheel={(e) => e.target.blur()} 
               />
@@ -404,7 +404,7 @@ const EditOfferModal = ({ offer, restaurantId, onClose, onUpdate }) => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 disabled:opacity-50"
+              className="px-4 py-2 bg-[#0f172a] text-white rounded-md bg-gradient-to-r hover:from-gray-700 hover:to-gray-800  disabled:opacity-50"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Updating..." : "Update Offer"}
