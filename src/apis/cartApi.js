@@ -13,7 +13,7 @@ export const addToCart = async (restaurantId, productId, quantity) => {
     };
 
     const res = await apiClient.post("/cart/add", payload);
-  
+    console.log("Add to cart response:", res.data);
     return res.data;
   } catch (error) {
     console.error("Error updating cart:", error);

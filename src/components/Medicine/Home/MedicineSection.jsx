@@ -1,7 +1,81 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { searchStore } from '../../../apis/storeApi'; // <- your API
+import { Heart, Truck } from "lucide-react";
+
+// --- CARD COMPONENT (small but real example) ---
+function MedicineStoreCard({ store }) {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleFavoriteToggle = (e) => {
+    e.stopPropagation();
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsFavorite(!isFavorite);
+      setIsLoading(false);
+    }, 300);
+  };
+
+  return (
+    <div className="relative w-full h-[20rem] overflow-hidden shadow-lg rounded-xl group">
+      <img
+        src={store.images?.[0] || store.image || "https://placehold.co/400x320/png?text=Medicine+Store"}
+        alt={store.name}
+        className="w-full h-full object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-5 text-white">
+        {/* Favorite */}
+        <button
+          onClick={handleFavoriteToggle}
+          disabled={isLoading}
+          className={`absolute top-6 right-6 p-3 rounded-full shadow-lg transition-all z-10 ${
+            isFavorite
+              ? 'bg-blue-500 text-white shadow-blue-500/50 hover:bg-blue-600'
+              : 'bg-white text-gray-700 hover:bg-blue-50'
+          } ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+        >
+          {isLoading ? (
+            <span className="animate-spin inline-block w-6 h-6 border-2 border-white border-t-transparent rounded-full"></span>
+          ) : (
+            <Heart className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`} />
+          )}
+        </button>
+        <h1 className="text-2xl font-bold drop-shadow-md">{store.name}</h1>
+        {/* Address */}
+        {store.address && (
+          <div className="text-xs mb-1">
+            {store.address.street && <div>{store.address.street}</div>}
+            {store.address.city && store.address.state && (
+              <div>{store.address.city}, {store.address.state}</div>
+            )}
+          </div>
+        )}
+        {/* Delivery/Min Order */}
+        <div className="flex gap-2 mt-2">
+          <button className="bg-blue-500/80 border border-blue-400 py-1 px-3 rounded-full font-semibold text-xs hover:bg-blue-600 flex items-center gap-1">
+            <Truck className="w-4 h-4" />
+            <span>Delivery in 20-30 min</span>
+          </button>
+          <button className="bg-white/10 border border-white/30 py-1 px-3 rounded-full font-semibold text-xs hover:bg-white/20">
+            Min Order ₹{store.minOrderAmount || store.minOrder || 199}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const MedicineSection = () => {
   const [activeCategory, setActiveCategory] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [searchPerformed, setSearchPerformed] = useState(false);
+
+  const { location } = useSelector(state => state.location);
 
   const categories = [
     {
@@ -78,6 +152,31 @@ const MedicineSection = () => {
     },
   ];
 
+  // --------- SEARCH HANDLER (API) ----------
+  const handleSearch = async (customQuery) => {
+    const query = typeof customQuery === 'string' ? customQuery : searchText;
+    if (!query.trim()) return;
+    setSearchLoading(true);
+    setSearchError('');
+    setSearchPerformed(true);
+
+    try {
+      const res = await searchStore({
+        query,
+        latitude: location?.lat,
+        longitude: location?.lon,
+        storeType: 'medicine'
+      });
+      setSearchResults(res.data || []);
+    } catch (err) {
+      setSearchError(err.message || "Failed to search");
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // --------- RENDER -----------
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 mt-18">
       {/* Hero Section */}
@@ -93,10 +192,8 @@ const MedicineSection = () => {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(255,255,255,0.1),transparent_70%)]"></div>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.1),transparent_70%)]"></div>
         </div>
-
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center text-white">
-          {/* Heading */}
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-4">
             Your <span className="text-blue-100">Healthcare</span> Essentials
           </h1>
@@ -106,7 +203,13 @@ const MedicineSection = () => {
 
           {/* Search Bar */}
           <div className="max-w-xl mx-auto mb-10">
-            <div className="relative rounded-full shadow-xl bg-white/80 backdrop-blur-md border border-white/30">
+            <form
+              className="relative rounded-full shadow-xl bg-white/80 backdrop-blur-md border border-white/30"
+              onSubmit={e => {
+                e.preventDefault();
+                handleSearch();
+              }}
+            >
               <svg
                 className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"
                 fill="none"
@@ -117,28 +220,41 @@ const MedicineSection = () => {
               </svg>
               <input
                 type="text"
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
                 placeholder="Search for medicines, brands, or health products..."
                 className="w-full pl-14 pr-6 py-4 rounded-full bg-transparent text-gray-800 placeholder-gray-600 focus:outline-none"
               />
-            </div>
+            </form>
           </div>
-
-          {/* Stats */}
-          {/* <div className="flex flex-wrap justify-center gap-6 text-blue-100">
-            <StatItem value="5K+" label="Medicines" />
-            <StatItem value="20min" label="Avg Delivery" />
-            <StatItem value="200+" label="Trusted Brands" />
-          </div> */}
         </div>
       </div>
 
-      {/* StatItem Component */}
-      {/* const StatItem = ({ value, label }) => (
-        <div className="flex flex-col items-center">
-          <div className="text-3xl font-bold">{value}</div>
-          <div className="text-sm opacity-90">{label}</div>
+      {/* ----- SEARCH RESULTS USING MEDICINE STORE CARD ----- */}
+      {searchPerformed && (
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          {searchLoading && <div className="py-8 text-center">Loading...</div>}
+          {searchError && <div className="py-8 text-center text-red-600">{searchError}</div>}
+          {!searchLoading && !searchError && (
+            <>
+              {searchResults.length === 0 ? (
+                <div className="py-8 text-center text-gray-600">No stores found.</div>
+              ) : (
+                <div>
+                  <div className="mb-8 text-lg text-gray-700 font-semibold">
+                    {searchResults.length} result{searchResults.length > 1 ? "s" : ""} found
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+                    {searchResults.map(store => (
+                      <MedicineStoreCard key={store._id} store={store} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
-      ); */}
+      )}
 
       {/* Categories Section */}
       <div className="w-full py-16 md:py-20">
@@ -152,7 +268,6 @@ const MedicineSection = () => {
             </p>
             <div className="w-24 h-1 bg-blue-600 mx-auto rounded-full mt-6"></div>
           </div>
-
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
             {categories.map((category) => (
               <div
@@ -161,25 +276,30 @@ const MedicineSection = () => {
                 onMouseEnter={() => setActiveCategory(category.id)}
                 onMouseLeave={() => setActiveCategory(null)}
               >
-                <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-blue-200 transform hover:-translate-y-2 cursor-pointer">
-                  <div className="relative overflow-hidden">
-                    <div className="aspect-square p-4 bg-gradient-to-br from-blue-50 to-white">
-                      <img
-                        src={category.image}
-                        alt={category.name}
-                        className="w-full h-full object-contain transition-all duration-700 group-hover:scale-110"
-                      />
+                <button
+                  type="button"
+                  onClick={() => handleSearch(category.name)}
+                  className="w-full"
+                  style={{ background: "none", border: "none", padding: 0, margin: 0 }}
+                >
+                  <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-blue-200 transform hover:-translate-y-2 cursor-pointer">
+                    <div className="relative overflow-hidden">
+                      <div className="aspect-square p-4 bg-gradient-to-br from-blue-50 to-white">
+                        <img
+                          src={category.image}
+                          alt={category.name}
+                          className="w-full h-full object-contain transition-all duration-700 group-hover:scale-110"
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-blue-600/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-blue-600/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="p-3">
+                      <h3 className="text-sm font-semibold text-gray-900 text-center leading-tight group-hover:text-blue-600 transition-colors duration-300">
+                        {category.name}
+                      </h3>
+                    </div>
                   </div>
-                  
-                  <div className="p-3">
-                    <h3 className="text-sm font-semibold text-gray-900 text-center leading-tight group-hover:text-blue-600 transition-colors duration-300">
-                      {category.name}
-                    </h3>
-                  </div>
-                </div>
-
+                </button>
                 {/* Tooltip */}
                 {activeCategory === category.id && (
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-20 animate-fade-in">
@@ -191,7 +311,6 @@ const MedicineSection = () => {
             ))}
           </div>
 
-          {/* View All Button */}
           <div className="text-center mt-12">
             <button className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
               <span>View All Categories</span>
@@ -214,7 +333,6 @@ const MedicineSection = () => {
             transform: translateX(-50%) translateY(0);
           }
         }
-        
         .animate-fade-in {
           animation: fade-in 0.3s ease-out;
         }

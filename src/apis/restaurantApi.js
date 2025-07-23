@@ -10,7 +10,7 @@ export const getRestaurantMenu = async (restaurantId, options = {}) => {
         productLimit: options.productLimit || 30,
       },
     });
-
+    console.log("Restaurant menu response:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching restaurant menu:", error);
@@ -52,6 +52,7 @@ export const getNearbyCategories = async ({ latitude, longitude, distance }) => 
 export const getRestaurantById = async (restaurantId) => {
   try {
     const response = await apiClient.get(`/restaurants/${restaurantId}`);
+    console.log("Fetched restaurant details:", response.data);
     return response.data;
   } catch (error) {
     console.error("Failed to fetch restaurant by ID:", error);
