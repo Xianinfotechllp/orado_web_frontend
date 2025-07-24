@@ -29,3 +29,13 @@ export const getWalletBalance = async () => {
     throw error;
   }
 };
+
+export const getUserWalletTransactions = async (params = {}) => {
+  try {
+    const response = await apiClient.get('/user/wallet/transactions', { params });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch user wallet transactions:", error);
+    throw error;
+  }
+};

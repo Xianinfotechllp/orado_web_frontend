@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Menucard from "./Menucard";
-import { addToCart, getCart } from "../../apis/cartApi";
+import { addToCart, getCart, clearCartApi } from "../../apis/cartApi";
 import { useDispatch, useSelector } from "react-redux";
 import { setCart, addItem } from "../../slices/cartSlice";
 import { ChefHat, Clock, Star, TrendingUp, Filter, X } from "lucide-react";
@@ -12,6 +12,7 @@ function CategorySection({ category, restaurantId }) {
 
   const [cartItems, setCartItems] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [cartRestaurantId, setCartRestaurantId] = useState(null);
   const [categoryStats, setCategoryStats] = useState({
     totalItems: 0,
     avgRating: 0,
