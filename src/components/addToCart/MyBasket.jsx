@@ -47,6 +47,10 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [estimatedDelivery, setEstimatedDelivery] = useState("60-70 mins");
+  const [selectedTip, setSelectedTip] = useState(0);         // Chosen tip value, default 0
+  const [customTip, setCustomTip] = useState("");            // For user-entered manual value
+  const [showTipInput, setShowTipInput] = useState(false);   // Whether 'Other' input is visible
+
 
   const user = useSelector((state) => state.auth.user);
   const cartId = useSelector((state) => state.cart.cartId);
@@ -111,6 +115,7 @@ const [isOpen, setIsOpen] = useState(false);
       latitude,
       cartId,
       useWallet: Boolean(useWallet),
+      tipAmount: Number(selectedTip) || 0,
     });
 
     console.log(billRes,"why........")
@@ -217,6 +222,16 @@ useEffect(() => {
     
     return () => clearTimeout(timer);
   }, [selectedAddress]);
+  
+  useEffect(() => {
+    if (cartDetails._id && selectedAddress?.location) {
+      const timer = setTimeout(() => {
+        fetchBill(cartDetails._id);
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedTip, cartDetails._id, selectedAddress]);
+
 
 
 
@@ -251,7 +266,8 @@ const handlePlaceOrder = async () => {
       state: selectedAddress.state,
       pincode: selectedAddress.zip,
       country: selectedAddress.country,
-      instructions: cookingInstructions
+      instructions: cookingInstructions,
+      tipAmount: Number(selectedTip) || 0,
     };
 
     if (paymentMethod === "cash") {
@@ -780,6 +796,12 @@ const handlePlaceOrder = async () => {
               ₹{(bill?.deliveryFee || 0).toFixed(2)}
             </span>
           </div>
+          {(bill?.tipAmount > 0) && (
+            <div className="flex justify-between text-sm sm:text-base">
+              <span className="font-medium">Tip:</span>
+              <span className="font-medium text-green-700">₹{(bill?.tipAmount || 0).toFixed(2)}</span>
+            </div>
+          )}
 
           {bill?.isSurge && (
             <div className="flex justify-between text-sm sm:text-base animate-pulseOnce">
@@ -826,6 +848,62 @@ const handlePlaceOrder = async () => {
           </div>
         </div>
       ) : null}
+
+      {/* Add Tip section - Swiggy style */}
+      <div className="bg-white border border-orange-200 rounded-lg px-4 py-4 mb-3">
+        <h2 className="font-semibold text-gray-900 text-base mb-1">Add a Tip for your Delivery Partner</h2>
+        <p className="text-gray-500 text-xs mb-3">100% of your tip goes to your delivery partner.</p>
+        <div className="flex gap-3 mt-1">
+          {[20, 40, 60].map(amount => (
+            <button
+              key={amount}
+              type="button"
+              className={`px-4 py-2 rounded-full border font-semibold text-sm 
+                ${Number(selectedTip) === amount
+                  ? "bg-orange-600 text-white border-orange-600"
+                  : "bg-white border-orange-200 text-orange-700 hover:bg-orange-50"
+                }`}
+              onClick={() => { setSelectedTip(amount); setShowTipInput(false); setCustomTip(""); }}
+            >
+              ₹{amount}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={`px-4 py-2 rounded-full border font-semibold text-sm 
+              ${showTipInput 
+                ? "bg-orange-600 text-white border-orange-600"
+                : "bg-white border-orange-200 text-orange-700 hover:bg-orange-50"
+              }`}
+            onClick={() => { setShowTipInput(true); setSelectedTip(Number(customTip) || ""); }}
+          >
+            Other
+          </button>
+          {showTipInput && (
+            <input
+              type="number"
+              min={0}
+              max={999}
+              placeholder="₹"
+              className="ml-1 w-20 px-3 py-2 border border-orange-300 rounded-full text-center font-semibold text-sm focus:ring-orange-500"
+              value={customTip}
+              onChange={e => {
+                const val = e.target.value.replace(/[^\d]/g, "");
+                setCustomTip(val);
+                setSelectedTip(Number(val) || 0);
+              }}
+              autoFocus
+            />
+          )}
+        </div>
+        {selectedTip > 0 && (
+          <div className="mt-2 text-green-700 text-xs flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            <span>You're tipping ₹{selectedTip} to your delivery partner</span>
+          </div>
+        )}
+      </div>
+
 
       <div className="p-4 space-y-2">
         <label className="text-sm font-medium text-gray-700">
