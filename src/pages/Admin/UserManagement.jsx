@@ -1,155 +1,85 @@
-import React, { useState } from 'react';
-import { Eye, Phone, Mail, MapPin, Wallet, Star, X, Shield, UserCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Eye, Phone, Mail, Wallet, Star, X, Shield, UserCheck, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 1
+  });
 
-  // Dummy data based on the schema
-  const users = [
-    {
-      _id: '507f1f77bcf86cd799439011',
-      name: 'John Smith',
-      email: 'john.smith@email.com',
-      phone: '+1-555-0123',
-      userType: 'customer',
-      profilePicture: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-      walletBalance: 1250.75,
-      loyaltyPoints: 2340,
-      totalSpending: 12450.50,
-      active: true,
-      verification: {
-        emailVerified: true,
-        phoneVerified: true
-      },
-      addresses: [
-        {
-          type: 'Home',
-          displayName: 'Home',
-          street: '123 Main St',
-          city: 'New York',
-          state: 'NY',
-          zip: '10001'
-        }
-      ],
-      lastActivity: new Date('2024-01-15'),
-      createdAt: new Date('2023-06-15')
-    },
-    {
-      _id: '507f1f77bcf86cd799439012',
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@email.com',
-      phone: '+1-555-0124',
-      userType: 'customer',
-      profilePicture: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-      walletBalance: 890.25,
-      loyaltyPoints: 1850,
-      totalSpending: 8920.75,
-      active: true,
-      verification: {
-        emailVerified: true,
-        phoneVerified: false
-      },
-      addresses: [
-        {
-          type: 'Work',
-          displayName: 'Office',
-          street: '456 Business Ave',
-          city: 'Los Angeles',
-          state: 'CA',
-          zip: '90210'
-        }
-      ],
-      lastActivity: new Date('2024-01-14'),
-      createdAt: new Date('2023-08-20')
-    },
-    {
-      _id: '507f1f77bcf86cd799439013',
-      name: 'Michael Brown',
-      email: 'michael.brown@email.com',
-      phone: '+1-555-0125',
-      userType: 'merchant',
-      profilePicture: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      walletBalance: 3240.80,
-      loyaltyPoints: 980,
-      totalSpending: 15670.25,
-      active: true,
-      verification: {
-        emailVerified: true,
-        phoneVerified: true
-      },
-      addresses: [
-        {
-          type: 'Other',
-          displayName: 'Restaurant Location',
-          street: '789 Food Court',
-          city: 'Chicago',
-          state: 'IL',
-          zip: '60601'
-        }
-      ],
-      lastActivity: new Date('2024-01-16'),
-      createdAt: new Date('2023-04-10')
-    },
-    {
-      _id: '507f1f77bcf86cd799439014',
-      name: 'Emily Davis',
-      email: 'emily.davis@email.com',
-      phone: '+1-555-0126',
-      userType: 'agent',
-      profilePicture: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-      walletBalance: 567.40,
-      loyaltyPoints: 1200,
-      totalSpending: 4320.90,
-      active: true,
-      isAgent: true,
-      agentApplicationStatus: 'approved',
-      verification: {
-        emailVerified: true,
-        phoneVerified: true
-      },
-      addresses: [
-        {
-          type: 'Home',
-          displayName: 'Residence',
-          street: '321 Agent Lane',
-          city: 'Miami',
-          state: 'FL',
-          zip: '33101'
-        }
-      ],
-      lastActivity: new Date('2024-01-13'),
-      createdAt: new Date('2023-09-05')
-    },
-    {
-      _id: '507f1f77bcf86cd799439015',
-      name: 'Robert Wilson',
-      email: 'robert.wilson@email.com',
-      phone: '+1-555-0127',
-      userType: 'customer',
-      profilePicture: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
-      walletBalance: 2100.60,
-      loyaltyPoints: 3200,
-      totalSpending: 18750.30,
-      active: false,
-      verification: {
-        emailVerified: false,
-        phoneVerified: true
-      },
-      addresses: [
-        {
-          type: 'Home',
-          displayName: 'Home Address',
-          street: '654 Sunset Blvd',
-          city: 'Phoenix',
-          state: 'AZ',
-          zip: '85001'
-        }
-      ],
-      lastActivity: new Date('2024-01-10'),
-      createdAt: new Date('2023-03-22')
+  // API client function to fetch customers with search and pagination
+  const fetchCustomers = async (page = 1, limit = 20, search = '') => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `http://localhost:5000/admin/customer-list?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        const transformedUsers = data.data.customers.map(customer => ({
+          _id: customer.userId,
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          userType: 'customer',
+          profilePicture: `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.name)}&background=random`,
+          walletBalance: customer.walletBalance,
+          loyaltyPoints: customer.loyaltyPoints,
+          totalSpending: 0,
+          active: true,
+          verification: {
+            emailVerified: true,
+            phoneVerified: true
+          },
+          addresses: [],
+          lastActivity: new Date(customer.createdAt),
+          createdAt: new Date(customer.createdAt)
+        }));
+        
+        setUsers(transformedUsers);
+        setPagination(data.data.pagination);
+      } else {
+        throw new Error(data.message || 'Failed to fetch customers');
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching customers:', err);
+    } finally {
+      setLoading(false);
     }
-  ].sort((a, b) => b.totalSpending - a.totalSpending); // Sort by total spending (top spender first)
+  };
+
+  useEffect(() => {
+    fetchCustomers(pagination.page, pagination.limit, searchQuery);
+  }, [pagination.page, pagination.limit, searchQuery]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // Reset to page 1 when searching
+    setPagination(prev => ({ ...prev, page: 1 }));
+    fetchCustomers(1, pagination.limit, searchQuery);
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage > 0 && newPage <= pagination.totalPages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+    }
+  };
 
   const openModal = (user) => {
     setSelectedUser(user);
@@ -186,6 +116,22 @@ const UserManagement = () => {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-orange-500 text-xl">Loading users...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-red-500 text-xl">Error: {error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -194,13 +140,40 @@ const UserManagement = () => {
         <p className="text-orange-100 mt-2">Manage and monitor all platform users</p>
       </div>
 
+      {/* Search and Filter Bar */}
+      <div className="p-6">
+        <div className="bg-white border border-orange-200 rounded-lg p-4 shadow-sm">
+          <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-grow">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by name, email or phone..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <button
+              type="submit"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center justify-center"
+            >
+              <Search className="w-4 h-4 mr-2" />
+              Search
+            </button>
+          </form>
+        </div>
+      </div>
+
       {/* Stats Cards */}
-      <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="px-6 pb-6 grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white border border-orange-200 rounded-lg p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Users</p>
-              <p className="text-2xl font-bold text-orange-600">{users.length}</p>
+              <p className="text-2xl font-bold text-orange-600">{pagination.total}</p>
             </div>
             <div className="bg-orange-100 p-3 rounded-full">
               <UserCheck className="w-6 h-6 text-orange-600" />
@@ -212,7 +185,7 @@ const UserManagement = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Active Users</p>
-              <p className="text-2xl font-bold text-orange-600">{users.filter(u => u.active).length}</p>
+              <p className="text-2xl font-bold text-orange-600">{users.length}</p>
             </div>
             <div className="bg-green-100 p-3 rounded-full">
               <Shield className="w-6 h-6 text-green-600" />
@@ -222,16 +195,18 @@ const UserManagement = () => {
 
         <div className="bg-white border border-orange-200 rounded-lg p-4 shadow-sm">
           <div>
-            <p className="text-sm text-gray-600">Top Spender</p>
-            <p className="text-lg font-bold text-orange-600">{formatCurrency(users[0]?.totalSpending || 0)}</p>
+            <p className="text-sm text-gray-600">Page</p>
+            <p className="text-lg font-bold text-orange-600">
+              {pagination.page} of {pagination.totalPages}
+            </p>
           </div>
         </div>
 
         <div className="bg-white border border-orange-200 rounded-lg p-4 shadow-sm">
           <div>
-            <p className="text-sm text-gray-600">Total Revenue</p>
+            <p className="text-sm text-gray-600">Showing</p>
             <p className="text-lg font-bold text-orange-600">
-              {formatCurrency(users.reduce((sum, user) => sum + user.totalSpending, 0))}
+              {users.length} of {pagination.total} users
             </p>
           </div>
         </div>
@@ -240,25 +215,46 @@ const UserManagement = () => {
       {/* User List */}
       <div className="px-6 pb-6">
         <div className="bg-white rounded-lg shadow-sm border border-orange-200 overflow-hidden">
-          <div className="bg-orange-500 text-white px-6 py-4">
-            <h2 className="text-xl font-semibold">Users (Sorted by Total Spending)</h2>
+          <div className="bg-orange-500 text-white px-6 py-4 flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Customers</h2>
+            <div className="flex items-center space-x-2">
+              <select
+                className="bg-orange-600 border border-orange-300 text-white text-sm rounded-md px-2 py-1"
+                value={pagination.limit}
+                onChange={(e) => setPagination(prev => ({ ...prev, limit: Number(e.target.value), page: 1 }))}
+              >
+                <option value={10}>10 per page</option>
+                <option value={20}>20 per page</option>
+                <option value={50}>50 per page</option>
+                <option value={100}>100 per page</option>
+              </select>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-orange-50">
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">ID</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">User</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Total Spending</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Contact</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Wallet</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Loyalty</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Joined</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-orange-100">
-                {users.map((user, index) => (
+                {users.map((user) => (
                   <tr key={user._id} className="hover:bg-orange-50 transition-colors duration-200">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <Link 
+                        to={`/admin/dashboard/customer/${user._id}/details`}
+                        className="hover:underline"
+                      >
+                        {user._id.substring(0, 8)}...
+                      </Link>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <img 
@@ -269,29 +265,27 @@ const UserManagement = () => {
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900 flex items-center">
                             {user.name}
-                            {index === 0 && <Star className="w-4 h-4 text-orange-500 ml-2" />}
                           </div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className="text-sm text-gray-500">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(user.userType)}`}>
+                              {user.userType}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(user.userType)}`}>
-                        {user.userType}
-                      </span>
+                      <div className="text-sm text-gray-900">{user.email}</div>
+                      <div className="text-sm text-gray-500">{user.phone}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {formatCurrency(user.totalSpending)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(user.walletBalance)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {user.active ? 'Active' : 'Inactive'}
-                      </span>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {user.loyaltyPoints}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(user.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
@@ -306,6 +300,64 @@ const UserManagement = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="bg-orange-50 px-6 py-4 flex items-center justify-between border-t border-orange-200">
+            <div className="flex-1 flex justify-between items-center">
+              <button
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page === 1}
+                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                  pagination.page === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <ChevronLeft className="h-5 w-5" />
+                Previous
+              </button>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-center">
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (pagination.totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (pagination.page <= 3) {
+                        pageNum = i + 1;
+                      } else if (pagination.page >= pagination.totalPages - 2) {
+                        pageNum = pagination.totalPages - 4 + i;
+                      } else {
+                        pageNum = pagination.page - 2 + i;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            pagination.page === pageNum
+                              ? 'z-10 bg-orange-500 border-orange-500 text-white'
+                              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </div>
+              </div>
+              <button
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page === pagination.totalPages}
+                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                  pagination.page === pagination.totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Next
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -343,7 +395,7 @@ const UserManagement = () => {
               </div>
 
               {/* Details Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg">
                 {/* Contact Information */}
                 <div className="bg-orange-50 rounded-lg p-4">
                   <h5 className="font-semibold text-orange-800 mb-3">Contact Information</h5>
@@ -377,29 +429,7 @@ const UserManagement = () => {
                       <Star className="w-4 h-4 text-orange-600 mr-3" />
                       <span className="text-sm">Loyalty Points: {selectedUser.loyaltyPoints.toLocaleString()}</span>
                     </div>
-                    <div className="flex items-center">
-                      <span className="w-4 h-4 text-orange-600 mr-3 text-sm font-bold">$</span>
-                      <span className="text-sm font-semibold">Total Spending: {formatCurrency(selectedUser.totalSpending)}</span>
-                    </div>
                   </div>
-                </div>
-
-                {/* Address Information */}
-                <div className="bg-orange-50 rounded-lg p-4">
-                  <h5 className="font-semibold text-orange-800 mb-3">Address Information</h5>
-                  {selectedUser.addresses.map((address, index) => (
-                    <div key={index} className="mb-3 last:mb-0">
-                      <div className="flex items-start">
-                        <MapPin className="w-4 h-4 text-orange-600 mr-3 mt-0.5" />
-                        <div>
-                          <div className="text-sm font-medium">{address.displayName} ({address.type})</div>
-                          <div className="text-sm text-gray-600">
-                            {address.street}, {address.city}, {address.state} {address.zip}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
                 </div>
 
                 {/* Account Information */}
@@ -408,8 +438,8 @@ const UserManagement = () => {
                   <div className="space-y-2">
                     <div className="text-sm">
                       <span className="font-medium">Status:</span> 
-                      <span className={`ml-2 px-2 py-1 rounded text-xs ${selectedUser.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {selectedUser.active ? 'Active' : 'Inactive'}
+                      <span className={`ml-2 px-2 py-1 rounded text-xs bg-green-100 text-green-800`}>
+                        Active
                       </span>
                     </div>
                     <div className="text-sm">
@@ -418,14 +448,9 @@ const UserManagement = () => {
                     <div className="text-sm">
                       <span className="font-medium">Last Activity:</span> {formatDate(selectedUser.lastActivity)}
                     </div>
-                    {selectedUser.isAgent && (
-                      <div className="text-sm">
-                        <span className="font-medium">Agent Status:</span> 
-                        <span className="ml-2 px-2 py-1 rounded text-xs bg-purple-100 text-purple-800">
-                          {selectedUser.agentApplicationStatus}
-                        </span>
-                      </div>
-                    )}
+                    <div className="text-sm">
+                      <span className="font-medium">User ID:</span> {selectedUser._id}
+                    </div>
                   </div>
                 </div>
               </div>

@@ -38,6 +38,8 @@ const AdminLogin = () => {
         password,
       });
       
+
+      console.log(response)
       const { token, user } = response.data;
       sessionStorage.setItem('userRole',user.userType)
       sessionStorage.setItem('permissions',JSON.stringify(user.adminPermissions))
@@ -47,7 +49,7 @@ const AdminLogin = () => {
       } else {
         sessionStorage.setItem("adminToken", token);
       }
-      Navigate("/admin/dashboard");
+      Navigate("/admin/dashboard/order/table");
       toast.success("Login successFull");
       // Redirect to admin dashboard or homepage
     } catch (err) {

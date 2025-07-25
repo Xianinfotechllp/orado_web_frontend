@@ -1,12 +1,11 @@
 import axios from 'axios';
+import apiClient from './apiClient/apiClient';
 
 export const createSurgeArea = async (surgeData) => {
   try {
-    const response = await axios.post('http://localhost:5000/admin/surge/add', surgeData, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+    const response = await apiClient.post('/admin/surge/add', surgeData)
+ 
+
 
     return response.data;
 
@@ -22,7 +21,7 @@ export const createSurgeArea = async (surgeData) => {
 
 export const getAllSurgeAreas = async () => {
   try {
-    const response = await axios.get('http://localhost:5000/admin/surge-list');
+    const response = await apiClient.get('/admin/surge-list');
 
     return response.data;
 

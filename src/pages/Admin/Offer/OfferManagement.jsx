@@ -6,7 +6,7 @@ import LoadingForAdmins from "../AdminUtils/LoadingForAdmins";
 import CreateOffer from "./CreateOffer";
 import AssignOffer from "./AssignOffer";
 
-const OfferManagement = () => {
+const OfferPage = () => {
   const [restaurants, setRestaurants] = useState([]);
   const [filteredRestaurants, setFilteredRestaurants] = useState([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
@@ -250,4 +250,4 @@ const OfferManagement = () => {
   );
 };
 
-export default OfferManagement;
+export default OfferPage;

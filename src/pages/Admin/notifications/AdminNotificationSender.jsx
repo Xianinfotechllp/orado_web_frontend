@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { notification, Form, Input, Button, Select, Card, Row, Col } from 'antd';
+import apiClient from '../../../apis/apiClient/apiClient';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -18,7 +19,12 @@ const AdminNotificationSender = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const response = await axios.post('/api/admin/notifications/send', values);
+        const payload = {
+      ...values,
+      sendToAll: true // ← Add this line to send to all users
+    };
+      const response = await apiClient.post('/admin/notifications', payload);
+      console.log(response)
       notification.success({
         message: 'Success',
         description: 'Notification sent successfully!',

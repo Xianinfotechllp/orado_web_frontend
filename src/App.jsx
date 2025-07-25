@@ -40,7 +40,8 @@ import AccessLogs from "./pages/Admin/AdminAccessLogs";
 import RestaurantOrderList from "./pages/Admin/RestaurantOrderList";
 import RestaurantReviewsPage from "./pages/Admin/reviews/RestaurantReviewPage";
 import RestaurantListforReviews from "./pages/Admin/reviews/RestaurantListforReviews";
-import OfferManagement from "./pages/Admin/Offer/OfferManagement";
+// import OfferManagement from "./pages/Admin/Offer/OfferManagement";
+
 import CreateOffer from "./pages/Admin/Offer/CreateOffer";
 import AssignOffer from "./pages/Admin/Offer/AssignOffer";
 import RestaurantEarningsTable from "./pages/Admin/RestaurantEarningsTable";
@@ -50,8 +51,64 @@ import AdminNotificationSender from "./pages/Admin/notifications/AdminNotificati
 import SurgeAreaList from "./pages/Admin/Surge/SurgeAreaList";
 import TaxManagementPanel from "./pages/Admin/FeeAndTaxSettings/TaxManagementPanel";
 import DeliveryFeeSettings from "./pages/Admin/FeeAndTaxSettings/DeliveryFeeSettings";
-
+import RestaurantEarningsv from "./pages/Admin/restauratnsEarnigs/RestaurantEarningsv";
 import AdminRestaurantChatDashboard from "./pages/Admin/RestaurantChats/AdminRestaurantChatDashboard";
+import OrderTable from "./pages/Admin/order/OrderTable";
+import CityCreationMap from "./pages/Admin/city/CityCreationMap";
+import PromoCodeManager from "./pages/Admin/Marketing/promotions/promoCode/ PromoCodeManager";
+import CreateLoyaltyPoints from "./pages/Admin/Marketing/promotions/loyalityPoints/CreateLoyaltyPoints";
+import RestaurantTables from "./pages/Admin/Restaurants/RestaurantTables";
+import RestaurantConfigPage from "./pages/Admin/Restaurants/RestaurantConfigPage";
+import AdminAgentDashboardLayout from "./layouts/AdminAgentDashboardLayout";
+import AgentDashboardSettings from "./pages/AgentAdminDashboard/AgentDashboardSettings";
+import CustomerCampaigns from "./pages/Admin/Marketing/pushCampaigns/CustomerCampaigns";
+import RestaurantCampaigns from "./pages/Admin/Marketing/pushCampaigns/RestaurantCampaigns";
+import RolesPage from "./pages/Admin/configure/userSettings/Rolepage";
+import AddRolePage from "./pages/Admin/configure/userSettings/AddRolepage";
+import ManagerManagement from "./pages/Admin/configure/userSettings/ManagerManagement";
+import AddManager from "./pages/Admin/configure/userSettings/AddManager";
+import EditRolePage from "./pages/Admin/configure/userSettings/EditRolePage";
+import EditManager from "./pages/Admin/configure/userSettings/EditManager";
+import CatalogPage  from "./pages/Admin/products/CatalogPage ";
+import ReferralPromotions from "./pages/Admin/Marketing/promotions/referal/ReferralPromotions";
+import CommissionPage from "./pages/Admin/configure/orderSettings/CommissionPage";
+import DeliverySettings from "./pages/Admin/configure/orderSettings/DeliverySettings";
+import TerminologyPage from "./pages/Admin/configure/generalSettings/TerminologyPage";
+import ManagerLogin from "./pages/Admin/manager/ManagerLogin";
+import PreferencesPage from "./pages/Admin/configure/generalSettings/PerferencePage";
+import OrderSettings from "./pages/Admin/configure/orderSettings/OrderSettings";
+import CancellationSettings from "./pages/Admin/configure/orderSettings/CancellationSettings";
+import DiscountPage from "./pages/Admin/Marketing/promotions/discount/DiscountPage";
+import OrderDetails from "./pages/Admin/order/OrderDetail";
+import ManagerDashboard from "./pages/manager/ManagerDashboard";
+import CustomerDetailsPage from "./pages/Admin/customer/CustomerDetails";
+import MerchantDetailsPage from "./pages/Admin/Restaurants/MerchantDetailsPage";
+import MerchantConfiguration from "./pages/Admin/Restaurants/MerchantConfiguration";
+import MerchantCataloguePage from "./pages/Admin/Restaurants/CataloguePage";
+import GeofencePage from "./pages/Admin/configure/cityConfig/GeofencePage";
+import GeofenceAdder from "./pages/Admin/configure/cityConfig/GeofenceAdder";
+import CityList from "./pages/Admin/configure/cityConfig/CityList";
+import TemplatesPage from "./pages/AgentAdminDashboard/settings/templates/TemplatesPage";
+import SettingsPageLayout from "./pages/AgentAdminDashboard/SettingsPageLayout";
+import AllocationMethodSelector from "./components/AgentAdminDashboard/SettingPage/AutoAllocation/AllocationMethodSelector";
+import AutoAllocationPage from "./pages/AgentAdminDashboard/AutoAllocationPage";
+import ThemeSettingsPage from "./pages/AgentAdminDashboard/settings/ThemeSettingsPage/ThemeSettingsPage";
+import MerchantCampaigns from "./pages/Admin/Marketing/pushCampaigns/MerchantCampaigns";
+import AddTemplate from "./pages/AgentAdminDashboard/settings/templates/AddTemplate";
+import TaxesFeesCharges from "./pages/Admin/configure/orderSettings/TaxFeesCharge/TaxesFeesCharges";
+import PromoCodesPage from "./pages/Admin/Marketing/promotions/promoCode/PromoCodesPage";
+import AnalyticsDashboardSwitcher from "./pages/Admin/Analytics/AnalyticsDashboardSwitcher";
+import OrderAnalytics from "./pages/Admin/Analytics/OrderAnalytics";
+import UserAnalytics from "./pages/Admin/Analytics/UserAnalytics";
+import OfferPage from "./pages/Admin/Offer/OfferManagement";
+import OfferManagement from "./pages/Admin/Marketing/promotions/offers/OfferManagement";
+import IncentivePlanModal from "./components/AgentAdminDashboard/IncentivePlan/IncentivePlanModal";
+import IncentivePlan from "./pages/AgentAdminDashboard/IncentivePlan/IncentivePlan";
+import MitlestonManagment from "./pages/AgentAdminDashboard/milteStoneRule/MitlestonManagment";
+import AgentDeliveryDash from "./pages/AgentAdminDashboard/AgentDeliveryDash";
+import AgentDetails from "./pages/AgentAdminDashboard/AgentDetails";
+import AgentList from "./pages/AgentAdminDashboard/AgentList";
+import AgentSelfieLogs from "./pages/AgentAdminDashboard/AgentSelfieLogs";
 
 function App() {
   // const [count, setCount] = useState(0);
@@ -59,26 +116,38 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Login />} />
+        {/* <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/home" element={<Home />} />
 
         <Route path="/add-to-cart" element={<AddToCart />} />
-        <Route path="/order-management" element={<OrderManagement />} />
-
+        <Route path="/order-management" element={<OrderManagement />} /> */}
+{/* 
         <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils />} />
         <Route path="/faq" element={<Faq />} />
-        <Route path="/notifications" element={<NotificationPage />} />
+        <Route path="/notifications" element={<NotificationPage />} /> */}
 
         {/* User Profile */}
-        <Route path="/my-account" element={<OrdersPage />} />
+        {/* <Route path="/my-account" element={<OrdersPage />} />
         <Route path="/my-account/orders" element={<OrdersPage />} />
-        <Route path="/my-account/settings" element={<SettingsPage />} />
+        <Route path="/my-account/settings" element={<SettingsPage />} /> */}
+
+
+
+
+
+        
+
+
+
+
 
 
         {/* Admin-Side */}
         <Route path="admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />}>
+      
+
 
 
           <Route index element={<Dashboard />} />
@@ -86,6 +155,12 @@ function App() {
           <Route path="restaurant-approvals" element={<RestaurantApprovalsPage />} />
           <Route path="restaurant-add" element={<AddRestaurantPage />} />
           <Route path="restaurant-edit" element={<RestaurantList />} />
+
+          <Route path="restaurant-table" element={<RestaurantTables/>} />
+            <Route path="restaurant-config" element={<RestaurantConfigPage/>}  />
+         
+
+
           <Route path="restaurant-createmenu" element={<CreateMenu />} />
           <Route path="restaurant-permission" element={<RestaurantPermissions />} />
           <Route path="restaurant-commission" element={<RestaurantCommission />} />
@@ -93,11 +168,21 @@ function App() {
           <Route path="restaurant-feedback" element={<RestaurantListforReviews />} />
            <Route path="restaurant-earnings" element={<RestaurantEarningsTable />} />
            <Route path="restaurant-chats" element={<AdminRestaurantChatDashboard />} />
+           <Route path="restaurant-earnings-summary/:restaurantId" element={<RestaurantEarningsv />} />
+
+        {/* Restuarnt */}
+            <Route path="merchants/merchant-details/:id" element={<MerchantDetailsPage/>}  />
+               <Route path="merchants/merchant-config/:id" element={<MerchantConfiguration/>}/>
+               <Route path="merchants/merchant-catelogue/:id" element={<MerchantCataloguePage/>}/>
+
+
+
+        
 
           {/* offer section */}
           <Route path="create-offer" element={<CreateOffer />} />
           <Route path="assign-offer" element={<AssignOffer />} />
-          <Route path="manage-offer" element={<OfferManagement />} />
+          <Route path="manage-offer" element={<OfferPage />} />
 
           
           {/* admin-section */}
@@ -109,9 +194,81 @@ function App() {
           <Route path="admin-surge-list" element={<SurgeAreaList/>}    />
 
           
+          {/* products */}
+              {/* CatalogPage */}
+       
+                <Route path="merchants/catalogue" element={<CatalogPage />} />
 
-          <Route path="admin-tax-management" element={<TaxManagementPanel />}    />
-          <Route path="admin-deliveryfee-management" element={<DeliveryFeeSettings />}    />
+
+          {/* Customer  */}
+
+              <Route path="customer/:customerId/details" element={<CustomerDetailsPage/>}  />
+
+
+
+       {/* alaytics */}
+
+       <Route path="analytics/order" element={<OrderAnalytics/>  }    />
+
+       <Route path="analytics/user" element={<UserAnalytics/>  }    />
+
+          {/* marketing */}
+
+             { /* >>  promotions */}
+                {/* promocodes */}
+                {/* <Route path="admin-promotions-promo" element={<PromoCodeManager/>}  /> */}
+                <Route path="admin-promotions-promo" element={<PromoCodesPage/>}  />
+                <Route  path="promotions-offer"  element={<OfferManagement/>} />
+             
+                <Route  path="promotions-discount"  element={<DiscountPage/>} />
+                <Route path="promotion-loyalty-points" element={<CreateLoyaltyPoints/>} />
+                 <Route path="promotion-referal" element={<ReferralPromotions/>}  />
+                {/* push campings */}
+                <Route path="campaigns-customer" element={<CustomerCampaigns/>} />
+                <Route path="campaigns-restaurant" element={<RestaurantCampaigns/>} />
+                <Route path="campaigns-merchant" element={<MerchantCampaigns/>} />
+                
+
+
+
+
+
+
+
+
+                {/* configration menu */}
+                   {/* >  user settings */}
+                <Route path="role-management" element={<RolesPage/>} />
+                <Route path="role-add" element={<AddRolePage/>} />
+                <Route path="role-edit/:roleId" element={<EditRolePage/>}  />
+
+                <Route path="manger-managment" element={<ManagerManagement/>}  />
+                <Route path="manger-add" element={<AddManager/>}  />
+                <Route path="manger-edit/:mangerId" element={<EditManager/>}  />
+
+                 {/* order settings */}
+                <Route path="order/settings" element={<OrderSettings/>} />
+                <Route path="order/cancel-settings" element={<CancellationSettings/>}  />
+                <Route path="commission/setup" element={<CommissionPage/>}  />
+
+                <Route path="delivery-settings"  element={<DeliverySettings/>}  />
+
+                <Route path="taxes-charges"  element={<TaxesFeesCharges/>}  />
+
+                    
+             {/* general settings */}
+             <Route path="general/terminology" element={<TerminologyPage/>} />
+             <Route path="general/preference" element={<PreferencesPage/>} />
+
+
+            {/* city config */}
+            <Route path="geofence" element={<GeofencePage/>} />
+            <Route path="geofence/add" element={<GeofenceAdder/>} />
+            <Route path="city/list" element={<CityList/>} />
+
+
+            <Route path="admin-tax-management" element={<TaxManagementPanel />}    />
+             <Route path="admin-deliveryfee-management" element={<DeliveryFeeSettings />}    />
 
 
 
@@ -123,16 +280,75 @@ function App() {
           <Route path="refund/transactions" element={<RefundTransactionsPage />} />
         
           <Route path="notification-sender"  element={<AdminNotificationSender/>} />
-
+        <Route path="order/table" element={<OrderTable/>} />
+        <Route path="order/table/details/:orderId" element={<OrderDetails/>}  />
+        <Route path="add-city" element={<CityCreationMap/>}  />
           {/* Add more nested routes as needed */}
         </Route>
-        <Route path="/restaurants/:restaurantId/categories" element={<RestaurantCategories />} />
         <Route path="/restaurants/:restaurantId/orders" element={<RestaurantOrderList />} />
+
+        <Route path="/restaurants/:restaurantId/categories" element={<RestaurantCategories />} />
         <Route path="/feedback/restaurants/:restaurantId" element={<RestaurantReviewsPage />} />
         <Route
           path="/restaurants/:restaurantId/categories/:categoryId/items"
           element={<CategoryItems />}
-        />
+/>
+
+
+
+
+
+
+
+
+
+ <Route path="/admin/agent-dashboard/settings/incentive-plan" element={<IncentivePlan/>} /> 
+
+<Route path="/admin/agent-dashboard/settings/milestone"  element={<MitlestonManagment/>} />
+
+
+<Route path="/admin/agent-dashboard/agent/list"   element={<AgentList/>} />
+
+<Route path="/admin/agent-dashboard/agent/details"   element={<AgentDetails/>} />
+<Route path="/admin/agent-dashboard/agent/details"   element={<AgentDetails/>} />
+<Route path="/admin/agent-dashboard/agent-selfie"   element={<AgentSelfieLogs/>} />
+
+
+
+
+
+<Route  path="/admin/agent-dashboard" element={<AdminAgentDashboardLayout/>}>
+
+ <Route index element={<AdminAgentDashboardLayout />} />
+
+
+    
+</Route>
+
+{/* <Route path="/admin/agent-dashboard/settings" element={<AgentDashboardSettings />} /> */}
+
+{/* <Route path="/admin/agent-dashboard/settings/template"  element={<TemplatesPage/>}   /> */}
+
+<Route path="/admin/agent-dashboard/settings" element={<SettingsPageLayout />}>
+
+
+     <Route path="allocation-method" element={<AutoAllocationPage/>}  />
+     <Route path="template"  element={<TemplatesPage/>}/>
+     <Route path="template/add"  element={<AddTemplate/>}/>
+
+     <Route path="theme-settings" element={<ThemeSettingsPage/>}  />
+    
+  {/* <Route path="preferences" element={<PreferencesPage />} /> */}
+  {/* <Route path="theme" element={<ThemeSettingsPage />} />
+  <Route path="profile" element={<ProfilePage />} />
+  <Route path="geo-fence" element={<GeoFencePage />} />
+  <Route path="auto-allocation" element={<AutoAllocationPage />} /> */}
+</Route>
+
+{/* manager logins */}
+    <Route path="/manger/login" element={<ManagerLogin/>}/>
+
+    <Route  path="/manager/dashboard" element={<ManagerDashboard/>}></Route>
       </Routes>
       <ToastContainer />
     </>
