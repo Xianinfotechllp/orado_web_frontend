@@ -205,7 +205,7 @@ const CancellationPolicyPage = () => {
 
       {/* Add Policy Modal */}
       {showAddPolicyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bgOp flex items-center justify-center z-50">
           <div className="bg-white rounded-lg w-full max-w-3xl max-h-screen overflow-y-auto">
             <div className="p-4 border-b">
               <h3 className="text-lg font-medium">Cancellation Policy</h3>

@@ -55,7 +55,7 @@ const AddTaxModal = ({ type = "marketplace", onClose, onSave, restaurants = [] }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bgOp flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
         <div className="border-b border-gray-200 px-6 py-4">
           <h4 className="text-lg font-semibold text-gray-800">{getModalTitle()}</h4>
