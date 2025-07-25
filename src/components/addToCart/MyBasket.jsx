@@ -56,53 +56,52 @@ export default function MyBasket({ useWallet, setUseWallet }) {
   const cartId = useSelector((state) => state.cart.cartId);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);
 
-  // Dummy data for coupon 
+  // Dummy data for coupon
   const coupons = [
-  {
-    code: 'FLAT125',
-    title: 'Get Flat Rs.125 off',
-    description: 'Use code FLAT125 & get flat ₹125 off on orders above ₹499.',
-  },
-  {
-    code: 'SPECIALS',
-    title: '60% off on select items',
-    description: 'Use code SPECIALS & get 60% off on orders above ₹299.',
-  },
-  {
-    code: 'FREEDISH',
-    title: 'Free Dish with Combo',
-    description: 'Use FREEDISH to get a free starter on orders above ₹399.',
-  },
-  {
-    code: 'SAVE30',
-    title: '30% off on all orders',
-    description: 'Use SAVE30 to get 30% off on any order above ₹199.',
-  },
-];
+    {
+      code: "FLAT125",
+      title: "Get Flat Rs.125 off",
+      description: "Use code FLAT125 & get flat ₹125 off on orders above ₹499.",
+    },
+    {
+      code: "SPECIALS",
+      title: "60% off on select items",
+      description: "Use code SPECIALS & get 60% off on orders above ₹299.",
+    },
+    {
+      code: "FREEDISH",
+      title: "Free Dish with Combo",
+      description: "Use FREEDISH to get a free starter on orders above ₹399.",
+    },
+    {
+      code: "SAVE30",
+      title: "30% off on all orders",
+      description: "Use SAVE30 to get 30% off on any order above ₹199.",
+    },
+  ];
 
-// usestate to open and close add coupon button sidebar
-const [isOpen, setIsOpen] = useState(false);
-  
-  
+  // usestate to open and close add coupon button sidebar
+  const [isOpen, setIsOpen] = useState(false);
+
   // Fetch bill summary
   const fetchBill = async (cartId) => {
-  if (!cartId) {
-    setError("Cart ID is required");
-    return;
-  }
+    if (!cartId) {
+      setError("Cart ID is required");
+      return;
+    }
 
-  if (!selectedAddress?.location) {
-    setError("Please select a valid delivery address");
-    return;
-  }
+    if (!selectedAddress?.location) {
+      setError("Please select a valid delivery address");
+      return;
+    }
 
-  // Handle both location formats
-  const { longitude, latitude } = (() => {
-    const loc = selectedAddress.location;
-    return loc.coordinates 
-      ? { longitude: loc.coordinates[0], latitude: loc.coordinates[1] }
-      : { longitude: loc.longitude, latitude: loc.latitude };
-  })();
+    // Handle both location formats
+    const { longitude, latitude } = (() => {
+      const loc = selectedAddress.location;
+      return loc.coordinates
+        ? { longitude: loc.coordinates[0], latitude: loc.coordinates[1] }
+        : { longitude: loc.longitude, latitude: loc.latitude };
+    })();
 
   try {
     setError(null);
@@ -118,36 +117,37 @@ const [isOpen, setIsOpen] = useState(false);
       tipAmount: Number(selectedTip) || 0,
     });
 
-    console.log(billRes,"why........")
-    
-    if (billRes.error) {
-      if (billRes.error.includes("do not deliver to your location")) {
-        setBill({});
-        setDeliveryAvailable(false);
-        setError({
-          code: "DELIVERY_UNAVAILABLE",
-          message: "Delivery unavailable to selected location"
-        });
+      console.log(billRes, "why........");
+
+      if (billRes.error) {
+        if (billRes.error.includes("do not deliver to your location")) {
+          setBill({});
+          setDeliveryAvailable(false);
+          setError({
+            code: "DELIVERY_UNAVAILABLE",
+            message: "Delivery unavailable to selected location",
+          });
+        } else {
+          throw new Error(billRes.error);
+        }
+      } else if (!billRes.data) {
+        throw new Error("Invalid response from server");
       } else {
-        throw new Error(billRes.error);
+        // ✅ Add the fix here - this replaces your existing success handling
+        setBill({ ...billRes.data, deliveryAvailable: true });
+        setDeliveryAvailable(true);
+        setError(null); // Explicitly clear errors
       }
-    } else if (!billRes.data) {
-      throw new Error("Invalid response from server");
-    } else {
-      // ✅ Add the fix here - this replaces your existing success handling
-      setBill({ ...billRes.data, deliveryAvailable: true });
-      setDeliveryAvailable(true);
-      setError(null); // Explicitly clear errors
+    } catch (err) {
+      console.error("Error fetching bill summary", err);
+      setError({
+        message:
+          err.message || "Failed to fetch bill summary. Please try again.",
+      });
+    } finally {
+      setBillLoading(false);
     }
-  } catch (err) {
-    console.error("Error fetching bill summary", err);
-    setError({
-      message: err.message || "Failed to fetch bill summary. Please try again."
-    });
-  } finally {
-    setBillLoading(false);
-  }
-};
+  };
 
   // Fetch cart data
   const fetchCartData = async () => {
@@ -204,14 +204,14 @@ const [isOpen, setIsOpen] = useState(false);
     fetchCartData();
   }, [user?._id]);
 
-useEffect(() => {
-  const timer = setTimeout(() => {
-    if (cartDetails._id && selectedAddress?.location) {
-      fetchBill(cartDetails._id);
-    }
-  }, 500);
-  return () => clearTimeout(timer);
-}, [selectedAddress, cartDetails._id, useWallet]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (cartDetails._id && selectedAddress?.location) {
+        fetchBill(cartDetails._id);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [selectedAddress, cartDetails._id, useWallet]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -219,7 +219,7 @@ useEffect(() => {
         fetchBill(cartDetails._id);
       }
     }, 500); // 500ms debounce
-    
+
     return () => clearTimeout(timer);
   }, [selectedAddress]);
   
@@ -241,14 +241,14 @@ const handlePlaceOrder = async () => {
     return;
   }
 
-  if (!cartId) {
-    setError("No cart items found. Please add items to cart first");
-    return;
-  }
+    if (!cartId) {
+      setError("No cart items found. Please add items to cart first");
+      return;
+    }
 
-  try {
-    setLoading(true);
-    setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
     // Common order payload for both payment methods
     const orderPayload = {
@@ -270,97 +270,104 @@ const handlePlaceOrder = async () => {
       tipAmount: Number(selectedTip) || 0,
     };
 
-    if (paymentMethod === "cash") {
-      // Cash on delivery flow
-      const res = await placeOrder(orderPayload);
+      if (paymentMethod === "cash") {
+        // Cash on delivery flow
+        const res = await placeOrder(orderPayload);
 
-      if (res?.orderId) {
-        dispatch(clearCart());
-        await clearCartApi(user._id);
-        setOrderSuccess(true);
-        setOrderId(res.orderId);
-      }
-    } else if (paymentMethod === "online") {
-      // Online payment flow
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        setError("Failed to load payment gateway. Please try again.");
-        return;
-      }
-
-      // 1. Create order in backend
-      const orderResponse = await placeOrder({
-        ...orderPayload,
-        paymentStatus: "pending" // Mark as pending until payment completes
-      });
-
-      if (!orderResponse?.orderId) {
-        throw new Error("Failed to create order");
-      }
-
-      // 2. Initialize Razorpay payment
-      const amountInPaise = Math.round((bill?.payable ?? bill?.total ?? 0) * 100);
-      
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: amountInPaise,
-        currency: "INR",
-        name: "Orado Food Delivery",
-        description: "Order Payment",
-        order_id: orderResponse.razorpayOrderId,
-        handler: async function (response) {
-          try {
-            // 3. Verify payment with backend
-
-            await verifyPayment({ razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              orderId: orderResponse.orderId})
-            // await axios.post("/api/payments/verify", {
-            //   razorpay_order_id: response.razorpay_order_id,
-            //   razorpay_payment_id: response.razorpay_payment_id,
-            //   razorpay_signature: response.razorpay_signature,
-            //   orderId: orderResponse.orderId
-            // });
-
-            // Success - clear cart and show success
-            dispatch(clearCart());
-            await clearCartApi(user._id);
-            setOrderSuccess(true);
-            setOrderId(orderResponse.orderId);
-          } catch (error) {
-            console.error("Payment verification failed:", error);
-            setError("Payment verification failed. Please check your orders.");
-          }
-        },
-        prefill: {
-          name: user.fullName,
-          email: user.email,
-          contact: user.phone
-        },
-        theme: {
-          color: "#ff5500",
-        },
-        modal: {
-          ondismiss: () => {
-            // Handle payment modal dismissal
-            setLoading(false);
-          }
+        if (res?.orderId) {
+          dispatch(clearCart());
+          await clearCartApi(user._id);
+          setOrderSuccess(true);
+          setOrderId(res.orderId);
         }
-      };
+      } else if (paymentMethod === "online") {
+        // Online payment flow
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+          setError("Failed to load payment gateway. Please try again.");
+          return;
+        }
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+        // 1. Create order in backend
+        const orderResponse = await placeOrder({
+          ...orderPayload,
+          paymentStatus: "pending", // Mark as pending until payment completes
+        });
+
+        if (!orderResponse?.orderId) {
+          throw new Error("Failed to create order");
+        }
+
+        // 2. Initialize Razorpay payment
+        const amountInPaise = Math.round(
+          (bill?.payable ?? bill?.total ?? 0) * 100
+        );
+
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          amount: amountInPaise,
+          currency: "INR",
+          name: "Orado Food Delivery",
+          description: "Order Payment",
+          order_id: orderResponse.razorpayOrderId,
+          handler: async function (response) {
+            try {
+              // 3. Verify payment with backend
+
+              await verifyPayment({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderId: orderResponse.orderId,
+              });
+              // await axios.post("/api/payments/verify", {
+              //   razorpay_order_id: response.razorpay_order_id,
+              //   razorpay_payment_id: response.razorpay_payment_id,
+              //   razorpay_signature: response.razorpay_signature,
+              //   orderId: orderResponse.orderId
+              // });
+
+              // Success - clear cart and show success
+              dispatch(clearCart());
+              await clearCartApi(user._id);
+              setOrderSuccess(true);
+              setOrderId(orderResponse.orderId);
+            } catch (error) {
+              console.error("Payment verification failed:", error);
+              setError(
+                "Payment verification failed. Please check your orders."
+              );
+            }
+          },
+          prefill: {
+            name: user.fullName,
+            email: user.email,
+            contact: user.phone,
+          },
+          theme: {
+            color: "#ff5500",
+          },
+          modal: {
+            ondismiss: () => {
+              // Handle payment modal dismissal
+              setLoading(false);
+            },
+          },
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      }
+    } catch (error) {
+      console.error("Failed to place order:", error);
+      const errorMsg =
+        error.response?.data?.message ||
+        "Failed to place order. Please try again.";
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Failed to place order:", error);
-    const errorMsg = error.response?.data?.message || 
-                    "Failed to place order. Please try again.";
-    setError(errorMsg);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleOrderModalClose = () => {
     setOrderSuccess(false);
@@ -607,188 +614,268 @@ const handlePlaceOrder = async () => {
           ))
         )}
 
-       
-{/*<p>------------------------hello there here shanky coupon sidebar start -------------------------</p> */}
-       
-       
- 
+        {/*<p>------------------------hello there here shanky coupon sidebar start -------------------------</p> */}
 
- <button
-  className="flex items-center gap-2 bg-orange-500 text-white px-4 py-3 font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/30 hover:scale-105 hover:bg-orange-600 shadow-md md:px-6 ml-17 md:ml-30 mb-0"
-  onClick={() => setIsOpen(true)}
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-5 w-5"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M17 9V7a2 2 0 00-2-2h-1.5a.5.5 0 01-.5-.5V3a2 2 0 00-2-2h-1a2 2 0 00-2 2v1.5a.5.5 0 01-.5.5H7a2 2 0 00-2 2v2a.5.5 0 01-.5.5H3a2 2 0 00-2 2v1a2 2 0 002 2h1.5a.5.5 0 01.5.5V17a2 2 0 002 2h2a.5.5 0 01.5.5V21a2 2 0 002 2h1a2 2 0 002-2v-1.5a.5.5 0 01.5-.5H17a2 2 0 002-2v-2a.5.5 0 01.5-.5H21a2 2 0 002-2v-1a2 2 0 00-2-2h-1.5a.5.5 0 01-.5-.5z"
-    />
-  </svg>
-  <span className="hidden sm:inline">Apply Coupon</span>
-  <span className="sm:hidden">Apply Coupons</span>
-</button>
-
-{/* Overlay with higher z-index */}
-{isOpen && (
-  <div
-    className="fixed inset-0 backdrop-blur-lg bg-black/30 z-50 transition-all duration-300 ease-out"
-    onClick={() => setIsOpen(false)}
-    style={{
-      height: 'calc(100% + 20px)', // Extends 20px beyond viewport
-      bottom: '-20px' // Pulls overlay down to cover gap
-    }}
-  />
-)}
-
-{/* Sidebar with highest z-index */}
-<div
-  className={`fixed top-0 right-0 h-full w-full max-w-full sm:max-w-md bg-white z-60 transform transition-all duration-300 ease-in-out ${
-    isOpen ? 'translate-x-0' : 'translate-x-full'
-  } shadow-xl`}
-  style={{
-    height: 'calc(100% + 20px)', // Extends 20px beyond viewport
-    bottom: '-20px' // Pulls sidebar down to cover gap
-  }}
->
-  {/* Rest of your sidebar content remains exactly the same */}
-  {/* Header */}
-  <div className="flex justify-between items-center p-4 sm:p-6 bg-white border-b border-orange-300 relative">
-    <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-      Available Coupons
-    </h2>
-    <button
-      onClick={() => setIsOpen(false)}
-      className="text-gray-500 hover:text-gray-800 text-3xl w-12 h-12 flex items-center justify-center transition-all duration-200 hover:bg-orange-100 rounded-full focus:outline-none absolute right-2 top-2 sm:static sm:text-2xl sm:w-8 sm:h-8"
-    >
-      &times;
-    </button>
-  </div>
-
-  {/* Content Area */}
-  <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto h-[calc(100vh-64px)] sm:h-[calc(100vh-88px)]">
-    {/* Input Group */}
-    <div className="flex flex-col sm:flex-row gap-3 mb-4 sm:mb-6">
-      <input
-        type="text"
-        placeholder="Enter Coupon Code"
-        className="flex-1 px-4 py-3 rounded-lg sm:rounded-xl bg-white border-2 border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-500 transition-all duration-300 placeholder-gray-400 text-sm sm:text-base"
-      />
-      <button className="px-4 py-3 bg-orange-400 text-white font-semibold rounded-lg sm:rounded-xl hover:bg-orange-600 transition-all duration-300 text-sm sm:text-base">
-        Apply
-      </button>
-    </div>
-
-    {/* Coupons List */}
-    <div className="space-y-3 sm:space-y-4">
-      {coupons.map((coupon, idx) => (
-        <div 
-          key={idx} 
-          className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-xl transition-all duration-300 border border-orange-100 hover:border-orange-300 hover:-translate-y-1 hover:scale-[1.02] transform-gpu"
+        <button
+          className="flex items-center gap-2 bg-orange-500 text-white px-4 py-3 font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/30 hover:scale-105 hover:bg-orange-600 shadow-md md:px-6 ml-17 md:ml-30 mb-0"
+          onClick={() => setIsOpen(true)}
         >
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
-            <div className="bg-orange-100 px-3 py-1.5 rounded-md sm:rounded-lg font-bold text-xs sm:text-sm text-orange-700 border border-orange-200">
-              {coupon.code}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M17 9V7a2 2 0 00-2-2h-1.5a.5.5 0 01-.5-.5V3a2 2 0 00-2-2h-1a2 2 0 00-2 2v1.5a.5.5 0 01-.5.5H7a2 2 0 00-2 2v2a.5.5 0 01-.5.5H3a2 2 0 00-2 2v1a2 2 0 002 2h1.5a.5.5 0 01.5.5V17a2 2 0 002 2h2a.5.5 0 01.5.5V21a2 2 0 002 2h1a2 2 0 002-2v-1.5a.5.5 0 01.5-.5H17a2 2 0 002-2v-2a.5.5 0 01.5-.5H21a2 2 0 002-2v-1a2 2 0 00-2-2h-1.5a.5.5 0 01-.5-.5z"
+            />
+          </svg>
+          <span className="hidden sm:inline">Apply Coupon</span>
+          <span className="sm:hidden">Apply Coupons</span>
+        </button>
+
+        {/* Overlay with higher z-index */}
+        {isOpen && (
+          <div
+            className="fixed inset-0 backdrop-blur-lg bg-black/30 z-50 transition-all duration-300 ease-out"
+            onClick={() => setIsOpen(false)}
+            style={{
+              height: "calc(100% + 20px)", // Extends 20px beyond viewport
+              bottom: "-20px", // Pulls overlay down to cover gap
+            }}
+          />
+        )}
+
+        {/* Sidebar with highest z-index */}
+        <div
+          className={`fixed top-0 right-0 h-full w-full max-w-full sm:max-w-md bg-white z-60 transform transition-all duration-300 ease-in-out ${
+            isOpen ? "translate-x-0" : "translate-x-full"
+          } shadow-xl`}
+          style={{
+            height: "calc(100% + 20px)", // Extends 20px beyond viewport
+            bottom: "-20px", // Pulls sidebar down to cover gap
+          }}
+        >
+          {/* Rest of your sidebar content remains exactly the same */}
+          {/* Header */}
+          <div className="flex justify-between items-center p-4 sm:p-6 bg-white border-b border-orange-300 relative">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+              Available Coupons
+            </h2>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-gray-500 hover:text-gray-800 text-3xl w-12 h-12 flex items-center justify-center transition-all duration-200 hover:bg-orange-100 rounded-full focus:outline-none absolute right-2 top-2 sm:static sm:text-2xl sm:w-8 sm:h-8"
+            >
+              &times;
+            </button>
+          </div>
+
+          {/* Content Area */}
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto h-[calc(100vh-64px)] sm:h-[calc(100vh-88px)]">
+            {/* Input Group */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-4 sm:mb-6">
+              <input
+                type="text"
+                placeholder="Enter Coupon Code"
+                className="flex-1 px-4 py-3 rounded-lg sm:rounded-xl bg-white border-2 border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-500 transition-all duration-300 placeholder-gray-400 text-sm sm:text-base"
+              />
+              <button className="px-4 py-3 bg-orange-400 text-white font-semibold rounded-lg sm:rounded-xl hover:bg-orange-600 transition-all duration-300 text-sm sm:text-base">
+                Apply
+              </button>
             </div>
-            <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
-              {coupon.title}
-            </h3>
-          </div>
-          <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 leading-relaxed">
-            {coupon.description}
-          </p>
-         <button 
-  className="w-full text-white bg-orange-400 hover:bg-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 border-2 border-orange-500 hover:border-orange-600 hover:shadow-lg active:scale-[0.98]"
->
-  APPLY COUPON
-</button>
-        </div>
-      ))}
 
-      </div>
-        </div>
-      </div>
-      </div>
-
-
- {/*<p>----------------------hello there here shanky coupon sidebar ends----------------------</p> */}
-    
-
-      {billLoading ? (
-        <div className="p-4 space-y-3 animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-        </div>
-      ) : items.length > 0 && deliveryAvailable ? (
-        <div className="p-4 space-y-2 border-t">
-          <div className="flex justify-between text-sm sm:text-base">
-            <span className="font-medium">Sub Total:</span>
-            <span className="font-medium">
-              ₹{(bill?.subtotal || 0).toFixed(2)}
-            </span>
-          </div>
-
-          <div className="flex justify-between text-sm sm:text-base">
-            <span className="font-medium">Discount:</span>
-            <div className="text-right">
-              <div className="font-medium text-[#ea4525]">
-                - ₹{(bill?.discount || 0).toFixed(2)}
-              </div>
-            </div>
-          </div>
-
-          {bill?.offersApplied?.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-green-600">
-                <Tag size={14} /> Applied Offers:
-              </div>
-              {bill.offersApplied.map((offer, index) => (
+            {/* Coupons List */}
+            <div className="space-y-3 sm:space-y-4">
+              {coupons.map((coupon, idx) => (
                 <div
-                  key={index}
-                  className="flex justify-between text-xs sm:text-sm pl-6"
+                  key={idx}
+                  className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-xl transition-all duration-300 border border-orange-100 hover:border-orange-300 hover:-translate-y-1 hover:scale-[1.02] transform-gpu"
                 >
-                  <span className="text-green-600">
-                    {typeof offer === "string" ? offer : offer?.name || "Offer"}
-                  </span>
-                  {bill?.discount > 0 && index === 0 && (
-                    <span className="text-green-600">
-                      - ₹{(bill?.discount || 0).toFixed(2)}
-                    </span>
-                  )}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+                    <div className="bg-orange-100 px-3 py-1.5 rounded-md sm:rounded-lg font-bold text-xs sm:text-sm text-orange-700 border border-orange-200">
+                      {coupon.code}
+                    </div>
+                    <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
+                      {coupon.title}
+                    </h3>
+                  </div>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 leading-relaxed">
+                    {coupon.description}
+                  </p>
+                  <button className="w-full text-white bg-orange-400 hover:bg-orange-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 border-2 border-orange-500 hover:border-orange-600 hover:shadow-lg active:scale-[0.98]">
+                    APPLY COUPON
+                  </button>
                 </div>
               ))}
             </div>
-          )}
-
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm sm:text-base">
-              <span className="font-medium">Tax Total:</span>
-              <span className="font-medium">
-                ₹{(bill?.tax || 0).toFixed(2)}
-              </span>
-            </div>
-
-            {bill?.taxes?.map((taxItem, index) => (
-              <div
-                key={index}
-                className="flex justify-between text-xs pl-4 text-gray-600"
-              >
-                <span>
-                  {taxItem.name} ({taxItem.percentage}%):
-                </span>
-                <span>₹{taxItem.amount.toFixed(2)}</span>
-              </div>
-            ))}
           </div>
+        </div>
+      </div>
+
+      {/*<p>----------------------hello there here shanky coupon sidebar ends----------------------</p> */}
+
+      {billLoading ? (
+    <div className="p-4 space-y-3 animate-pulse">
+      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+    </div>
+  ) : items.length > 0 && deliveryAvailable ? (
+    <div className="p-4 space-y-2 border-t">
+      <div className="flex justify-between text-sm sm:text-base">
+        <span className="font-medium">Sub Total:</span>
+        <span className="font-medium">
+          ₹{(bill?.subtotal || 0).toFixed(2)}
+        </span>
+      </div>
+
+      <div className="flex justify-between text-sm sm:text-base">
+        <span className="font-medium">Discount:</span>
+        <div className="text-right">
+          <div className="font-medium text-[#ea4525]">
+            - ₹{(bill?.discount || 0).toFixed(2)}
+          </div>
+        </div>
+      </div>
+
+      {/* Combo Discounts Section */}
+      {bill?.combosApplied?.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-green-600">
+            <Tag size={14} /> Applied Combos:
+          </div>
+          {bill.combosApplied.map((combo, index) => (
+            <div key={`combo-${index}`} className="space-y-1">
+              <div className="flex justify-between text-xs sm:text-sm pl-6">
+                <span className="text-green-600">{combo.title}</span>
+                <span className="text-green-600">
+                  - ₹{(combo.saved || 0).toFixed(2)}
+                </span>
+              </div>
+              <div className="text-xs pl-6 text-gray-500">
+                Applied {combo.times} time{combo.times > 1 ? 's' : ''}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {bill?.offersApplied?.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-green-600">
+            <Tag size={14} /> Applied Offers:
+          </div>
+          {bill.offersApplied.map((offer, index) => (
+            <div
+              key={index}
+              className="flex justify-between text-xs sm:text-sm pl-6"
+            >
+              <span className="text-green-600">
+                {typeof offer === "string" ? offer : offer?.name || "Offer"}
+              </span>
+              {bill?.discount > 0 && index === 0 && (
+                <span className="text-green-600">
+                  - ₹{(bill?.discount || 0).toFixed(2)}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="space-y-1">
+        <div className="flex justify-between text-sm sm:text-base">
+          <span className="font-medium">Tax Total:</span>
+          <span className="font-medium">
+            ₹{(bill?.tax || 0).toFixed(2)}
+          </span>
+        </div>
+
+        {bill?.taxes?.map((taxItem, index) => (
+          <div
+            key={index}
+            className="flex justify-between text-xs pl-4 text-gray-600"
+          >
+            <span>
+              {taxItem.name} ({taxItem.percentage}%):
+            </span>
+            <span>₹{taxItem.amount.toFixed(2)}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Add this section below the tax breakdown */}
+      {bill?.totalPackingCharge > 0 && (
+        <div className="space-y-1">
+          <div className="flex justify-between text-sm sm:text-base">
+            <span className="font-medium">Packing Charges:</span>
+            <span className="font-medium">
+              ₹{(bill?.totalPackingCharge || 0).toFixed(2)}
+            </span>
+          </div>
+
+          {/* Marketplace packing charges */}
+          {bill?.packingCharges?.marketplace?.map((charge, index) => (
+            <div
+              key={`marketplace-packing-${index}`}
+              className="flex justify-between text-xs pl-4 text-gray-600"
+            >
+              <span>{charge.name}:</span>
+              <span>₹{charge.amount.toFixed(2)}</span>
+            </div>
+          ))}
+
+          {/* Merchant packing charges */}
+          {bill?.packingCharges?.merchant?.map((charge, index) => (
+            <div
+              key={`merchant-packing-${index}`}
+              className="flex justify-between text-xs pl-4 text-gray-600"
+            >
+              <span>{charge.name}:</span>
+              <span>₹{charge.amount.toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {bill?.totalAdditionalCharges > 0 && (
+        <div className="space-y-1">
+          <div className="flex justify-between text-sm sm:text-base">
+            <span className="font-medium">Additional Charges:</span>
+            <span className="font-medium">
+              ₹{(bill?.totalAdditionalCharges || 0).toFixed(2)}
+            </span>
+          </div>
+
+          {/* Marketplace additional charges */}
+          {bill?.additionalCharges?.marketplace?.map((charge, index) => (
+            <div
+              key={`marketplace-additional-${index}`}
+              className="flex justify-between text-xs pl-4 text-gray-600"
+            >
+              <span>{charge.name}:</span>
+              <span>₹{charge.amount.toFixed(2)}</span>
+            </div>
+          ))}
+
+          {/* Merchant additional charges */}
+          {bill?.additionalCharges?.merchant?.map((charge, index) => (
+            <div
+              key={`merchant-additional-${index}`}
+              className="flex justify-between text-xs pl-4 text-gray-600"
+            >
+              <span>{charge.name}:</span>
+              <span>₹{charge.amount.toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
           <div className="flex justify-between text-sm sm:text-base">
             <span className="font-medium">Delivery Fee:</span>
@@ -803,44 +890,44 @@ const handlePlaceOrder = async () => {
             </div>
           )}
 
-          {bill?.isSurge && (
-            <div className="flex justify-between text-sm sm:text-base animate-pulseOnce">
-              <span className="font-medium flex items-center gap-1">
-                <Zap size={14} className="text-yellow-500 animate-bounce" />
-                Surge Fee
-                {bill?.surgeReason && (
-                  <span className="text-xs text-gray-500">
-                    ({bill.surgeReason})
-                  </span>
-                )}
+      {bill?.isSurge && (
+        <div className="flex justify-between text-sm sm:text-base animate-pulseOnce">
+          <span className="font-medium flex items-center gap-1">
+            <Zap size={14} className="text-yellow-500 animate-bounce" />
+            Surge Fee
+            {bill?.surgeReason && (
+              <span className="text-xs text-gray-500">
+                ({bill.surgeReason})
               </span>
-              <span className="font-medium text-yellow-600">
-                ₹{(bill?.surgeFee || 0).toFixed(2)}
-              </span>
-            </div>
-          )}
+            )}
+          </span>
+          <span className="font-medium text-yellow-600">
+            ₹{(bill?.surgeFee || 0).toFixed(2)}
+          </span>
+        </div>
+      )}
 
-          <div className="flex items-center justify-between text-sm sm:text-base pt-2">
-            <label className="font-medium flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                disabled={walletBalance <= 0 || walletLoading}
-                checked={walletBalance > 0 && useWallet}
-                onChange={handleWalletToggle}
-                className="cursor-pointer"
-              />
-              Use Wallet (₹{walletBalance.toFixed(2)} available)
-            </label>
-          </div>
+      <div className="flex items-center justify-between text-sm sm:text-base pt-2">
+        <label className="font-medium flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            disabled={walletBalance <= 0 || walletLoading}
+            checked={walletBalance > 0 && useWallet}
+            onChange={handleWalletToggle}
+            className="cursor-pointer"
+          />
+          Use Wallet (₹{walletBalance.toFixed(2)} available)
+        </label>
+      </div>
 
-          {bill?.walletUsed > 0 && (
-            <div className="flex justify-between text-sm sm:text-base mb-2">
-              <span className="font-medium text-green-600">Wallet Used:</span>
-              <span className="font-medium text-green-600">
-                - ₹{bill.walletUsed.toFixed(2)}
-              </span>
-            </div>
-          )}
+      {bill?.walletUsed > 0 && (
+        <div className="flex justify-between text-sm sm:text-base mb-2">
+          <span className="font-medium text-green-600">Wallet Used:</span>
+          <span className="font-medium text-green-600">
+            - ₹{bill.walletUsed.toFixed(2)}
+          </span>
+        </div>
+      )}
 
           <div className="flex justify-between text-sm sm:text-base font-semibold border-t pt-2">
             <span>Payable Now:</span>
@@ -974,8 +1061,7 @@ const handlePlaceOrder = async () => {
         )}
       </div>
 
-
-{/* <div 
+      {/* <div 
   className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50" 
   role="dialog"
 >
