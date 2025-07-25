@@ -101,56 +101,61 @@ const WalletTopUp = () => {
   // };
 
 
-  const handleTopUp = async (amount) => {
-  try {
+  const handleTopUp = async () => {
+    try {
+      const amount = getSelectedAmount();
+      if (amount < 10) {
+        setError("Minimum amount is ₹10");
+        return;
+      }
+      setLoading(true);
+      setStep('processing');
+      setError(null);
 
-    const amount = 100;
-    // setLoading(true);
-    // setStep('processing');
-    setError(null);
-const scriptLoaded = await loadRazorpayScript();
+      const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
         setError("Failed to load payment gateway. Please try again.");
+        setLoading(false);
         return;
       }
 
+      const data = await initiateWalletTopUp(amount);
+      const options = {
+        key: data.key,
+        amount: data.amount,
+        currency: data.currency,
+        name: 'Orado',
+        description: 'Wallet Top-up',
+        order_id: data.orderId,
+        handler: async function (response) {
+          try {
+            const verifyPayload = {
+              razorpay_order_id: data.orderId,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              amount: data.amount, // Note: amount in paise!
+            }
+            await verifyAndCreditWallet(verifyPayload);
+            await fetchBalance();
+            setTransactionId(response.razorpay_payment_id);
+            setStep('success');
+          } catch (err) {
+            setError('Verification failed. Please contact support or try again.');
+            setStep('amount');
+          } finally {
+            setLoading(false);
+          }
+        },
+      };
 
-
-
-    const data = await initiateWalletTopUp(amount);
-    console.log(data)
-
-    const options = {
-      key: data.key,
-      amount: data.amount,
-      currency: data.currency,
-      name: 'Orado',
-      description: 'Wallet Top-up',
-      order_id: data.orderId,
-      handler: async function (response) {
-         const verifyPayload = {
-          razorpay_order_id: data.orderId,
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_signature: response.razorpay_signature,
-        }
-        console.log(response)
-        await verifyAndCreditWallet(verifyPayload);
-        alert('Wallet credited successfully!');
-      },
-      // prefill: {
-      //   name: user.name,
-      //   email: user.email,
-      //   contact: user.phone,
-      // },
-    };
-
-    const razorpay = new window.Razorpay(options);
-    razorpay.open();
-  } catch (error) {
-    console.log(error)
-    alert('Failed to initiate top-up');
-  }
-};
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      setError('Failed to initiate top-up');
+      setLoading(false);
+      setStep('amount');
+    }
+  };
 
   const resetFlow = () => {
     setStep('amount');

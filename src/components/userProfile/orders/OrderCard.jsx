@@ -205,7 +205,7 @@ const [selectedProduct, setSelectedProduct] = React.useState(null);
               {itemSummary}
             </p>
             <p className="text-sm font-semibold text-gray-900">
-              Total Paid: ₹ {order.totalAmount.toFixed(0)}
+              Total Paid: ₹ {order?.totalAmount ? order.totalAmount.toFixed(0) : "0"}
             </p>
           </div>
 
@@ -316,7 +316,7 @@ const [selectedProduct, setSelectedProduct] = React.useState(null);
               {itemSummary}
             </p>
             <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-              Total Paid: ₹ {order.totalAmount.toFixed(0)}
+              Total Paid: ₹ {order?.totalAmount ? order.totalAmount.toFixed(0) : "0"}
             </p>
           </div>
 
