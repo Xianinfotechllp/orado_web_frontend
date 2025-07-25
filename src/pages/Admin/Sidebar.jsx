@@ -255,6 +255,19 @@ const Sidebar = () => {
                       </Link>
 
 
+  <Link 
+                        to="promotions-offer" 
+                        className="block py-2 px-4 hover:text-[#FC8019] hover:bg-orange-50 rounded"
+                      >
+                     Offer
+                      </Link>
+
+
+
+
+
+
+
 
                          <Link 
                         to="promotions-discount" 

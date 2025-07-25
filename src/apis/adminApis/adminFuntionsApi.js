@@ -348,6 +348,7 @@ export const addCategory = async (restaurantId, categoryData) => {
 export const addProduct = async (restaurantId, productData) => {
   try {
     const formData = new FormData();
+
     formData.append("name", productData.name);
     formData.append("description", productData.description);
     formData.append("price", productData.price);
@@ -370,7 +371,30 @@ export const addProduct = async (restaurantId, productData) => {
       formData.append("attributes", JSON.stringify(productData.attributes));
     }
 
-    // Append images
+    // ✅ New Fields
+    if (productData.minQty !== undefined) {
+      formData.append("minQty", productData.minQty);
+    }
+
+    if (productData.maxQty !== undefined) {
+      formData.append("maxQty", productData.maxQty);
+    }
+
+    if (productData.costPrice !== undefined) {
+      formData.append("costPrice", productData.costPrice);
+    }
+
+    if (productData.preparationTime !== undefined) {
+      formData.append("preparationTime", productData.preparationTime);
+    }
+
+    formData.append("isRecurring", productData.isRecurring ? "true" : "false");
+
+    if (productData.availability) {
+      formData.append("availability", JSON.stringify(productData.availability));
+    }
+
+    // Upload images
     if (productData.images && productData.images.length > 0) {
       productData.images.forEach((file) => {
         formData.append("images", file);

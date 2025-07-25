@@ -5,6 +5,7 @@
   import { deleteGeofence, getGeofences } from "../../../../apis/adminApis/geoFenceApi";
   import "mapbox-gl/dist/mapbox-gl.css";
   import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
+import DeliveryHeatmap from "../../../../components/admin/analytics/DeliveryHeatmap";
 
   mapboxgl.accessToken = "pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w";
 
@@ -354,6 +355,10 @@
             )}
           </div>
 
+
+ 
+
+
           {/* Map */}
           <div className="w-full lg:w-2/3 lg:h-full relative">
             <div ref={mapContainerRef} className="w-full h-full" />
@@ -364,6 +369,7 @@
             )}
           </div>
         </div>
+
       </div>
     );
   };

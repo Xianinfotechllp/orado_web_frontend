@@ -87,6 +87,7 @@ const LocationPicker = ({ onSelectLocation }) => {
       markerRef.current = marker;
 
       reverseGeocode(lng, lat);
+      console.log("MAPBOX TOKEN:", mapboxgl.accessToken);
     });
 
     return () => {

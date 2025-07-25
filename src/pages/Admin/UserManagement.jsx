@@ -364,7 +364,7 @@ const UserManagement = () => {
 
       {/* Modal */}
       {isModalOpen && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bgOp flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
             {/* Modal Header */}
             <div className="bg-orange-500 text-white px-6 py-4 flex justify-between items-center">
@@ -395,7 +395,7 @@ const UserManagement = () => {
               </div>
 
               {/* Details Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg">
                 {/* Contact Information */}
                 <div className="bg-orange-50 rounded-lg p-4">
                   <h5 className="font-semibold text-orange-800 mb-3">Contact Information</h5>

@@ -19,6 +19,8 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { createRestaurant } from "../../apis/restaurantApi";
+
+import { createStore } from "../../apis/adminApis/storeApi";
 import axios from "axios";
 import LoadingForAdmins from "./AdminUtils/LoadingForAdmins";
 import apiClient from "../../apis/apiClient/apiClient";
@@ -31,11 +33,7 @@ const AddRestaurant = () => {
     ownerName: "",
     phone: "",
     email: "",
-    password: "",
-    confirmPassword: "",
-    fssaiNumber: "",
-    gstNumber: "",
-    aadharNumber: "",
+    city: "", // Added city field which is required by createStore
     address: {
       street: "",
       city: "",
@@ -44,17 +42,28 @@ const AddRestaurant = () => {
       latitude: "",
       longitude: "",
     },
+    storeType: "restaurant",
     foodType: "veg",
     minOrderAmount: 100,
     openingHours: [],
-    paymentMethods: ["online", "cash", "wallet", "card"],
+    paymentMethods: ["online", "cash", "wallet"],
+    fssaiNumber: "", // Moved from kyc object
+    gstNumber: "", // Moved from kyc object
+    aadharNumber: "", // Moved from kyc object
+    commission: {
+      type: "percentage",
+      value: 20,
+    },
+    preparationTime: 20,
+    active: true,
+    autoOnOff: true,
   });
 
   const [documents, setDocuments] = useState({
     fssaiDoc: null,
     gstDoc: null,
     aadharDoc: null,
-    images: [], // Changed to array to hold multiple images
+    images: [],
   });
 
   const [merchants, setMerchants] = useState([]);
@@ -256,6 +265,66 @@ const AddRestaurant = () => {
 
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   if (!validateStep(4)) return;
+
+  //   setLoading(true);
+
+  //   const formDataToSend = new FormData();
+
+  //   // Basic information
+  //   formDataToSend.append("name", formData.name);
+  //   formDataToSend.append("ownerId", formData.ownerId);
+  //   formDataToSend.append("ownerName", formData.ownerName);
+  //   formDataToSend.append("phone", formData.phone);
+  //   formDataToSend.append("email", formData.email);
+
+  //   // Business details
+  //   formDataToSend.append("fssaiNumber", formData.fssaiNumber);
+  //   formDataToSend.append("gstNumber", formData.gstNumber);
+  //   formDataToSend.append("aadharNumber", formData.aadharNumber);
+  //   formDataToSend.append("foodType", formData.foodType);
+  //   formDataToSend.append("minOrderAmount", formData.minOrderAmount);
+  //   formDataToSend.append("paymentMethods", formData.paymentMethods.join(","));
+
+  //   // Address details
+  //   formDataToSend.append("address[street]", formData.address.street);
+  //   formDataToSend.append("address[city]", formData.address.city);
+  //   formDataToSend.append("address[state]", formData.address.state);
+  //   formDataToSend.append("address[pincode]", formData.address.pincode);
+  //   formDataToSend.append("address[latitude]", formData.address.latitude);
+  //   formDataToSend.append("address[longitude]", formData.address.longitude);
+
+  //   // Opening hours
+  //   formDataToSend.append(
+  //     "openingHours",
+  //     JSON.stringify(formData.openingHours)
+  //   );
+
+  //   // File uploads
+  //   if (documents.fssaiDoc)
+  //     formDataToSend.append("fssaiDoc", documents.fssaiDoc);
+  //   if (documents.gstDoc) formDataToSend.append("gstDoc", documents.gstDoc);
+  //   if (documents.aadharDoc)
+  //     formDataToSend.append("aadharDoc", documents.aadharDoc);
+  //   // Append each image
+  //   documents.images.forEach((image, index) => {
+  //     formDataToSend.append(`images`, image);
+  //   });
+
+  //   try {
+  //     const response = await createStore(formData);
+  //     alert("Restaurant Created Successfully!");
+  //     // Optionally reset form or redirect
+  //   } catch (err) {
+  //     alert("Error: " + (err.response?.data?.message || "Unknown Error"));
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -263,50 +332,18 @@ const AddRestaurant = () => {
 
     setLoading(true);
 
-    const formDataToSend = new FormData();
-
-    // Basic information
-    formDataToSend.append("name", formData.name);
-    formDataToSend.append("ownerId", formData.ownerId);
-    formDataToSend.append("ownerName", formData.ownerName);
-    formDataToSend.append("phone", formData.phone);
-    formDataToSend.append("email", formData.email);
-
-    // Business details
-    formDataToSend.append("fssaiNumber", formData.fssaiNumber);
-    formDataToSend.append("gstNumber", formData.gstNumber);
-    formDataToSend.append("aadharNumber", formData.aadharNumber);
-    formDataToSend.append("foodType", formData.foodType);
-    formDataToSend.append("minOrderAmount", formData.minOrderAmount);
-    formDataToSend.append("paymentMethods", formData.paymentMethods.join(","));
-
-    // Address details
-    formDataToSend.append("address[street]", formData.address.street);
-    formDataToSend.append("address[city]", formData.address.city);
-    formDataToSend.append("address[state]", formData.address.state);
-    formDataToSend.append("address[pincode]", formData.address.pincode);
-    formDataToSend.append("address[latitude]", formData.address.latitude);
-    formDataToSend.append("address[longitude]", formData.address.longitude);
-
-    // Opening hours
-    formDataToSend.append(
-      "openingHours",
-      JSON.stringify(formData.openingHours)
-    );
-
-    // File uploads
-    if (documents.fssaiDoc)
-      formDataToSend.append("fssaiDoc", documents.fssaiDoc);
-    if (documents.gstDoc) formDataToSend.append("gstDoc", documents.gstDoc);
-    if (documents.aadharDoc)
-      formDataToSend.append("aadharDoc", documents.aadharDoc);
-    // Append each image
-    documents.images.forEach((image, index) => {
-      formDataToSend.append(`images`, image);
-    });
-
     try {
-      const response = await createRestaurant(formDataToSend);
+      // Prepare the data in the format expected by createStore
+      const storeData = {
+        ...formData,
+        city: formData.address.city, // Use city from address
+        images: documents.images,
+        fssaiDoc: documents.fssaiDoc,
+        gstDoc: documents.gstDoc,
+        aadharDoc: documents.aadharDoc,
+      };
+
+      const response = await createStore(storeData);
       alert("Restaurant Created Successfully!");
       // Optionally reset form or redirect
     } catch (err) {
@@ -315,7 +352,6 @@ const AddRestaurant = () => {
       setLoading(false);
     }
   };
-
   const steps = [
     { id: 0, title: "Merchant Selection", icon: User },
     { id: 1, title: "Basic Information", icon: Building },
@@ -843,6 +879,25 @@ const AddRestaurant = () => {
                   </div>
 
                   <div className="space-y-2">
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <Building className="w-4 h-4 mr-2 text-orange-500" />
+                      Store Type
+                    </label>
+                    <select
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:border-orange-300"
+                      name="storeType"
+                      value={formData.storeType}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="restaurant">Restaurant</option>
+                      <option value="grocery">Grocery Store</option>
+                      <option value="meat">Meat Shop</option>
+                      <option value="pharmacy">Pharmacy</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
                       Minimum Order Amount
                     </label>
@@ -864,7 +919,6 @@ const AddRestaurant = () => {
                       Payment Methods
                     </label>
 
-                    
                     <div className="flex flex-wrap gap-4">
                       {["cash", "online", "wallet"].map((method) => (
                         <label
@@ -873,17 +927,15 @@ const AddRestaurant = () => {
                         >
                           <input
                             type="checkbox"
-                            value={method}
                             checked={formData.paymentMethods.includes(method)}
                             onChange={(e) => {
                               const checked = e.target.checked;
-                              const value = e.target.value;
                               setFormData((prev) => ({
                                 ...prev,
                                 paymentMethods: checked
-                                  ? [...prev.paymentMethods, value]
+                                  ? [...prev.paymentMethods, method]
                                   : prev.paymentMethods.filter(
-                                      (item) => item !== value
+                                      (item) => item !== method
                                     ),
                               }));
                             }}
@@ -902,7 +954,6 @@ const AddRestaurant = () => {
                       <Clock className="w-4 h-4 mr-2 text-orange-500" />
                       Opening Hours
                     </label>
-
 
                     {formData.openingHours.length === 0 && (
                       <p className="text-sm text-gray-500">

@@ -4,11 +4,12 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { FiSearch, FiZoomIn, FiZoomOut, FiCompass, FiList, FiTruck } from 'react-icons/fi';
 import { MdMyLocation, MdRestaurant, MdDeliveryDining } from 'react-icons/md';
 import { fetchOrdersLocationForMap, fetchRestauantsLocationForMap } from '../../apis/adminApis/adminFuntionsApi';
-import restaurantMapicons from "../../../src/assets/restauratnMapicon.png"
+import restaurantMapicons from "../../../src/assets/restauratnMapicon.png";
+
 // Initialize Mapbox token
 mapboxgl.accessToken = 'pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w';
 
-const MapView = () => {
+const MapView = ({ agents = [] }) => {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,75 +24,58 @@ const MapView = () => {
   const [orders, setOrders] = useState([]);
   const [markers, setMarkers] = useState([]);
 
-
-
-
-
-
-const fetchRouteGeoJSON = async (start, end) => {
-  const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
-
-  const response = await fetch(url);
-  const data = await response.json();
-
-  if (!data.routes.length) return null;
-
-  return data.routes[0].geometry;
-};
+  const fetchRouteGeoJSON = async (start, end) => {
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    if (!data.routes.length) return null;
+    return data.routes[0].geometry;
+  };
 
   const showRouteBetween = async (startLocation, endLocation) => {
-  const start = [startLocation.lng, startLocation.lat];
-  const end = [endLocation.lng, endLocation.lat];
-  
-  const routeGeoJSON = await fetchRouteGeoJSON(start, end);
-  if (routeGeoJSON) {
-    drawRouteOnMap(routeGeoJSON);
-  } else {
-    alert("Could not fetch route");
-  }
-};
+    const start = [startLocation.lng, startLocation.lat];
+    const end = [endLocation.lng, endLocation.lat];
+    const routeGeoJSON = await fetchRouteGeoJSON(start, end);
+    if (routeGeoJSON) {
+      drawRouteOnMap(routeGeoJSON);
+    } else {
+      alert("Could not fetch route");
+    }
+  };
 
-const drawRouteOnMap = (routeGeoJSON) => {
-  const map = mapRef.current;
+  const drawRouteOnMap = (routeGeoJSON) => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
 
-  if (!map || !map.isStyleLoaded()) {
-    console.warn("Map style not yet loaded");
-    return;
-  }
+    if (!map.getSource('route-line')) {
+      map.addSource('route-line', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: routeGeoJSON
+        }
+      });
 
-  if (!map.getSource('route-line')) {
-    map.addSource('route-line', {
-      type: 'geojson',
-      data: {
+      map.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route-line',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#ff5733',
+          'line-width': 5
+        }
+      });
+    } else {
+      map.getSource('route-line').setData({
         type: 'Feature',
         geometry: routeGeoJSON
-      }
-    });
-
-    map.addLayer({
-      id: 'route-line',
-      type: 'line',
-      source: 'route-line',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round'
-      },
-      paint: {
-        'line-color': '#ff5733',
-        'line-width': 5
-      }
-    });
-  } else {
-    map.getSource('route-line').setData({
-      type: 'Feature',
-      geometry: routeGeoJSON
-    });
-  }
-};
-
-
-
-
+      });
+    }
+  };
 
   // Fetch data on component mount
   useEffect(() => {
@@ -118,13 +102,11 @@ useEffect(() => {
     container: mapContainerRef.current,
     style: 'mapbox://styles/mapbox/streets-v11',
     center: [lng, lat],
-    zoom: zoom
+    zoom: zoom,
   });
 
-  // Add controls
   map.addControl(new mapboxgl.NavigationControl(), 'top-right');
   map.addControl(new mapboxgl.ScaleControl(), 'bottom-left');
-
   mapRef.current = map;
 
   map.on('move', () => {
@@ -136,19 +118,32 @@ useEffect(() => {
   const newMarkers = [];
 
   map.on('load', () => {
-    // Add restaurant markers
-    restaurants.forEach(restaurant => {
-      const el = document.createElement('div');
-      el.className = 'custom-marker';
-      el.style.backgroundImage = `url(${restaurantMapicons})`;
-      el.style.width = '30px';
-      el.style.height = '40px';
-      el.style.backgroundSize = '100%';
+    // === Restaurants ===
+    restaurants.forEach((restaurant) => {
+      if (!restaurant?.lng || !restaurant?.lat) return;
 
-      const marker = new mapboxgl.Marker({
-        color: 'red',
-        scale: 0.8
-      })
+      const el = document.createElement('div');
+      el.className = 'custom-marker-restaurant';
+      el.innerHTML = `
+        <div style="
+          width: 30px;
+          height: 40px;
+          background: #ff6b6b;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 10px 0 0 10px;
+        ">
+          <div style="transform: rotate(45deg); color: white; font-weight: bold; font-size: 12px;">
+            ${restaurant.name?.charAt(0).toUpperCase() || 'R'}
+          </div>
+        </div>
+      `;
+
+      const marker = new mapboxgl.Marker({ color: "red" })
         .setLngLat([restaurant.lng, restaurant.lat])
         .addTo(map);
 
@@ -159,42 +154,90 @@ useEffect(() => {
       newMarkers.push({ marker, type: 'restaurant', id: restaurant.id });
     });
 
-    // Add delivery markers
-    orders.forEach(order => {
-      const marker = new mapboxgl.Marker({
-        color: '#457b9d',
-        scale: 0.8
-      })
+    // === Orders ===
+    orders.forEach((order) => {
+      if (!order?.lng || !order?.lat) return;
+
+      const marker = new mapboxgl.Marker({ color: '#457b9d', scale: 0.8 })
         .setLngLat([order.lng, order.lat])
         .addTo(map);
 
       marker.getElement().addEventListener('click', () => {
         setSelectedLocation({ ...order, type: 'delivery' });
-
-      if (order.restaurant && order.restaurant.location && order.restaurant.location.coordinates) {
-    showRouteBetween(
-      { 
-        lng: order.restaurant.location.coordinates[0], 
-        lat: order.restaurant.location.coordinates[1] 
-      },
-      { 
-        lng: order.lng, 
-        lat: order.lat 
-      }
-    );
-  } else {
-    console.warn("Restaurant location missing for this order");
-  }
+        if (order.restaurant?.location?.coordinates) {
+          showRouteBetween(
+            {
+              lng: order.restaurant.location.coordinates[0],
+              lat: order.restaurant.location.coordinates[1],
+            },
+            { lng: order.lng, lat: order.lat }
+          );
+        }
       });
 
       newMarkers.push({ marker, type: 'delivery', id: order.id });
     });
 
-    // ✅ Draw sample demo route here safely after style is loaded
-    const startLocation = { lng: 76.320, lat: 9.995 };
-    const endLocation = { lng: 76.350, lat: 10.015 };
+    // === Agents ===
+    agents.forEach((agent) => {
+      if (!agent?.location || agent.location.lat == null || agent.location.lng == null) return;
 
-    // showRouteBetween(startLocation, endLocation);
+      const status = agent.currentStatus || "AVAILABLE";
+      const color =
+        status === 'AVAILABLE'
+          ? '#2a9d8f'
+          : status === 'ORDER_ASSIGNED'
+          ? '#e63946'
+          : status === 'PICKED_UP'
+          ? '#f4a261'
+          : '#ccc';
+
+      const el = document.createElement('div');
+      el.className = 'custom-marker-agent';
+      el.innerHTML = `
+        <div style="
+          width: 24px;
+          height: 24px;
+          background: ${color};
+          border-radius: 50%;
+          border: 2px solid white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+          font-size: 10px;
+        ">
+          ${agent.name?.charAt(0).toUpperCase() || 'A'}
+        </div>
+        <div style="
+          position: absolute;
+          bottom: -5px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 0;
+          height: 0;
+          border-left: 5px solid transparent;
+          border-right: 5px solid transparent;
+          border-top: 5px solid ${color};
+        "></div>
+      `;
+
+      const marker = new mapboxgl.Marker({element:el})
+        .setLngLat([agent.location.lng, agent.location.lat])
+        .addTo(map);
+
+      marker.getElement().addEventListener('click', () => {
+        setSelectedLocation({
+          ...agent,
+          type: 'agent',
+          status: status,
+          accuracy: agent.location.accuracy,
+        });
+      });
+
+      newMarkers.push({ marker, type: 'agent', id: agent.id });
+    });
   });
 
   setMarkers(newMarkers);
@@ -203,10 +246,9 @@ useEffect(() => {
     newMarkers.forEach(({ marker }) => marker.remove());
     map.remove();
   };
+}, [restaurants, orders, agents]);
 
-}, [restaurants, orders]);
-
-  // Toggle marker visibility - improved version
+  // Toggle marker visibility
   useEffect(() => {
     markers.forEach(({ marker, type }) => {
       if (type === 'restaurant') {
@@ -217,11 +259,9 @@ useEffect(() => {
     });
   }, [showRestaurants, showDeliveries, markers]);
 
-
   // Fly to location
   const flyToLocation = (location) => {
     if (!location.lng || !location.lat) return;
-    
     setSelectedLocation(location);
     mapRef.current?.flyTo({
       center: [location.lng, location.lat],
@@ -230,34 +270,20 @@ useEffect(() => {
     });
   };
 
-
-
-
-
-
-
-
-
-
-
-
   // Handle location search
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-    
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${mapboxgl.accessToken}`
       );
       const data = await response.json();
-      
       if (data.features?.length > 0) {
         const [longitude, latitude] = data.features[0].center;
         mapRef.current?.flyTo({
           center: [longitude, latitude],
           zoom: 14
         });
-        
         new mapboxgl.Marker()
           .setLngLat([longitude, latitude])
           .addTo(mapRef.current);
@@ -270,12 +296,6 @@ useEffect(() => {
     }
   };
 
-
-
-
-
-
-
   // Handle geolocation
   const handleLocateMe = () => {
     if (navigator.geolocation) {
@@ -286,7 +306,6 @@ useEffect(() => {
             center: [longitude, latitude],
             zoom: 14
           });
-          
           new mapboxgl.Marker({ color: '#4285F4' })
             .setLngLat([longitude, latitude])
             .addTo(mapRef.current);
@@ -464,8 +483,10 @@ useEffect(() => {
           <h3 className="font-bold text-lg">
             {selectedLocation.type === 'restaurant' ? (
               selectedLocation.name
-            ) : (
+            ) : selectedLocation.type === 'delivery' ? (
               `Order ${selectedLocation.orderId}`
+            ) : (
+              `Agent ${selectedLocation.name}`
             )}
           </h3>
           
@@ -478,39 +499,48 @@ useEffect(() => {
                 <span className="ml-1 text-sm text-gray-600">{selectedLocation.rating || 0}</span>
               </div>
             </>
-          ) }
-          {
-            selectedLocation.type === 'delivery' &&
-          (
+          )}
+          
+          {selectedLocation.type === 'delivery' && (
             <div className={`mt-1 text-sm ${
               selectedLocation.status === 'Delivered' ? 'text-green-500' : 
               selectedLocation.status === 'In Transit' ? 'text-blue-500' : 
               'text-yellow-500'
             }`}>
               Status: {selectedLocation.status || 'Pending'}
-
-
-                 <div className="text-sm text-gray-600">
-      From: <span className="font-semibold">{ selectedLocation?.restaurant.name|| 'Unknown'}</span>
-    </div>
-        <div className="text-sm text-gray-600">
-      Customer Name : <span className="font-semibold">{ selectedLocation?.customer.name|| 'Unknown'}</span>
-   
-    </div>
-
-      <div className="text-sm text-gray-600">
-      Customer Phone: <span className="font-semibold">{ selectedLocation?.customer.phone|| 'Unknown'}</span>
-   
-    </div>
-    
-
-         
+              <div className="text-sm text-gray-600">
+                From: <span className="font-semibold">{selectedLocation?.restaurant?.name || 'Unknown'}</span>
+              </div>
+              <div className="text-sm text-gray-600">
+                Customer Name: <span className="font-semibold">{selectedLocation?.customer?.name || 'Unknown'}</span>
+              </div>
+              <div className="text-sm text-gray-600">
+                Customer Phone: <span className="font-semibold">{selectedLocation?.customer?.phone || 'Unknown'}</span>
+              </div>
             </div>
-
-
-
           )}
-         
+          
+          {selectedLocation.type === 'agent' && (
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full mr-2 ${
+                  selectedLocation.currentStatus === 'AVAILABLE' ? 'bg-green-500' :
+                  selectedLocation.currentStatus === 'ORDER_ASSIGNED' ? 'bg-red-500' : 'bg-yellow-500'
+                }`}></div>
+                <span className="text-sm capitalize">
+                  {selectedLocation.currentStatus?.toLowerCase().replace('_', ' ') || 'Unknown status'}
+                </span>
+              </div>
+              <div className="text-sm text-gray-600">
+                Phone: {selectedLocation.phone || 'Unknown'}
+              </div>
+              {selectedLocation.accuracy && (
+                <div className="text-sm text-gray-600">
+                  Accuracy: {Math.round(selectedLocation.accuracy)} meters
+                </div>
+              )}
+            </div>
+          )}
           
           <button 
             onClick={() => setSelectedLocation(null)}

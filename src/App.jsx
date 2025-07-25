@@ -40,7 +40,8 @@ import AccessLogs from "./pages/Admin/AdminAccessLogs";
 import RestaurantOrderList from "./pages/Admin/RestaurantOrderList";
 import RestaurantReviewsPage from "./pages/Admin/reviews/RestaurantReviewPage";
 import RestaurantListforReviews from "./pages/Admin/reviews/RestaurantListforReviews";
-import OfferManagement from "./pages/Admin/Offer/OfferManagement";
+// import OfferManagement from "./pages/Admin/Offer/OfferManagement";
+
 import CreateOffer from "./pages/Admin/Offer/CreateOffer";
 import AssignOffer from "./pages/Admin/Offer/AssignOffer";
 import RestaurantEarningsTable from "./pages/Admin/RestaurantEarningsTable";
@@ -95,6 +96,19 @@ import ThemeSettingsPage from "./pages/AgentAdminDashboard/settings/ThemeSetting
 import MerchantCampaigns from "./pages/Admin/Marketing/pushCampaigns/MerchantCampaigns";
 import AddTemplate from "./pages/AgentAdminDashboard/settings/templates/AddTemplate";
 import TaxesFeesCharges from "./pages/Admin/configure/orderSettings/TaxFeesCharge/TaxesFeesCharges";
+import PromoCodesPage from "./pages/Admin/Marketing/promotions/promoCode/PromoCodesPage";
+import AnalyticsDashboardSwitcher from "./pages/Admin/Analytics/AnalyticsDashboardSwitcher";
+import OrderAnalytics from "./pages/Admin/Analytics/OrderAnalytics";
+import UserAnalytics from "./pages/Admin/Analytics/UserAnalytics";
+import OfferPage from "./pages/Admin/Offer/OfferManagement";
+import OfferManagement from "./pages/Admin/Marketing/promotions/offers/OfferManagement";
+import IncentivePlanModal from "./components/AgentAdminDashboard/IncentivePlan/IncentivePlanModal";
+import IncentivePlan from "./pages/AgentAdminDashboard/IncentivePlan/IncentivePlan";
+import MitlestonManagment from "./pages/AgentAdminDashboard/milteStoneRule/MitlestonManagment";
+import AgentDeliveryDash from "./pages/AgentAdminDashboard/AgentDeliveryDash";
+import AgentDetails from "./pages/AgentAdminDashboard/AgentDetails";
+import AgentList from "./pages/AgentAdminDashboard/AgentList";
+import AgentSelfieLogs from "./pages/AgentAdminDashboard/AgentSelfieLogs";
 
 function App() {
   // const [count, setCount] = useState(0);
@@ -161,10 +175,14 @@ function App() {
                <Route path="merchants/merchant-config/:id" element={<MerchantConfiguration/>}/>
                <Route path="merchants/merchant-catelogue/:id" element={<MerchantCataloguePage/>}/>
 
+
+
+        
+
           {/* offer section */}
           <Route path="create-offer" element={<CreateOffer />} />
           <Route path="assign-offer" element={<AssignOffer />} />
-          <Route path="manage-offer" element={<OfferManagement />} />
+          <Route path="manage-offer" element={<OfferPage />} />
 
           
           {/* admin-section */}
@@ -186,11 +204,22 @@ function App() {
 
               <Route path="customer/:customerId/details" element={<CustomerDetailsPage/>}  />
 
+
+
+       {/* alaytics */}
+
+       <Route path="analytics/order" element={<OrderAnalytics/>  }    />
+
+       <Route path="analytics/user" element={<UserAnalytics/>  }    />
+
           {/* marketing */}
 
              { /* >>  promotions */}
                 {/* promocodes */}
-                <Route path="admin-promotions-promo" element={<PromoCodeManager/>}  />
+                {/* <Route path="admin-promotions-promo" element={<PromoCodeManager/>}  /> */}
+                <Route path="admin-promotions-promo" element={<PromoCodesPage/>}  />
+                <Route  path="promotions-offer"  element={<OfferManagement/>} />
+             
                 <Route  path="promotions-discount"  element={<DiscountPage/>} />
                 <Route path="promotion-loyalty-points" element={<CreateLoyaltyPoints/>} />
                  <Route path="promotion-referal" element={<ReferralPromotions/>}  />
@@ -271,9 +300,27 @@ function App() {
 
 
 
+
+
+ <Route path="/admin/agent-dashboard/settings/incentive-plan" element={<IncentivePlan/>} /> 
+
+<Route path="/admin/agent-dashboard/settings/milestone"  element={<MitlestonManagment/>} />
+
+
+<Route path="/admin/agent-dashboard/agent/list"   element={<AgentList/>} />
+
+<Route path="/admin/agent-dashboard/agent/details"   element={<AgentDetails/>} />
+<Route path="/admin/agent-dashboard/agent/details"   element={<AgentDetails/>} />
+<Route path="/admin/agent-dashboard/agent-selfie"   element={<AgentSelfieLogs/>} />
+
+
+
+
+
 <Route  path="/admin/agent-dashboard" element={<AdminAgentDashboardLayout/>}>
 
  <Route index element={<AdminAgentDashboardLayout />} />
+
 
     
 </Route>

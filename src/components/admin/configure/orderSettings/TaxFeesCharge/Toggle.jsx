@@ -2,51 +2,35 @@ import React from 'react';
 
 const Toggle = ({ 
   enabled, 
-  onChange, 
-  label, 
-  size = 'md' 
+  onChange,
+  size = 'md'
 }) => {
   const sizeClasses = {
-    sm: {
-      container: 'w-8 h-4',
-      circle: 'w-3 h-3',
-      translate: 'translate-x-4'
-    },
-    md: {
-      container: 'w-11 h-6',
-      circle: 'w-5 h-5',
-      translate: 'translate-x-5'
-    },
-    lg: {
-      container: 'w-14 h-7',
-      circle: 'w-6 h-6',
-      translate: 'translate-x-7'
-    }
+    sm: 'h-4 w-8',
+    md: 'h-5 w-10',
+    lg: 'h-6 w-12'
   };
 
-  const classes = sizeClasses[size];
+  const dotClasses = {
+    sm: 'h-3 w-3',
+    md: 'h-4 w-4',
+    lg: 'h-5 w-5'
+  };
 
   return (
-    <div className="flex items-center space-x-3">
-      <button
-        type="button"
-        onClick={onChange}
-        className={`${classes.container} relative inline-flex items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-          enabled 
-            ? 'bg-blue-600' 
-            : 'bg-gray-200'
+    <button
+      type="button"
+      className={`${sizeClasses[size]} relative inline-flex items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+        enabled ? 'bg-blue-600' : 'bg-gray-200'
+      }`}
+      onClick={() => onChange()}
+    >
+      <span
+        className={`${dotClasses[size]} inline-block transform rounded-full bg-white transition ${
+          enabled ? 'translate-x-5' : 'translate-x-1'
         }`}
-      >
-        <span
-          className={`${classes.circle} inline-block transform rounded-full bg-white shadow transition-transform ${
-            enabled ? classes.translate : 'translate-x-0'
-          }`}
-        />
-      </button>
-      {label && (
-        <span className="text-sm font-medium text-gray-700">{label}</span>
-      )}
-    </div>
+      />
+    </button>
   );
 };
 

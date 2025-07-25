@@ -25,8 +25,8 @@ const DispatchSidebar = () => {
   const [selectedAgent, setSelectedAgent] = useState("");
   const [isAssigning, setIsAssigning] = useState(false);
   const [assignmentError, setAssignmentError] = useState(null);
-const [isLoadingAgents, setIsLoadingAgents] = useState(false);
-const [successMessage, setSuccessMessage] = useState(null);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
   // Fetch dispatch orders
   const fetchOrders = async () => {
     setIsLoading(true);
@@ -47,23 +47,23 @@ const [successMessage, setSuccessMessage] = useState(null);
     }
   };
 
-
-const fetchAvailableAgents = async () => {
-  setIsLoadingAgents(true);
-  try {
-    const res = await axios.get("http://localhost:5000/admin/agent/list");
-    if (res.data.messageType === "success") {
-      const availableAgents = res.data.data.filter(
-        (agent) => agent.status === "Free" && agent.currentStatus === "AVAILABLE"
-      );
-      setAvailableAgents(availableAgents);
+  const fetchAvailableAgents = async () => {
+    setIsLoadingAgents(true);
+    try {
+      const res = await axios.get("http://localhost:5000/admin/agent/list");
+      if (res.data.messageType === "success") {
+        const availableAgents = res.data.data.filter(
+          (agent) =>
+            agent.status === "Free" && agent.currentStatus === "AVAILABLE"
+        );
+        setAvailableAgents(availableAgents);
+      }
+    } catch (err) {
+      console.error("Failed to fetch agents", err);
+    } finally {
+      setIsLoadingAgents(false);
     }
-  } catch (err) {
-    console.error("Failed to fetch agents", err);
-  } finally {
-    setIsLoadingAgents(false);
-  }
-};
+  };
 
   // Open assign modal
   const openAssignModal = (order) => {
@@ -75,42 +75,42 @@ const fetchAvailableAgents = async () => {
   };
 
   // Assign agent to order
-const assignAgent = async () => {
-  if (!selectedAgent) {
-    setAssignmentError("Please select an agent");
-    return;
-  }
-
-  setIsAssigning(true);
-  setAssignmentError(null);
-
-  try {
-    const res = await axios.post(
-      "http://localhost:5000/admin/agent/manual-assign",
-      {
-        orderId: selectedOrder.orderId,
-        agentId: selectedAgent,
-      }
-    );
-
-    if (res.data.messageType === "success") {
-      // Refresh both orders and available agents
-      await Promise.all([fetchOrders(), fetchAvailableAgents()]);
-      setShowAssignModal(false);
-      
-      // Show success message
-      toast.success("Agent assigned successfully!")
-      setAssignmentError("Agent assigned successfully!");
-      setTimeout(() => setAssignmentError(null), 3000);
-    } else {
-      setAssignmentError(res.data.message || "Failed to assign agent");
+  const assignAgent = async () => {
+    if (!selectedAgent) {
+      setAssignmentError("Please select an agent");
+      return;
     }
-  } catch (err) {
-    setAssignmentError("Failed to connect to server");
-  } finally {
-    setIsAssigning(false);
-  }
-};
+
+    setIsAssigning(true);
+    setAssignmentError(null);
+
+    try {
+      const res = await axios.post(
+        "https://orado-backend.onrender.com/admin/agent/manual-assign",
+        {
+          orderId: selectedOrder.orderId,
+          agentId: selectedAgent,
+        }
+      );
+
+      if (res.data.messageType === "success") {
+        // Refresh both orders and available agents
+        await Promise.all([fetchOrders(), fetchAvailableAgents()]);
+        setShowAssignModal(false);
+
+        // Show success message
+        toast.success("Agent assigned successfully!");
+        setAssignmentError("Agent assigned successfully!");
+        setTimeout(() => setAssignmentError(null), 3000);
+      } else {
+        setAssignmentError(res.data.message || "Failed to assign agent");
+      }
+    } catch (err) {
+      setAssignmentError("Failed to connect to server");
+    } finally {
+      setIsAssigning(false);
+    }
+  };
 
   useEffect(() => {
     fetchOrders();
@@ -119,14 +119,16 @@ const assignAgent = async () => {
   const groupedTasks = {
     unassigned: dispatchOrders.filter(
       (o) =>
-        o.agentAssignmentStatus === "not_assigned" &&
+        (o.agentAssignmentStatus === "unassigned" || 
+         o.agentAssignmentStatus === "not_assigned") && // Handle both cases
         o.orderStatus !== "completed" &&
         o.orderStatus !== "delivered"
     ),
     assigned: dispatchOrders.filter(
       (o) =>
         (o.agentAssignmentStatus === "assigned" ||
-          o.agentAssignmentStatus === "accepted") &&
+         o.agentAssignmentStatus === "accepted" ||
+         o.agentAssignmentStatus === "manually_assigned_by_admin") && // Include manual assignments
         o.orderStatus !== "completed" &&
         o.orderStatus !== "delivered"
     ),
@@ -134,7 +136,6 @@ const assignAgent = async () => {
       (o) => o.orderStatus === "completed" || o.orderStatus === "delivered"
     ),
   };
-
   const getTabCount = (tab) => groupedTasks[tab]?.length || 0;
 
   const formatTime = (time) =>
@@ -508,7 +509,7 @@ const assignAgent = async () => {
 
       {/* Assign Agent Modal */}
       {showAssignModal && (
-<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -541,28 +542,33 @@ const assignAgent = async () => {
                 </p>
               </div>
 
-           <div className="mb-4">
-  <label htmlFor="agent" className="block text-sm font-medium text-gray-700 mb-1">
-    Select Agent
-  </label>
-  {isLoadingAgents ? (
-    <div className="py-2 text-center text-gray-500">Loading available agents...</div>
-  ) : (
-    <select
-      id="agent"
-      value={selectedAgent}
-      onChange={(e) => setSelectedAgent(e.target.value)}
-      className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-    >
-      <option value="">-- Select an agent --</option>
-      {availableAgents.map((agent) => (
-        <option key={agent.id} value={agent.id}>
-          {agent.name} ({agent.phone})
-        </option>
-      ))}
-    </select>
-  )}
-</div>
+              <div className="mb-4">
+                <label
+                  htmlFor="agent"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Select Agent
+                </label>
+                {isLoadingAgents ? (
+                  <div className="py-2 text-center text-gray-500">
+                    Loading available agents...
+                  </div>
+                ) : (
+                  <select
+                    id="agent"
+                    value={selectedAgent}
+                    onChange={(e) => setSelectedAgent(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">-- Select an agent --</option>
+                    {availableAgents.map((agent) => (
+                      <option key={agent.id} value={agent.id}>
+                        {agent.name} ({agent.phone})
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
 
               {assignmentError && (
                 <div className="mb-4 text-sm text-red-600">
