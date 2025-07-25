@@ -42,7 +42,13 @@
 
 
 
+.custom-marker-agent {
+  transition: transform 0.5s ease-out;
+}
 
+.agent-marker {
+  transition: transform 0.5s ease-out;
+}
 
 
 
