@@ -37,6 +37,8 @@ import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDet
 import About from "./pages/Merchant/AboutMerchant";
 import Partner from "./pages/Merchant/Partner";
 import MerchantDashboard from "./pages/Merchant/MerchantDashboard";
+import RestaurantCategories from "./components/merchant/Dashboard/MenuSection/RestaurantCategories";
+import CategoryItems from "./components/merchant/Dashboard/MenuSection/CategoryItems";
 
 
 function App() {
@@ -106,6 +108,8 @@ function App() {
         <Route path="/merchant-detail" element={<About />} />
         <Route path="/partner-with-orado" element={<Partner />} />
         <Route path="/merchant" element={<MerchantDashboard />} />
+        <Route path="/restaurants/:restaurantId/categories" element={<RestaurantCategories />} />
+        <Route path="/restaurants/:restaurantId/categories/:categoryId/items" element={<CategoryItems />} />
 
         {/* Admin-Side */}
         <Route path="admin/login" element={<AdminLogin />} />

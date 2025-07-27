@@ -237,7 +237,7 @@ export const resetPassword = async (token, newPassword) => {
 
 export const getMerchantRestaurants = async (merchantId) => {
   try {
-    const response = await apiClient.get(`/restaurants/merchant/${merchantId}/restaurants`);
+    const response = await apiClient.get(`/restaurants/merchant/restaurants`);
     return response.data;
   } catch (error) {
     console.error("Error fetching merchant restaurants:", error.response?.data || error.message);

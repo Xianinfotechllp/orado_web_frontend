@@ -1,390 +1,344 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from 'react';
 import {
-  createProduct,
-  getRestaurantProducts,
-  deleteProduct,
-  toggleProductStatus,
-} from "../../../../apis/restaurantApi";
-import { Plus, Edit, Trash2, Utensils } from "lucide-react";
-import { toast } from "react-toastify";
-import MenuAddModal from "./MenuAddModal";
-import MenuEditModal from "./MenuEditModal";
-import RestaurantSlider from "../Slider/RestaurantSlider";
+  MapPin,
+  Phone,
+  Clock,
+  Star,
+  CheckCircle,
+  AlertCircle,
+  CreditCard,
+  Wallet,
+  Heart,
+  Shield,
+  Zap,
+  Search,
+  Filter,
+  ChevronDown,
+  Truck,
+  Timer,
+  Percent,
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import apiClient from '../../../../apis/apiClient/apiClient';
 
-const MenuManagement = () => {
+const CreateMenu = () => {
   const [restaurants, setRestaurants] = useState([]);
-  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
-  const [selectedRestaurantIndex, setSelectedRestaurantIndex] = useState(null);
-  const [menuItems, setMenuItems] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-
-  const currentRestaurantId = selectedRestaurant?.id || null;
-  // Handle restaurants loaded from RestaurantSlider
-  const handleRestaurantsLoad = (restaurantData) => {
-    setRestaurants(restaurantData);
-  };
-
-  // Handle restaurant selection from RestaurantSlider
-  const handleRestaurantSelect = async (restaurant, index) => {
-    setSelectedRestaurant(restaurant);
-    setSelectedRestaurantIndex(index);
-
-    if (restaurant?.id) {
-      await fetchRestaurantProducts(restaurant.id);
-    }
-  };
-
-  const fetchRestaurantProducts = async (restaurantId) => {
-    try {
-      setLoading(true);
-      const response = await getRestaurantProducts(restaurantId);
-      console.log("Fetched products:-----------", response);
-
-      // Handle various possible response structures
-      const products = Array.isArray(response?.data?.products)
-        ? response.data.products
-        : Array.isArray(response?.products)
-        ? response.products
-        : Array.isArray(response?.data)
-        ? response.data
-        : Array.isArray(response)
-        ? response
-        : [];
-
-      // Keep ALL product fields instead of filtering them out
-      const validatedProducts = products.map((product) => ({
-        // Keep all original fields
-        ...product,
-        // Only add defaults for essential missing fields
-        _id: product?._id || Math.random().toString(36).substring(2, 9),
-        name: product?.name || "Unnamed Item",
-        description: product?.description || "",
-        price: product?.price ?? 0,
-        images: Array.isArray(product?.images) ? product.images : [],
-        active: product?.active !== false,
-        foodType: product?.foodType || "Uncategorized",
-        categoryId: product?.categoryId?._id || product?.categoryId || "",
-        categoryName: product?.categoryId?.name || "Uncategorized",
-        stock: product?.stock ?? "",
-        reorderLevel: product?.reorderLevel ?? "",
-        unit: product?.unit || "piece",
-      }));
-
-      console.log("Validated products: ", validatedProducts);
-
-      setMenuItems(validatedProducts);
-    } catch (err) {
-      setError(err.message);
-      console.error("Failed to load restaurant products:", err);
-      toast.error("Failed to load menu items");
-      setMenuItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleToggleAvailability = async (productId) => {
-    try {
-      setLoading(true);
-      const response = await toggleProductStatus(productId);
-      
-      if (response?.product) {
-        setMenuItems(prevItems => 
-          prevItems.map(item => 
-            item._id === productId 
-              ? { ...item, active: response.product.active } 
-              : item
-          )
-        );
-        toast.success(`Item is now ${response.product.active ? 'available' : 'unavailable'}`);
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to toggle availability");
-      console.error("Toggle error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const navigate = useNavigate();
   
-  const handleDelete = async (id) => {
-    if (
-      !id ||
-      !window.confirm("Are you sure you want to delete this product?")
-    ) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await deleteProduct(id);
-
-      if (response?.message?.includes("deleted successfully")) {
-        toast.success("Product deleted successfully");
-        setMenuItems((prev) => prev.filter((item) => item._id !== id));
-      } else if (response?.message?.includes("permission")) {
-        toast.info(
-          "Your deletion request has been submitted for admin approval"
-        );
-      } else {
-        throw new Error(response?.message || "Failed to delete product");
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const res = await apiClient.get('/restaurants/merchant/restaurants');
+        console.log('Fetched Restaurants:', res.data);
+        setRestaurants(res.data.data.restaurants || []);
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to fetch restaurants');
+        setLoading(false);
+        setRestaurants([]);
       }
-    } catch (err) {
-      toast.error(
-        err.response?.data?.message || err.message || "Failed to delete product"
+    };
+    fetchRestaurants();
+  }, []);
+
+  const filteredRestaurants = restaurants.filter(restaurant => {
+    const matchesSearch =
+      restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      restaurant.cuisines?.some(cuisine =>
+        cuisine.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    } finally {
-      setLoading(false);
-    }
+
+    if (selectedFilter === 'all') return matchesSearch;
+    if (selectedFilter === 'veg')
+      return matchesSearch && (restaurant.foodType === 'veg' || restaurant.foodType === 'both');
+    if (selectedFilter === 'non-veg')
+      return matchesSearch && (restaurant.foodType === 'non-veg' || restaurant.foodType === 'both');
+    if (selectedFilter === 'offers') return matchesSearch && restaurant.offer;
+
+    return matchesSearch;
+  });
+
+  const handleRestaurantClick = restaurantId => {
+    navigate(`/restaurants/${restaurantId}/categories`);
   };
 
-  // const toggleAvailability = (id) => {
-  //   setMenuItems((items) =>
-  //     items.map((item) =>
-  //       item._id === id ? { ...item, active: !item.active } : item
-  //     )
-  //   );
-  // };
-
-  const handleCreateProduct = async (productData) => {
-    try {
-      if (!currentRestaurantId) throw new Error("No restaurant selected");
-
-      const response = await createProduct(currentRestaurantId, productData);
-      const newProduct =
-        response?.data?.product || response?.product || productData;
-
-      setMenuItems((prev) => [
-        ...prev,
-        {
-          _id: newProduct?._id || Math.random().toString(36).substring(2, 9),
-          name: newProduct?.name || "New Item",
-          description: newProduct?.description || "",
-          price: newProduct?.price || 0,
-          images: Array.isArray(newProduct?.images) ? newProduct.images : [],
-          active: newProduct?.active !== false,
-          foodType: newProduct?.foodType || "Uncategorized",
-        },
-      ]);
-
-      setShowAddModal(false);
-      toast.success("Menu item created successfully");
-      return response;
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to create product"
-      );
-      throw error;
-    }
-  };
-
-  const handleAddMenuClick = () => {
-    if (currentRestaurantId) {
-      setShowAddModal(true);
-    } else {
-      toast.warning("Please select a restaurant first");
-    }
-  };
-
-  const handleUpdateSuccess = (updatedProduct) => {
-  if (!updatedProduct?._id) return;
-
-  setMenuItems(prevItems => 
-    prevItems.map(item => 
-      item._id === updatedProduct._id
-        ? {
-            ...item,
-            ...updatedProduct,
-            // Ensure all critical fields are properly set
-            name: updatedProduct.name || item.name,
-            price: updatedProduct.price ?? item.price,
-            description: updatedProduct.description || item.description,
-            foodType: updatedProduct.foodType || item.foodType,
-            categoryId: updatedProduct.categoryId || item.categoryId,
-            categoryName: updatedProduct.categoryName || item.categoryName,
-            stock: updatedProduct.stock ?? item.stock,
-            reorderLevel: updatedProduct.reorderLevel ?? item.reorderLevel,
-            unit: updatedProduct.unit || item.unit,
-            images: Array.isArray(updatedProduct.images) 
-              ? updatedProduct.images 
-              : item.images,
-            active: updatedProduct.active !== false,
-          }
-        : item
-    )
-  );
-  
-  // Only close modal if we're not in optimistic update phase
-  if (!updatedProduct.isOptimistic) {
-    setEditingProduct(null);
-    setShowEditModal(false);
-  }
-};
-
-  if (loading && restaurants.length === 0) {
+  if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header Skeleton */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            <div className="h-8 bg-gray-200 rounded w-48 mb-4"></div>
+            <div className="h-12 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+        {/* Loading Cards */}
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="bg-white rounded-xl overflow-hidden shadow-sm">
+                <div className="h-48 bg-gray-200 animate-pulse"></div>
+                <div className="p-4 space-y-3">
+                  <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🍽️</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Oops! Something went wrong</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 pb-20">
-      {/* Restaurant Slider - Using the reusable component */}
-      <RestaurantSlider
-        onRestaurantSelect={handleRestaurantSelect}
-        onRestaurantsLoad={handleRestaurantsLoad}
-        selectedIndex={selectedRestaurantIndex}
-        className=""
-        showError={true}
-      />
-
-      {/* Menu Items Grid */}
-      {loading && menuItems.length === 0 ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search for restaurants, dishes or cuisines..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+            />
+          </div>
         </div>
-      ) : error ? (
-        <div className="text-center py-12 text-red-500">{error}</div>
-      ) : menuItems.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {menuItems.map((item) => (
-      <div
-        key={item._id}
-        className="bg-white rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
-      >
-        <div className="relative aspect-square">
-          <img
-            src={item.images?.[0] || "/placeholder.svg"}
-            alt={item.name}
-            className="w-full h-full object-cover bg-gray-100"
-            onError={(e) => {
-              e.target.src = "/placeholder.svg";
-            }}
-          />
-        </div>
+      </header>
 
-        <div className="p-3">
-          <div className="space-y-2">
-            <div className="flex items-start justify-between">
-              <h3 className="font-medium text-sm text-gray-900 line-clamp-1">
-                {item.name}
-              </h3>
-              <span className="text-sm font-bold text-orange-600 whitespace-nowrap">
-                ₹{item.price}
-              </span>
-            </div>
-
-            <p className="text-gray-600 text-xs line-clamp-2">
-              {item.description}
-            </p>
-
-            <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
-              {item.foodType}
-            </span>
-
-            {/* Toggle switch and action buttons container */}
-            <div className="flex items-center justify-between pt-2">
-              {/* Toggle switch */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-gray-500">
-                  {item.active ? 'Active' : 'Inactive'}
-                </span>
-                <button
-                  onClick={() => handleToggleAvailability(item._id)}
-                  className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
-                    item.active ? 'bg-green-500' : 'bg-gray-300'
-                  }`}
-                  disabled={loading}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      item.active ? 'translate-x-5' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex gap-1">
-                <button
-                  onClick={() => {
-                    setEditingProduct(item);
-                    setShowEditModal(true);
-                  }}
-                  className="border border-gray-300 px-2 py-1 text-xs rounded hover:bg-gray-50"
-                >
-                  <Edit className="w-3 h-3" />
-                </button>
-
-                <button
-                  className="border border-red-300 px-2 py-1 text-xs rounded text-red-600 hover:bg-red-50"
-                  onClick={() => handleDelete(item._id)}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
+      {/* Filters */}
+      <div className="bg-white border-b sticky top-20 z-40">
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <div className="flex items-center space-x-4 overflow-x-auto">
+            <button
+              onClick={() => setSelectedFilter('all')}
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                selectedFilter === 'all'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              All Restaurants
+            </button>
+            <button
+              onClick={() => setSelectedFilter('offers')}
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center ${
+                selectedFilter === 'offers'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Percent className="h-4 w-4 mr-1" />
+              Offers
+            </button>
+            <button
+              onClick={() => setSelectedFilter('veg')}
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center ${
+                selectedFilter === 'veg'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <CheckCircle className="h-4 w-4 mr-1" />
+              Pure Veg
+            </button>
+            <button
+              onClick={() => setSelectedFilter('non-veg')}
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center ${
+                selectedFilter === 'non-veg'
+                  ? 'bg-red-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <AlertCircle className="h-4 w-4 mr-1" />
+              Non-Veg
+            </button>
+            <button className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 flex items-center">
+              <Filter className="h-4 w-4 mr-1" />
+              More Filters
+            </button>
           </div>
         </div>
       </div>
-    ))}
-  </div>
-      ) : (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-lg mb-2">No menu items found</div>
-          <p className="text-gray-500">
-            Add your first menu item to get started
-          </p>
+
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {filteredRestaurants.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🔍</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">No restaurants found</h2>
+            <p className="text-gray-600">Try searching with different keywords or clear your filters</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                ( {filteredRestaurants.length}) Click restaurants To add categories and Items
+              </h2>
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <span>Sort by:</span>
+                <select className="border border-gray-200 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                  <option>Relevance</option>
+                  <option>Delivery Time</option>
+                  <option>Rating</option>
+                  <option>Cost: Low to High</option>
+                  <option>Cost: High to Low</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Restaurant Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredRestaurants.map(restaurant => (
+                <div
+                  key={restaurant.id}
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer group relative"
+                  onClick={() => handleRestaurantClick(restaurant.id)}
+                >
+                  {/* Restaurant Image */}
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={
+                        restaurant.images?.[0] ||
+                        'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop'
+                      }
+                      alt={restaurant.name}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {/* Offer Badge */}
+                    {restaurant.offer && (
+                      <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                        {restaurant.offer}
+                      </div>
+                    )}
+                    {/* Favorite Button */}
+                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Heart className="h-4 w-4 text-gray-600 hover:text-red-500 hover:fill-red-500 transition-colors" />
+                    </div>
+                    {/* Status Badge */}
+                    <div className="absolute bottom-3 left-3">
+                      {(restaurant.status == "approved") ? (
+                        <div className="bg-green-500 text-white text-xs font-medium px-3 py-1 rounded-full flex items-center shadow-lg">
+                          <Zap className="h-3 w-3 mr-1" />
+                          Approved
+                        </div>
+                      ) : (
+                        <div className="bg-gray-500 text-white text-xs font-medium px-3 py-1 rounded-full shadow-lg">
+                          Not Approved
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Restaurant Info */}
+                  <div className="p-5">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{restaurant.name}</h3>
+                      <div className="flex items-center bg-green-500 text-white px-2 py-1 rounded-lg text-xs font-bold">
+                        <Star className="h-3 w-3 fill-white mr-1" />
+                        {restaurant.rating}
+                      </div>
+                    </div>
+                    {/* Cuisines */}
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-1">
+                      {restaurant.cuisines?.join(', ') || 'Multi-cuisine'}
+                    </p>
+                    {/* Delivery Info */}
+                    <div className="flex items-center text-sm text-gray-600 mb-3 space-x-4">
+                      <div className="flex items-center">
+                        <Timer className="h-4 w-4 text-orange-500 mr-1" />
+                        <span>{restaurant.deliveryTime}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Truck className="h-4 w-4 text-orange-500 mr-1" />
+                        <span>{restaurant.distance}</span>
+                      </div>
+                    </div>
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {restaurant.foodType === 'veg' && (
+                        <span className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-full flex items-center border border-green-200">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                          Veg
+                        </span>
+                      )}
+                      {restaurant.foodType === 'non-veg' && (
+                        <span className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded-full flex items-center border border-red-200">
+                          <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
+                          Non-Veg
+                        </span>
+                      )}
+                      {restaurant.foodType === 'both' && (
+                        <>
+                          <span className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-full flex items-center border border-green-200">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                            Veg
+                          </span>
+                          <span className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded-full flex items-center border border-red-200">
+                            <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
+                            Non-Veg
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    {/* Footer */}
+                    <div className="flex items-center justify-between text-sm text-gray-600 pt-3 border-t border-gray-100">
+                      <div className="flex items-center">
+                        <Shield className="h-4 w-4 text-orange-500 mr-1" />
+                        <span>₹{restaurant.minOrderAmount || 0} minimum</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {restaurant.paymentMethods?.includes('online') && (
+                          <CreditCard className="h-4 w-4 text-blue-500" />
+                        )}
+                        {restaurant.paymentMethods?.includes('cash') && (
+                          <Wallet className="h-4 w-4 text-green-500" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </main>
+      {/* Footer */}
+      <footer className="bg-white border-t mt-16">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center text-gray-600">
+            <p className="mb-2">🍽️ Hungry? You're in the right place!</p>
+            <p className="text-sm">Order from your favorite restaurants and get it delivered fresh to your door.</p>
+          </div>
         </div>
-      )}
-
-      {/* Add New Item Button */}
-      <div className="fixed bottom-6 right-6 z-10">
-        <button
-          className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center transition-all hover:shadow-xl"
-          onClick={handleAddMenuClick}
-          disabled={!currentRestaurantId || loading}
-        >
-          {loading ? (
-            <div className="animate-spin h-6 w-6 border-2 border-white border-t-transparent rounded-full"></div>
-          ) : (
-            <>
-              <Utensils className="w-6 h-6 mr-2" />
-              <span className="text-white font-medium">Add Menu</span>
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Modals */}
-      {showAddModal && currentRestaurantId && (
-        <MenuAddModal
-          restaurantId={currentRestaurantId}
-          onClose={() => setShowAddModal(false)}
-          onCreate={handleCreateProduct}
-          categories={categories}
-        />
-      )}
-
-      {showEditModal && editingProduct && (
-        <MenuEditModal
-          restaurantId={currentRestaurantId}
-          initialData={editingProduct}
-          onClose={() => setShowEditModal(false)}
-          onUpdateSuccess={handleUpdateSuccess}
-          categories={categories}
-        />
-      )}
+      </footer>
     </div>
   );
 };
 
-export default MenuManagement;
+export default CreateMenu;

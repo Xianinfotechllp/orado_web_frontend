@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import MerchantSidebar from "../../components/merchant/Dashboard/sidebar/MerchantSidebar";
 import DashboardHeader from "../../components/merchant/Dashboard/DashboardHeader";
 import DashboardOverview from "../../components/merchant/Dashboard/EarningsSection/DashboardOverView";
-import MenuManagement from "../../components/merchant/Dashboard/MenuSection/MenuManagement";
+import CreateMenu from "../../components/merchant/Dashboard/MenuSection/MenuManagement";
 import OrderManagement from "../../components/merchant/Dashboard/OrderSection/OrderManagement";
 import RestaurantManagement from "../../components/merchant/Dashboard/RestaurantSection/RestaurantManagement";
 import CategoryManagement from "../../components/merchant/Dashboard/CategorySection/CategoryManagement";
@@ -27,15 +27,15 @@ const MerchantDashboard = () => {
       case "earnigs":
         return <RestaurantEarnings  />;
       case "menu":
-        return <MenuManagement />;
+        return <CreateMenu />;
       case "orders":
         return <OrderManagement />;
       case "service-areas":
         return <ServiceAreaManagement />;
       case "restaurant":
         return <RestaurantManagement />;
-      case "categories":
-        return <CategoryManagement />;
+      // case "categories":
+      //   return <CategoryManagement />;
       case "reviews":
         return <ReviewsManagement />;
       case "offers":

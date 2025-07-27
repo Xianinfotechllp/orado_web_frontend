@@ -26,7 +26,7 @@ const MerchantSidebar = ({ activeTab, setActiveTab, mobileSidebarOpen, setMobile
    { id: "earnigs", label: "Earnigs", icon: BarChart3 },
 
     { id: "menu", label: "Menu Management", icon: ShoppingBag },
-    { id: "categories", label: "Category", icon: Grid3X3 },
+    // { id: "categories", label: "Category", icon: Grid3X3 },
     { id: "orders", label: "Orders", icon: ClipboardList },
     { id: "service-areas", label: "Service Areas", icon: MapPin },
     { id: "reviews", label: "Reviews", icon: Star },
