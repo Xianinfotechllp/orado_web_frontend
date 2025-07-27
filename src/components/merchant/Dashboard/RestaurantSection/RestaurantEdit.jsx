@@ -14,16 +14,20 @@ import {
   updateRestaurant,
   getRestaurantById,
 } from "../../../../apis/restaurantApi";
-import { toast } from "react-toastify";
+import { toast } from 'react-hot-toast';
 import LocationInput from "../Input/LocationInput";
+import RestaurantSlider from "../Slider/RestaurantSlider";
 
-const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
+const RestaurantEdit = ({ onBack, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [useMapLocation, setUseMapLocation] = useState(false);
+
+   const [restaurantId, setRestaurantId] = useState(null);
+  const [currentRestaurantIndex, setCurrentRestaurantIndex] = useState(0);
 
   // Initialize with default opening hours for all days
   const defaultOpeningHours = [
@@ -36,6 +40,7 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
     { day: "sunday", openingTime: "09:00", closingTime: "21:00", isClosed: false },
   ];
   
+
   const [formData, setFormData] = useState({
     name: "",
     foodType: "both",
@@ -60,6 +65,9 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
   });
 
 
+  const [openingHours, setOpeningHours] = useState(
+  JSON.parse(formData.openingHours || "[]")
+);
   const steps = [
     { id: 1, title: "Basic Info", icon: Store, description: "Restaurant details" },
     { id: 2, title: "Location", icon: MapPin, description: "Address & coordinates" },
@@ -80,6 +88,49 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
     { value: "cash", label: "Cash on Delivery" },
     { value: "wallet", label: "Wallet" },
   ];
+const handleRestaurantSelect = (restaurant, index) => {
+    setRestaurantId(restaurant._id);
+    setCurrentRestaurantIndex(index);
+    // Reset form data when switching restaurants
+    setFormData({
+      name: "",
+      foodType: "both",
+      address: {
+        street: "",
+        city: "",
+        state: "",
+        zip: "",
+        longitude: "",
+        latitude: "",
+      },
+      openingHours: JSON.stringify(defaultOpeningHours),
+      paymentMethods: ["online"],
+      minOrderAmount: 100,
+      fssaiNumber: "",
+      gstNumber: "",
+      aadharNumber: "",
+      fssaiDoc: null,
+      gstDoc: null,
+      aadharDoc: null,
+      images: [],
+    });
+    setCurrentStep(1);
+    setCompletedSteps(new Set());
+  };
+
+  // Add this handler for when restaurants are loaded
+  const handleRestaurantsLoad = (restaurants) => {
+    if (restaurants.length > 0 && !restaurantId) {
+      setRestaurantId(restaurants[0]._id);
+    }
+  };
+
+
+
+
+
+
+
 
   useEffect(() => {
     const loadRestaurantData = async () => {
@@ -102,28 +153,28 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
         }
 
         setFormData({
-          name: restaurant.name || "",
-          foodType: restaurant.foodType || "both",
-          address: {
-            street: restaurant.address?.street || "",
-            city: restaurant.address?.city || "",
-            state: restaurant.address?.state || "",
-            zip: restaurant.address?.zip || "",
-            longitude,
-            latitude,
-          },
-          openingHours: JSON.stringify(openingHours),
-          paymentMethods: restaurant.paymentMethods || ["online"],
-          minOrderAmount: restaurant.minOrderAmount || 100,
-          fssaiNumber: restaurant.kyc?.fssaiNumber || "",
-          gstNumber: restaurant.kyc?.gstNumber || "",
-          aadharNumber: restaurant.kyc?.aadharNumber || "",
-          fssaiDoc: null,
-          gstDoc: null,
-          aadharDoc: null,
-          images: restaurant.images || [],
-        });
-
+  name: restaurant.name || "",
+  foodType: restaurant.foodType || "both",
+  address: {
+    street: restaurant.address?.street || "",
+    city: restaurant.address?.city || "",
+    state: restaurant.address?.state || "",
+    zip: restaurant.address?.zip || "",
+    // Ensure these are parsed as floats
+    longitude: restaurant.address?.longitude|| 0,
+    latitude: restaurant.address?.latitude || 0,
+  },
+  openingHours: JSON.stringify(openingHours),
+  paymentMethods: restaurant.paymentMethods || ["online"],
+  minOrderAmount: restaurant.minOrderAmount || 100,
+  fssaiNumber: restaurant.kyc?.fssaiNumber || "",
+  gstNumber: restaurant.kyc?.gstNumber || "",
+  aadharNumber: restaurant.kyc?.aadharNumber || "",
+  fssaiDoc: null,
+  gstDoc: null,
+  aadharDoc: null,
+  images: restaurant.images || [],
+});
         setIsLoading(false);
       } catch (err) {
         console.error("Failed to load restaurant data:", err);
@@ -230,26 +281,24 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
   };
 
   const handleBusinessHoursChange = (day, field, value) => {
-    try {
-      const hours = JSON.parse(formData.openingHours);
-      const updatedHours = hours.map((h) => {
-        if (h.day === day) {
-          const backendField = field === 'open' ? 'openingTime' : 
-                           field === 'close' ? 'closingTime' : 
-                           field;
-          return { ...h, [backendField]: value };
-        }
-        return h;
-      });
-      setFormData(prev => ({
-        ...prev,
-        openingHours: JSON.stringify(updatedHours),
-      }));
-    } catch (err) {
-      console.error("Error updating business hours:", err);
-      toast.error("Failed to update business hours");
-    }
-  };
+  try {
+    const updatedHours = openingHours.map((h) => {
+      if (h.day === day) {
+        const backendField = field === 'open' ? 'openingTime' :
+                             field === 'close' ? 'closingTime' :
+                             field;
+        return { ...h, [backendField]: value };
+      }
+      return h;
+    });
+
+    setOpeningHours(updatedHours);
+  } catch (err) {
+    console.error("Error updating business hours:", err);
+    toast.error("Failed to update business hours");
+  }
+};
+
 
   const handlePaymentMethodToggle = (method) => {
     setFormData((prev) => {
@@ -551,7 +600,7 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
             </div>
             
             <div className="space-y-4">
-              {JSON.parse(formData.openingHours).map((dayObj) => {
+              {openingHours.map((dayObj) => {
                 const day = dayObj.day;
                 return (
                   <div key={day} className="bg-gray-50 p-4 rounded-lg">
@@ -890,16 +939,16 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading restaurant data...</p>
-        </div>
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+  //         <p className="text-gray-600">Loading restaurant data...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -922,6 +971,17 @@ const RestaurantEdit = ({ restaurantId, onBack, onComplete }) => {
             </p>
           </div>
           <div className="w-32"></div> {/* Spacer for balance */}
+        </div>
+
+
+
+           <div className="mb-8">
+          <RestaurantSlider 
+            onRestaurantSelect={handleRestaurantSelect}
+            onRestaurantsLoad={handleRestaurantsLoad}
+            selectedIndex={currentRestaurantIndex}
+            className="mb-6"
+          />
         </div>
 
         {/* Step Progress */}

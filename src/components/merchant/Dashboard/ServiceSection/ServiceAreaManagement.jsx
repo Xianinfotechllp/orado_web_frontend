@@ -88,7 +88,7 @@ const ServiceAreaManagement = () => {
     if (loading) {
       return (
         <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700"></div>
         </div>
       );
     }
@@ -133,7 +133,7 @@ const ServiceAreaManagement = () => {
           </p>
           <button
             onClick={handleAddService}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+            className="bg-gray-950 bg-gradient-to-r hover:from-gray-700 hover:to-gray-900 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2"
           >
             <span className="flex items-center gap-2">
               <svg
@@ -166,9 +166,9 @@ const ServiceAreaManagement = () => {
             </span>
             <button
               onClick={handleAddService}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+              className="bg-gray-950 bg-gradient-to-r hover:from-gray-700 hover:to-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
             >
-              Add New Area
+              Edit Area
             </button>
           </div>
         </div>
@@ -180,7 +180,7 @@ const ServiceAreaManagement = () => {
               className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
             >
               <div className="h-64">
-                <PolygonMap polygonCoordinates={area.coordinates} />
+              <PolygonMap polygonCoordinates={area.area?.coordinates || area.coordinates}    restaurantLocation={selectedRestaurant?.location?.coordinates}     restaurantName={selectedRestaurant?.name}  />
               </div>
               <div className="p-4">
                 <div className="flex justify-between items-start">
@@ -240,7 +240,7 @@ const ServiceAreaManagement = () => {
       </div>
     );
   };
-
+console.log("location corde r of rest ", selectedRestaurant)
   return (
     <>
       <RestaurantSlider
@@ -253,13 +253,14 @@ const ServiceAreaManagement = () => {
           {renderServiceAreas()}
         </div>
 
-        <AddServiceModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          restaurantId={selectedRestaurant?.id}
-          onServiceAdded={handleServiceAdded}
-          initialData={selectedArea}
-        />
+       <AddServiceModal
+  isOpen={isModalOpen}
+  onClose={handleCloseModal}
+  restaurantId={selectedRestaurant?.id}   // Or .id if that's your key
+  onServiceAdded={handleServiceAdded}
+  restaurantLocation={selectedRestaurant?.location?.coordinates}  // [lng, lat]
+  restaurantName={selectedRestaurant?.name}
+/>
       </div>
     </>
   );

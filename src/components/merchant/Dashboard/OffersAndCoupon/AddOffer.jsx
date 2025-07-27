@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createOfferByRestaurantOwner } from "../../../../apis/restaurantApi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { toast } from "react-toastify";
+import { toast } from 'react-hot-toast';
 
 const OfferModal = ({ restaurantId, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -165,7 +165,7 @@ const OfferModal = ({ restaurantId, onClose }) => {
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.title ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
               />
               {errors.title && (
                 <p className="mt-1 text-sm text-red-600">{errors.title}</p>
@@ -182,7 +182,7 @@ const OfferModal = ({ restaurantId, onClose }) => {
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700"
               />
             </div>
           </div>
@@ -199,7 +199,7 @@ const OfferModal = ({ restaurantId, onClose }) => {
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.type ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
               >
                 <option value="percentage">Percentage Discount</option>
                 <option value="flat">Flat Discount</option>
@@ -223,7 +223,7 @@ const OfferModal = ({ restaurantId, onClose }) => {
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-md ${
                     errors.discountValue ? "border-red-500" : "border-gray-300"
-                  } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                  } focus:outline-none focus:ring-2 focus:ring-gray-700`}
                   placeholder={
                     formData.type === "percentage" ? "e.g. 20" : "e.g. 100"
                   }
@@ -254,7 +254,7 @@ const OfferModal = ({ restaurantId, onClose }) => {
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.maxDiscount ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
                 placeholder="e.g. 200"
                  onWheel={(e) => e.target.blur()} 
               />
@@ -282,7 +282,7 @@ const OfferModal = ({ restaurantId, onClose }) => {
               onChange={handleChange}
               className={`w-full px-3 py-2 border rounded-md ${
                 errors.minOrderValue ? "border-red-500" : "border-gray-300"
-              } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+              } focus:outline-none focus:ring-2 focus:ring-gray-700`}
               placeholder="e.g. 500"
                onWheel={(e) => e.target.blur()} 
             />
@@ -308,7 +308,7 @@ const OfferModal = ({ restaurantId, onClose }) => {
                 minDate={new Date()}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.validFrom ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
                 placeholderText="Select start date"
               />
               {errors.validFrom && (
@@ -329,7 +329,7 @@ const OfferModal = ({ restaurantId, onClose }) => {
                 minDate={formData.validFrom || new Date()}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.validTill ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
                 placeholderText="Select end date"
               />
               {errors.validTill && (
@@ -353,7 +353,7 @@ const OfferModal = ({ restaurantId, onClose }) => {
                   errors.usageLimitPerUser
                     ? "border-red-500"
                     : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
                 placeholder="No limit if empty"
                  onWheel={(e) => e.target.blur()} 
               />
@@ -375,7 +375,7 @@ const OfferModal = ({ restaurantId, onClose }) => {
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.totalUsageLimit ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                } focus:outline-none focus:ring-2 focus:ring-gray-700`}
                 placeholder="No limit if empty"
                  onWheel={(e) => e.target.blur()} 
               />
@@ -398,7 +398,7 @@ const OfferModal = ({ restaurantId, onClose }) => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 disabled:opacity-50"
+              className="px-4 py-2 bg-[#0f172a] text-white rounded-md bg-gradient-to-r hover:from-gray-700 hover:to-gray-800 disabled:opacity-50"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Creating..." : "Create Offer"}

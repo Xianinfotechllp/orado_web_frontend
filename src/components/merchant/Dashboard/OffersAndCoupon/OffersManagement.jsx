@@ -295,7 +295,7 @@ const OffersManagement = () => {
                 onClick={() => setActiveTab("restaurant")}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   activeTab === "restaurant"
-                    ? "bg-orange-500 text-white"
+                    ? "bg-[#0f172a] text-white"
                     : "bg-white text-gray-700 hover:bg-gray-100"
                 }`}
               >
@@ -305,7 +305,7 @@ const OffersManagement = () => {
                 onClick={() => setActiveTab("assignable")}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   activeTab === "assignable"
-                    ? "bg-orange-500 text-white"
+                    ? "bg-[#0f172a] text-white"
                     : "bg-white text-gray-700 hover:bg-gray-100"
                 }`}
               >
@@ -321,14 +321,14 @@ const OffersManagement = () => {
                 onRestaurantSelect={handleRestaurantSelect}
                 onRestaurantsLoad={handleRestaurantsLoad}
                 selectedIndex={selectedRestaurantIndex}
-                className="bg-white p-4 rounded-lg shadow-sm border"
+                
                 showError={true}
               />
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
@@ -342,7 +342,7 @@ const OffersManagement = () => {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
@@ -356,7 +356,7 @@ const OffersManagement = () => {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Valid Now</p>
@@ -367,42 +367,42 @@ const OffersManagement = () => {
                 <Clock className="w-8 h-8 text-purple-500" />
               </div>
             </div>
-          </div>
 
-          <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-medium text-gray-700">
-                Filter by Status:
-              </label>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="all">All Offers</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+            <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200">
+              <div className="flex items-center gap-4">
+                <label className="text-sm font-medium text-gray-700">
+                  Filter by Status:
+                </label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700"
+                >
+                  <option value="all">All Offers</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
             </div>
           </div>
 
           {offersLoading && (
             <div className="flex justify-center py-8">
-              <Loader className="w-6 h-6 animate-spin text-orange-500" />
+              <Loader className="w-6 h-6 animate-spin text-[#0f172a]" />
             </div>
           )}
 
           {!offersLoading && (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredOffers.map((offer) => (
                 <div
                   key={offer._id}
-                  className="bg-white p-6 rounded-lg shadow-sm border"
+                  className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200"
                 >
-                  <div className="flex justify-between items-start mb-4">
+                  <div className="flex flex-col h-full">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-900">
                           {offer.title}
                         </h3>
                         <span
@@ -418,15 +418,15 @@ const OffersManagement = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-gray-600 mb-3">{offer.description}</p>
+                      <p className="text-gray-600 mb-3 text-sm">{offer.description}</p>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                      <div className="space-y-3 text-sm">
                         <div className="flex items-center gap-2">
-                          <Tag className="w-4 h-4 text-orange-500" />
+                          <Tag className="w-4 h-4 text-[#0f172a]" />
                           <span className="font-medium">{offer.code}</span>
                           <button
                             onClick={() => copyCode(offer.code)}
-                            className="text-orange-500 hover:text-orange-600"
+                            className="text-[#0f172a] hover:text-orange-600"
                           >
                             <Copy className="w-4 h-4" />
                           </button>
@@ -460,9 +460,9 @@ const OffersManagement = () => {
                       )}
                     </div>
 
-                    <div className="flex gap-2 ml-4">
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
                       {activeTab === "restaurant" ? (
-                        <>
+                        <div className="flex gap-2">
                           <button
                             onClick={() => setEditingOffer(offer)}
                             className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
@@ -475,11 +475,11 @@ const OffersManagement = () => {
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-                        </>
+                        </div>
                       ) : (
                         <button
                           onClick={() => handleOpenAssignModal(offer)}
-                          className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
+                          className="px-3 py-2 bg-[#0f172a] text-white rounded-lg hover:bg-orange-600 transition-colors font-medium text-sm"
                         >
                           Assign to Restaurants
                         </button>
@@ -510,7 +510,7 @@ const OffersManagement = () => {
       {activeTab === "restaurant" && (
         <button
           onClick={() => setShowCreateModal(true)}
-          className="fixed bottom-6 right-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white p-4 rounded-full font-medium transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center z-50"
+          className="fixed bottom-6 right-6 bg-gradient-to-r bg-[#0f172a] hover:from-gray-700 hover:to-gray-800 text-white p-4 rounded-full font-medium transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center z-50"
           disabled={!currentRestaurantId}
         >
           <Tag className="w-6 h-6 mr-2" />

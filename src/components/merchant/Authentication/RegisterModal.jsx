@@ -8,7 +8,7 @@ import {
   FileInput,
 } from "lucide-react";
 import { useLayoutEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from 'react-hot-toast';
 import { registerMerchant } from "../../../apis/restaurantApi";
 
 const RegisterModal = ({ isOpen, onClose, onLoginClick }) => {

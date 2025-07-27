@@ -1,7 +1,7 @@
 // src/components/AddCategoryModal.jsx
 import React, { useState } from "react";
 import { createCategory } from "../../../../apis/restaurantApi";
-import { toast } from "react-toastify";
+import { toast } from 'react-hot-toast';
 
 const AddCategoryModal = ({
   showAddModal,
@@ -102,7 +102,7 @@ const AddCategoryModal = ({
                 onChange={(e) =>
                   setNewCategory((prev) => ({ ...prev, name: e.target.value }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800"
                 placeholder="Enter category name"
                 disabled={isSubmitting}
               />
@@ -120,7 +120,7 @@ const AddCategoryModal = ({
                     description: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800"
                 rows="4"
                 placeholder="Enter category description (minimum 100 characters)"
                 disabled={isSubmitting}
@@ -137,7 +137,7 @@ const AddCategoryModal = ({
               <input
                 type="file"
                 onChange={handleImageChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800"
                 accept="image/*"
                 disabled={isSubmitting}
               />
@@ -155,7 +155,7 @@ const AddCategoryModal = ({
             <button
               onClick={handleAddCategory}
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-gradient-to-r bg-gray-950 text-white rounded-lg hover:from-gray-600 hover:to-gray-900 transition-all duration-200 disabled:opacity-50"
             >
               {isSubmitting ? "Adding..." : "Add Category"}
             </button>

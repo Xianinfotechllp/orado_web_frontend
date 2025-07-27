@@ -198,15 +198,51 @@ const RestaurantChatWindow = ({ userId, chatId, onBack }) => {
   };
 
   if (loading) {
-    return <div className="flex-1 flex items-center justify-center bg-orange-50">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center bg-orange-50" style={{ height: '500px', width: '400px' }}>
+        Loading...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="flex-1 flex items-center justify-center bg-orange-50 text-red-500">{error}</div>;
+    return (
+      <div className="flex items-center justify-center bg-orange-50 text-red-500" style={{ height: '500px', width: '400px' }}>
+        {error}
+      </div>
+    );
   }
 
+ if (!userId) {
+  return (
+    <div 
+      className="flex flex-col items-center justify-center bg-orange-50 p-6 rounded-lg shadow-md"
+      style={{ 
+        height: '500px', 
+        width: '400px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}
+    >
+      <div className="text-center">
+        <MessageCircle size={48} className="text-orange-400 mb-4 mx-auto" />
+        <h3 className="text-xl font-semibold text-gray-700 mb-2">Welcome to Restaurant Chat</h3>
+        <p className="text-gray-500">
+          Select a customer chat to start messaging...
+        </p>
+      </div>
+    </div>
+  );
+}
+
   if (!chat) {
-    return <div className="flex-1 flex items-center justify-center bg-orange-50">No chat found</div>;
+    return (
+      <div className="flex items-center justify-center bg-orange-50" style={{ height: '500px', width: '400px' }}>
+        No chat found
+      </div>
+    );
   }
 
   const user = chat.participants?.find(p => p.modelType === 'user');
@@ -222,13 +258,13 @@ const RestaurantChatWindow = ({ userId, chatId, onBack }) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-white h-full">
+    <div className="flex flex-col bg-white rounded-lg overflow-hidden shadow-md" style={{ height: '500px', width: '400px' }}>
       <div className="sticky top-0 z-10 bg-orange-500 text-white p-4 shadow-md">
         <div className="flex items-center space-x-3">
           {onBack && (
             <button 
               onClick={onBack}
-              className="mr-2 p-1 rounded-full hover:bg-orange-500"
+              className="mr-2 p-1 rounded-full hover:bg-orange-600"
             >
               <ChevronLeft size={20} />
             </button>
@@ -247,7 +283,7 @@ const RestaurantChatWindow = ({ userId, chatId, onBack }) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-orange-50" style={{ paddingTop: '0.5rem' }}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-orange-50" style={{ maxHeight: 'calc(500px - 128px)' }}>
         {chat.messages?.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-500">No messages yet</p>

@@ -20,43 +20,43 @@ const RestaurantSlider = ({
   const [underlinePosition, setUnderlinePosition] = useState(0);
 
   // Fetch restaurants on component mount
-  useEffect(() => {
-    const fetchRestaurants = async () => {
-      if (!user?.id) return;
+// Fetch restaurants — move outside
+const fetchRestaurants = async () => {
+  if (!user?.id) return;
 
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await getMerchantRestaurants(user.id);
-        const restaurantData = response.data.restaurants;
-        
-        setRestaurants(restaurantData);
-        
-        // Filter only approved restaurants
-        const approved = restaurantData.filter(restaurant => restaurant.status === "approved");
-        setApprovedRestaurants(approved);
-        
-        // If no selected restaurant and approved restaurants exist, select first one
-        if (selectedRestaurant === null && approved.length > 0) {
-          setSelectedRestaurant(0);
-          // Notify parent component about restaurants load and initial selection
-          onRestaurantsLoad?.(approved);
-          onRestaurantSelect?.(approved[0], 0);
-        } else if (selectedRestaurant !== null && approved.length > 0) {
-          // If there's a selected index, notify parent
-          onRestaurantsLoad?.(approved);
-          onRestaurantSelect?.(approved[selectedRestaurant], selectedRestaurant);
-        }
-      } catch (err) {
-        setError(err.message);
-        console.error("Failed to load restaurants:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  try {
+    setLoading(true);
+    setError(null);
+    const response = await getMerchantRestaurants(user.id);
+    const restaurantData = response.data.restaurants;
 
-    fetchRestaurants();
-  }, [user?.id]);
+    setRestaurants(restaurantData);
+
+    const approved = restaurantData.filter(
+      (restaurant) => restaurant.status === "approved"
+    );
+    setApprovedRestaurants(approved);
+
+    if (approved.length > 0) {
+      onRestaurantsLoad?.(approved);
+      const index = selectedIndex ?? 0;
+      setSelectedRestaurant(index);
+      onRestaurantSelect?.(approved[index], index);
+    }
+  } catch (err) {
+    setError(err.message);
+    console.error("Failed to load restaurants:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+// useEffect — clean and reliable now
+useEffect(() => {
+  if (!user?.id) return;
+  fetchRestaurants();
+}, [user?.id]);
+
 
   // Update underline position when selected restaurant changes
   useEffect(() => {
@@ -133,7 +133,7 @@ const RestaurantSlider = ({
                 <h3
                   className={`font-medium ${
                     index === selectedRestaurant
-                      ? "text-orange-600 text-lg"
+                      ? "text-gray-800 text-lg"
                       : "text-gray-700"
                   }`}
                 >
@@ -144,7 +144,7 @@ const RestaurantSlider = ({
           ))}
 
           <div
-            className="absolute bottom-0 h-1 bg-orange-500 rounded-full transition-all duration-500 ease-out"
+            className="absolute bottom-0 h-1 bg-gray-950 rounded-full transition-all duration-500 ease-out"
             style={{
               width: `${underlineWidth}px`,
               left: `${underlinePosition}px`,

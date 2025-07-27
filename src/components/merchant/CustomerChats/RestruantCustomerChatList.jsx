@@ -14,7 +14,7 @@ const RestaurantChatList = ({ onSelectChat, selectedUserId }) => {
       try {
         setLoading(true);
         const response = await getRestaurantCustomerChats();
-        
+        console.log("customers--------",response)
         const data = response.data;
         console.log('Restaurant chat data', data);
         
@@ -89,8 +89,8 @@ const RestaurantChatList = ({ onSelectChat, selectedUserId }) => {
 
   if (loading) {
     return (
-      <div className="w-96 border-r border-orange-200 h-full bg-white flex flex-col">
-        <div className="p-4 bg-orange-500 text-white">
+      <div className="w-96 border-r border-gray-700 h-full bg-white flex flex-col">
+        <div className="p-4 text-[#0f172a]">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <MessageCircle size={24} />
             Customer Chats
@@ -105,8 +105,8 @@ const RestaurantChatList = ({ onSelectChat, selectedUserId }) => {
 
   if (error) {
     return (
-      <div className="w-96 border-r border-orange-200 h-full bg-white flex flex-col">
-        <div className="p-4 bg-orange-500 text-white">
+      <div className="w-96 border-r border-gray-700 h-full bg-white flex flex-col">
+        <div className="p-4 text-[#0f172a]">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <MessageCircle size={24} />
             Customer Chats
@@ -120,15 +120,15 @@ const RestaurantChatList = ({ onSelectChat, selectedUserId }) => {
   }
 
   return (
-    <div className="w-96 border-r border-orange-200 h-full bg-white flex flex-col">
-      <div className="p-4 bg-orange-500 text-white">
+    <div className="group bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200 w-96 border-r h-full flex flex-col">
+      <div className="p-4 text-[#0f172a]">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <MessageCircle size={24} />
           Customer Chats
         </h2>
       </div>
 
-      <div className="p-4 border-b border-orange-200">
+      <div className="p-4 border-b border-gray-400">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
           <input
@@ -136,12 +136,12 @@ const RestaurantChatList = ({ onSelectChat, selectedUserId }) => {
             placeholder="Search customers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="overflow-y-auto" style={{ height: '55vh' }}>
         {filteredChats.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-500">No chats found</p>

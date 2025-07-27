@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import CategoryDropdown from "../Dropdown/CategoryDropdown";
 import { updateProduct } from "../../../../apis/restaurantApi";
-import { toast } from "react-toastify";
+import { toast } from 'react-hot-toast';
 
 const MenuEditModal = ({
   restaurantId,

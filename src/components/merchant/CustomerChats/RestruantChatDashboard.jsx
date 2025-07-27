@@ -35,9 +35,9 @@ const RestaurantChatDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen">
       {(showSidebar || !isMobile) && (
-        <div className={`${isMobile ? 'w-full absolute z-10' : 'w-1/3'} h-full bg-white border-r border-gray-200`}>
+        <div className={`${isMobile ? 'w-full absolute z-10' : 'w-1/3'} h-full border-r border-gray-200`}>
           <RestaurantChatList 
             onSelectChat={handleSelectChat} 
             selectedUserId={selectedUserId} 

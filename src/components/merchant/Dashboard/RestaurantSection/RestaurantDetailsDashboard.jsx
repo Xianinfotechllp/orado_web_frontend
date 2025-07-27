@@ -4,7 +4,7 @@ import {
   Users, Package, AlertCircle, CheckCircle, XCircle, 
   Calendar, Settings, X 
 } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 import { toggleRestaurantActiveStatus } from '../../../../apis/restaurantApi';
 
 const RestaurantDetailsDashboard = ({ restaurantData: initialRestaurantData, onClose }) => {

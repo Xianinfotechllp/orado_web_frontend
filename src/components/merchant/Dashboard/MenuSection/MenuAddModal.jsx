@@ -1,13 +1,11 @@
 import React, { useState } from "react";
-import CategoryDropdown from "../Dropdown/CategoryDropdown";
 
-const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
+const MenuAddModal = ({ restaurantId, onClose, onCreate }) => {
   const [formData, setFormData] = useState({
     name: "",
     price: "",
     description: "",
     foodType: "",
-    categoryId: "",
     stock: "",
     reorderLevel: "",
     unit: "piece",
@@ -23,26 +21,10 @@ const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
       ...prev,
       [name]: value,
     }));
-    // Clear error when user types
     if (errors[name]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
-
-  const handleCategorySelect = (categoryId) => {
-    setFormData((prev) => ({
-      ...prev,
-      categoryId,
-    }));
-    // Clear error if exists
-    if (errors.categoryId) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.categoryId;
         return newErrors;
       });
     }
@@ -56,7 +38,6 @@ const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
     else if (parseFloat(formData.price) <= 0)
       newErrors.price = "Price must be positive";
     if (!formData.foodType) newErrors.foodType = "Food type is required";
-    if (!formData.categoryId) newErrors.categoryId = "Category is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -110,7 +91,7 @@ const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
           >
-            &times;
+            ×
           </button>
         </div>
 
@@ -124,14 +105,13 @@ const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
           className="flex-1 overflow-y-auto pr-2 pb-1"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {/* Hide scrollbar for WebKit browsers */}
           <style>{`
             div::-webkit-scrollbar {
               display: none;
             }
           `}</style>
 
-          <form onSubmit={onSubmit} className="space-y-4 ">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Name*
@@ -159,8 +139,7 @@ const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
                 type="number"
                 step="0.01"
                 className="w-full p-2 border rounded"
-                 onWheel={(e) => e.target.blur()} 
-
+                onWheel={(e) => e.target.blur()}
               />
               {errors.price && (
                 <p className="text-red-500 text-xs mt-1">{errors.price}</p>
@@ -198,19 +177,6 @@ const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.foodType}</p>
               )}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category*
-              </label>
-              <CategoryDropdown
-                restaurantId={restaurantId}
-                onCategorySelect={handleCategorySelect}
-                selectedCategory={formData.categoryId}
-              />
-              {errors.categoryId && (
-                <p className="text-red-500 text-xs mt-1">{errors.categoryId}</p>
-              )}
-            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -237,7 +203,7 @@ const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
                   type="number"
                   min="0"
                   className="w-full p-2 border rounded"
-                   onWheel={(e) => e.target.blur()} 
+                  onWheel={(e) => e.target.blur()}
                 />
               </div>
 
@@ -252,7 +218,7 @@ const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
                   type="number"
                   min="0"
                   className="w-full p-2 border rounded"
-                   onWheel={(e) => e.target.blur()} 
+                  onWheel={(e) => e.target.blur()}
                 />
               </div>
             </div>
@@ -277,7 +243,7 @@ const MenuAddModal = ({ restaurantId, onClose, onCreate, categories }) => {
           </form>
         </div>
 
-        <div className="mt-4 pt ">
+        <div className="mt-4">
           <div className="flex justify-end space-x-3">
             <button
               type="button"

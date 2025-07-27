@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import RestaurantRegistration from './RestaurantRegistration';
 import RestaurantEdit from './RestaurantEdit';
-import { toast } from 'react-toastify'
+import { toast } from 'react-hot-toast';
 import RestaurantList from './RestaurantList';
 import { useSelector } from 'react-redux';
 import { getMerchantRestaurants } from '../../../../apis/restaurantApi';
