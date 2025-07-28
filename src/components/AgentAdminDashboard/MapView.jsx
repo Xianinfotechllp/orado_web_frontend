@@ -495,24 +495,26 @@ useEffect(() => {
   Object.values(agentMarkersRef.current).forEach(marker => marker.remove());
   agentMarkersRef.current = {};
 
-  // Create markers for initial agents (from props)
+  // Create markers for all agents with valid locations
   agents.forEach(agent => {
-    if (agent?.location) {
+    // Only create marker if location exists and isn't (0,0)
+    if (agent?.location && (agent.location.lat !== 0 || agent.location.lng !== 0)) {
       createAgentMarker({
         id: agent.id,
         name: agent.name,
         location: agent.location,
         currentStatus: agent.currentStatus,
         accuracy: agent.location?.accuracy,
-        deviceInfo: agent.deviceInfo // Make sure deviceInfo is included in initial props
+        deviceInfo: agent.deviceInfo
       });
     }
   });
 
-  // Also set them as live agents
-  setLiveAgents(agents);
+  // Set initial live agents (filter out those with invalid locations)
+  setLiveAgents(agents.filter(agent => 
+    agent?.location && (agent.location.lat !== 0 || agent.location.lng !== 0)
+  ));
 }, [agents]);
-
 // Simplified socket connection handler
 useEffect(() => {
   let mounted = true;
