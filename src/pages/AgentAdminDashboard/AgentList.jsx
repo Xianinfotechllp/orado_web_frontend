@@ -1,122 +1,376 @@
-// pages/AgentList.jsx
-import React, { useState } from 'react';
-
-const dummyAgents = [
-  { id: '101', fullName: 'Alice Johnson', image: '', phoneNumber: '9876543210', email: 'alice@example.com', status: 'Online' },
-  { id: '102', fullName: 'Bob Smith', image: '', phoneNumber: '9123456780', email: 'bob@example.com', status: 'Offline' },
-  { id: '103', fullName: 'Charlie Brown', image: '', phoneNumber: '9988776655', email: 'charlie@example.com', status: 'Online' },
-  { id: '104', fullName: 'Diana Prince', image: '', phoneNumber: '9001122334', email: 'diana@example.com', status: 'Offline' },
-  { id: '105', fullName: 'Evan Wright', image: '', phoneNumber: '9334455667', email: 'evan@example.com', status: 'Online' },
-  { id: '106', fullName: 'Fiona Green', image: '', phoneNumber: '9556677889', email: 'fiona@example.com', status: 'Online' },
-  { id: '107', fullName: 'George Harris', image: '', phoneNumber: '9112233445', email: 'george@example.com', status: 'Offline' },
-  { id: '108', fullName: 'Hannah Clark', image: '', phoneNumber: '9445566778', email: 'hannah@example.com', status: 'Online' },
-  { id: '109', fullName: 'Ian Miller', image: '', phoneNumber: '9778899001', email: 'ian@example.com', status: 'Offline' },
-  { id: '110', fullName: 'Jessica Lee', image: '', phoneNumber: '9887766554', email: 'jessica@example.com', status: 'Online' },
-  { id: '111', fullName: 'Kevin Adams', image: '', phoneNumber: '9332211445', email: 'kevin@example.com', status: 'Online' },
-  { id: '112', fullName: 'Lisa Wilson', image: '', phoneNumber: '9665544332', email: 'lisa@example.com', status: 'Offline' },
-  { id: '113', fullName: 'Mike Taylor', image: '', phoneNumber: '9223344556', email: 'mike@example.com', status: 'Online' },
-  { id: '114', fullName: 'Nina Davis', image: '', phoneNumber: '9554433221', email: 'nina@example.com', status: 'Offline' },
-  { id: '115', fullName: 'Oliver Martin', image: '', phoneNumber: '9776655443', email: 'oliver@example.com', status: 'Online' },
-  { id: '116', fullName: 'Paula Scott', image: '', phoneNumber: '9009988776', email: 'paula@example.com', status: 'Online' },
-  { id: '117', fullName: 'Quinn Parker', image: '', phoneNumber: '9110099887', email: 'quinn@example.com', status: 'Offline' },
-  { id: '118', fullName: 'Ryan Cooper', image: '', phoneNumber: '9331122334', email: 'ryan@example.com', status: 'Online' },
-  { id: '119', fullName: 'Sarah Bennett', image: '', phoneNumber: '9442233445', email: 'sarah@example.com', status: 'Offline' },
-  { id: '120', fullName: 'Tom Nelson', image: '', phoneNumber: '9553344556', email: 'tom@example.com', status: 'Online' },
-];
+import React, { useState, useEffect } from 'react';
+import { User, Search, RefreshCw, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import apiClient from '../../apis/apiClient/apiClient';
+import { toast } from 'react-toastify';
 
 export default function AgentList() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [agents, setAgents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  const filteredAgents = dummyAgents.filter(agent =>
-    agent.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+  // Fetch agents from API
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        setLoading(true);
+        const res = await apiClient.get('/admin/agent/getAll');
+        console.log('Fetched agents:', res.data);
+        setAgents(res.data.agents || res.data);
+      } catch (err) {
+        console.error('Error fetching agents:', err);
+        setError(err.response?.data?.message || 'Failed to fetch agents');
+        toast.error('Failed to load agents');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAgents();
+  }, []);
+
+  // Filter agents based on search term
+  const filteredAgents = agents.filter(agent =>
+    agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    agent.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    agent.phone.includes(searchTerm)
   );
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAgents.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredAgents.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset pagination when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Get status badge
+  const getStatusBadge = (status) => {
+    const config = {
+      approved: { bg: 'bg-green-100', text: 'text-green-700', label: 'Approved' },
+      pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Pending' },
+      rejected: { bg: 'bg-red-100', text: 'text-red-700', label: 'Rejected' },
+    }[status] || { bg: 'bg-gray-100', text: 'text-gray-700', label: status };
+
     return (
-    <div className="min-h-screen bg-orange-50 p-4 md:p-8 font-sans">
-      <div className="max-w-6xl mx-auto bg-white rounded-xl md:rounded-3xl shadow-lg md:shadow-2xl p-4 md:p-8 transition-all duration-300">
-        <h1 className="text-2xl md:text-3xl font-extrabold text-orange-600 mb-4 md:mb-6 tracking-wide">🚴‍♂️ Delivery Agents</h1>
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+        {config.label}
+      </span>
+    );
+  };
 
-        <input
-          type="text"
-          placeholder="Search by name..."
-          className="mb-4 md:mb-6 w-full p-2 md:p-3 border border-orange-300 rounded-lg md:rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 shadow-sm"
-          onChange={e => setSearchTerm(e.target.value)}
-        />
+  // Pagination controls
+  const goToNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
 
-        {/* Desktop Table (hidden on mobile) */}
-        <div className="hidden sm:block overflow-x-auto">
-          <table className="w-full text-left text-xs sm:text-sm">
-            <thead className="bg-orange-100 text-orange-700 uppercase">
-              <tr>
-                <th className="px-2 py-2 sm:px-4 sm:py-3">User ID</th>
-                <th className="px-2 py-2 sm:px-4 sm:py-3">Full Name</th>
-                <th className="px-2 py-2 sm:px-4 sm:py-3">Image</th>
-                <th className="px-2 py-2 sm:px-4 sm:py-3 hidden sm:table-cell">Phone</th>
-                <th className="px-2 py-2 sm:px-4 sm:py-3 hidden md:table-cell">Email</th>
-                <th className="px-2 py-2 sm:px-4 sm:py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAgents.map(agent => (
-                <tr
-                  key={agent.id}
-                className="border-b border-orange-100 cursor-pointer transition-all duration-200 hover:bg-orange-50 hover:shadow-md group"
-                  onClick={() => window.location.href = `/admin/agent-dashboard/agent/details`}
-                >
-                  <td className="px-2 py-2 sm:px-4 sm:py-3 font-medium">{agent.id}</td>
-                  <td className="px-2 py-2 sm:px-4 sm:py-3 font-medium text-gray-800 group-hover:text-orange-600">
-                    {agent.fullName}
-                  </td>
-                  <td className="px-2 py-2 sm:px-4 sm:py-3">
-                    <img
-                      src={agent.image || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}
-                      alt="avatar"
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-gray-200 shadow-sm"
-                    />
-                  </td>
-                  <td className="px-2 py-2 sm:px-4 sm:py-3 hidden sm:table-cell">{agent.phoneNumber}</td>
-                  <td className="px-2 py-2 sm:px-4 sm:py-3 hidden md:table-cell truncate max-w-[120px] lg:max-w-none">
-                    {agent.email}
-                  </td>
-                  <td className="px-2 py-2 sm:px-4 sm:py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${agent.status === 'Online' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                      {agent.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  const goToPrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Retry function
+  const handleRetry = () => {
+    window.location.reload();
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-sm text-center border border-gray-200">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-700 font-medium">Loading agents...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-sm text-center max-w-md border border-gray-200">
+          <AlertCircle size={48} className="text-red-600 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Agents</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={handleRetry}
+            className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition flex items-center gap-2 mx-auto"
+          >
+            <RefreshCw size={16} />
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-6">
+        {/* Header */}
+        <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+          <h1 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+            <User size={26} className="text-orange-600" />
+            Delivery Agents
+          </h1>
+          <p className="text-gray-600 text-sm mt-1">
+            Manage and view all delivery agents
+          </p>
         </div>
 
-        {/* Mobile Cards (only visible on small screens) */}
-        <div className="sm:hidden space-y-3">
-          {filteredAgents.map(agent => (
-            <div
-              key={agent.id}
-              className="border border-orange-100 rounded-lg p-3 cursor-pointer hover:bg-orange-50 transition-colors duration-200"
-              onClick={() => window.location.href = `/agent/details/${agent.id}`}
-            >
-              <div className="flex items-center space-x-3">
-                <img
-                  src={agent.image || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}
-                  alt="avatar"
-                  className="w-10 h-10 rounded-full border border-gray-200 shadow-sm"
-                />
-                <div>
-                  <h3 className="font-bold text-orange-600">{agent.fullName}</h3>
-                  <p className="text-sm text-gray-600">ID: {agent.id}</p>
+        {/* Search */}
+        <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name, email, or phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-orange-600"
+            />
+          </div>
+          <div className="mt-4 text-sm text-gray-600">
+            Found <span className="font-medium text-orange-600">{filteredAgents.length}</span> agents
+            {totalPages > 1 && (
+              <span> • Page {currentPage} of {totalPages}</span>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr className="text-gray-600">
+                  <th className="px-6 py-3 text-left font-medium">Agent</th>
+                  <th className="px-6 py-3 text-left font-medium">Contact</th>
+                  <th className="px-6 py-3 text-left font-medium">Status</th>
+                  <th className="px-6 py-3 text-left font-medium">Warnings</th>
+                  <th className="px-6 py-3 text-left font-medium">Termination</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {currentItems.length > 0 ? (
+                  currentItems.map((agent) => (
+                    <tr 
+                      key={agent.id} 
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => window.location.href = `/admin/agent-dashboard/agent/details`}
+                    >
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                            <User size={16} className="text-orange-600" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-800">{agent.name}</div>
+                            <div className="text-xs text-gray-500">ID: {agent.id}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="text-gray-700">{agent.phone}</div>
+                        <div className="text-xs text-gray-500">{agent.email}</div>
+                      </td>
+                      <td className="px-6 py-3">
+                        {getStatusBadge(agent.status)}
+                      </td>
+                      <td className="px-6 py-3">
+                        <span className="text-gray-600">
+                          {agent.warnings?.length || 0} warnings
+                        </span>
+                      </td>
+                      <td className="px-6 py-3">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          agent.termination?.terminated 
+                            ? 'bg-red-100 text-red-700' 
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {agent.termination?.terminated ? 'Terminated' : 'Active'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                      <User size={48} className="mx-auto text-gray-300 mb-4" />
+                      <p className="font-medium">No agents found</p>
+                      <p className="text-sm">Try adjusting your search criteria</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Desktop Pagination */}
+          {totalPages > 1 && (
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
+                  <span className="font-medium">{Math.min(indexOfLastItem, filteredAgents.length)}</span> of{" "}
+                  <span className="font-medium">{filteredAgents.length}</span> results
                 </div>
-                <span className={`ml-auto px-2 py-1 rounded-full text-xs font-semibold ${agent.status === 'Online' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                  {agent.status}
-                </span>
-              </div>
-              <div className="mt-2 text-sm">
-                <p className="truncate">{agent.phoneNumber}</p>
-                <p className="truncate text-orange-500">{agent.email}</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={goToPrevPage}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1 rounded text-sm font-medium flex items-center gap-1 ${
+                      currentPage === 1
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-orange-600 text-white hover:bg-orange-700"
+                    }`}
+                  >
+                    <ChevronLeft size={14} />
+                    Previous
+                  </button>
+
+                  <div className="flex gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`w-8 h-8 rounded text-sm font-medium ${
+                          currentPage === page
+                            ? "bg-orange-600 text-white"
+                            : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1 rounded text-sm font-medium flex items-center gap-1 ${
+                      currentPage === totalPages
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-orange-600 text-white hover:bg-orange-700"
+                    }`}
+                  >
+                    Next
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
               </div>
             </div>
-          ))}
+          )}
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-4">
+          {currentItems.length > 0 ? (
+            currentItems.map((agent) => (
+              <div
+                key={agent.id}
+                className="bg-white shadow-sm border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50"
+                onClick={() => window.location.href = `/admin/agent-dashboard/agent/details`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                      <User size={18} className="text-orange-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-800">{agent.name}</h3>
+                      <p className="text-sm text-gray-500">ID: {agent.id}</p>
+                    </div>
+                  </div>
+                  {getStatusBadge(agent.status)}
+                </div>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Phone:</span>
+                    <span className="text-gray-700">{agent.phone}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Email:</span>
+                    <span className="text-gray-700 truncate ml-2">{agent.email}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Warnings:</span>
+                    <span className="text-gray-700">{agent.warnings?.length || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Status:</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      agent.termination?.terminated 
+                        ? 'bg-red-100 text-red-700' 
+                        : 'bg-green-100 text-green-700'
+                    }`}>
+                      {agent.termination?.terminated ? 'Terminated' : 'Active'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-12 text-center">
+              <User size={48} className="mx-auto text-gray-300 mb-4" />
+              <p className="font-medium text-gray-500">No agents found</p>
+              <p className="text-sm text-gray-400">Try adjusting your search criteria</p>
+            </div>
+          )}
+
+          {/* Mobile Pagination */}
+          {totalPages > 1 && (
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-sm text-gray-600">
+                  Page <span className="font-medium">{currentPage}</span> of{" "}
+                  <span className="font-medium">{totalPages}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={goToPrevPage}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-2 rounded text-sm font-medium flex items-center gap-1 ${
+                      currentPage === 1
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-orange-600 text-white hover:bg-orange-700"
+                    }`}
+                  >
+                    <ChevronLeft size={14} />
+                    Prev
+                  </button>
+
+                  <div className="text-sm text-gray-600">
+                    {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredAgents.length)} of {filteredAgents.length}
+                  </div>
+
+                  <button
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-2 rounded text-sm font-medium flex items-center gap-1 ${
+                      currentPage === totalPages
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-orange-600 text-white hover:bg-orange-700"
+                    }`}
+                  >
+                    Next
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
