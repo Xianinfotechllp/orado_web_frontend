@@ -7,6 +7,12 @@ import axios from "axios";
 const AdminAgentDashboardLayout = () => {
 
    const [agents, setAgents] = useState([]);
+ const [selectedOrder, setSelectedOrder] = useState(null);
+
+   const [selectedAgent, setSelectedAgent] = useState(null);
+
+
+ 
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -22,6 +28,13 @@ const AdminAgentDashboardLayout = () => {
 
     fetchAgents();
   }, []);
+
+
+  const handleOrderSelect = (order) => {
+    console.log(order)
+    setSelectedOrder(order);
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Top Navbar */}
@@ -30,13 +43,16 @@ const AdminAgentDashboardLayout = () => {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
-        <DispatchSidebar />
+ <DispatchSidebar 
+          onOrderSelect={handleOrderSelect} 
+          selectedOrder={selectedOrder}
+        />
 
         {/* Center Map */}
-<MapView agents={agents} />
+       <MapView agents={agents}  selectedAgent={selectedAgent} selectedOrder={selectedOrder}/>
 
         {/* Right Sidebar */}
-        <AgentStatusPanel />
+        <AgentStatusPanel    onAgentSelect={setSelectedAgent}  />
       </div>
     </div>
   );

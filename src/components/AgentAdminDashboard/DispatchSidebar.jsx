@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 
-const DispatchSidebar = () => {
+const DispatchSidebar = ({ onOrderSelect}) => {
   const [activeTab, setActiveTab] = useState("unassigned");
   const [dispatchOrders, setDispatchOrders] = useState([]);
   const [error, setError] = useState(null);
@@ -27,6 +27,7 @@ const DispatchSidebar = () => {
   const [assignmentError, setAssignmentError] = useState(null);
   const [isLoadingAgents, setIsLoadingAgents] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
+
   // Fetch dispatch orders
   const fetchOrders = async () => {
     setIsLoading(true);
@@ -206,11 +207,15 @@ const DispatchSidebar = () => {
     );
   };
 
-  const TaskCard = ({ task, status }) => {
+  const TaskCard = ({ task, status ,onSelect, isSelected }) => {
     const [showDetails, setShowDetails] = useState(false);
-
+const handleClick = () => {
+    onSelect(task);
+  };
     return (
-      <div className="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150">
+      <div   className={`border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150 ${
+        isSelected ? 'bg-blue-50' : ''
+      }`}    onClick={handleClick} >
         <div className="flex items-start p-4">
           {/* Left Action Button */}
           <div className="flex flex-col items-center mr-3">
@@ -500,9 +505,15 @@ const DispatchSidebar = () => {
             Showing {groupedTasks[activeTab].length} {activeTab} orders
           </div>
           <div className="divide-y divide-gray-200">
-            {groupedTasks[activeTab].map((task) => (
-              <TaskCard key={task.orderId} task={task} status={activeTab} />
-            ))}
+         {groupedTasks[activeTab].map((task) => (
+  <TaskCard 
+    key={task.orderId} 
+    task={task} 
+    status={activeTab}
+    onSelect={onOrderSelect}
+    isSelected={selectedOrder?.orderId === task.orderId}
+  />
+))}
           </div>
         </div>
       )}

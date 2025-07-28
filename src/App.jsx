@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
@@ -18,7 +18,7 @@ import SettingsPage from "./pages/UserProfile/SettingsPage";
 import NotificationPage from "./pages/Notification/NotificationPage";
 import AdminLogin from "./pages/Admin/AdminLogin";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
-import { ToastContainer } from "react-toastify";
+import { toast,ToastContainer } from "react-toastify";
 import RestaurantApprovalsPage from "./pages/Admin/RestaurantApprovalsPage";
 import AddRestaurantPage from "./pages/Admin/AddRestaurant";
 import RestaurantList from "./pages/Admin/RestaurantList";
@@ -109,9 +109,71 @@ import AgentDeliveryDash from "./pages/AgentAdminDashboard/AgentDeliveryDash";
 import AgentDetails from "./pages/AgentAdminDashboard/AgentDetails";
 import AgentList from "./pages/AgentAdminDashboard/AgentList";
 import AgentSelfieLogs from "./pages/AgentAdminDashboard/AgentSelfieLogs";
+import AdminOfferUsage from "./pages/AgentAdminDashboard/AdminOfferUsage";
+import AdminPromoCodeUsage from "./pages/AgentAdminDashboard/AdminPromoCodeUsage";
+import { onMessageListener, requestFirebaseNotificationPermission } from "./services/firebase";
+import { saveFcmToken } from "./apis/adminApis/adminFuntionsApi";
+import AgentKYCApproval from "./pages/AgentAdminDashboard/AgentKYCApproval";
+import AgentLeave from "./pages/AgentAdminDashboard/AgentLeave";
+import AgentWarningsApprovalsTerminationsDash from "./pages/AgentAdminDashboard/AgentWarningsApprovalsTerminationsDash";
+import AgentWarningTerm from "./pages/AgentAdminDashboard/AgentWarningTerm";
 
 function App() {
   // const [count, setCount] = useState(0);
+
+useEffect(() => {
+  const initFCM = async () => {
+    try {
+      const token = await requestFirebaseNotificationPermission();
+      if (token) {
+        console.log("Token ready to send:", token);
+        
+        const storedUser = sessionStorage.getItem("adminToken");
+   
+
+        console.log("User from sessionStorage:", storedUser);
+
+        if (storedUser) {
+          await saveFcmToken({ token }); // Send token to server (you may need to pass userId)
+        }
+      }
+    } catch (err) {
+      console.error("FCM token error:", err);
+    }
+  };
+
+  initFCM();
+
+  const unsubscribe = onMessageListener((payload) => {
+    const title = payload?.notification?.title || "Notification";
+    const body = payload?.notification?.body || "";
+
+    // Show toast
+    toast.info(`${title}: ${body}`, {
+      position: "top-right",
+      autoClose: 5000,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+
+    // Play notification sound
+    const audio = new Audio("/sound/bell.wav");
+    audio.addEventListener("ended", () => {
+      const speech = new SpeechSynthesisUtterance(body);
+      speech.lang = "en-IN";
+      window.speechSynthesis.speak(speech);
+    });
+    audio.play().catch((e) => console.log("Audio play error:", e));
+  });
+
+  // Optional cleanup (if you add `unsubscribe`)
+  return () => {
+    if (typeof unsubscribe === "function") {
+      unsubscribe();
+    }
+  };
+}, []);
 
   return (
     <>
@@ -166,9 +228,9 @@ function App() {
           <Route path="restaurant-commission" element={<RestaurantCommission />} />
           <Route path="restaurant-order" element={<RestaurantListForOrders />} />
           <Route path="restaurant-feedback" element={<RestaurantListforReviews />} />
-           <Route path="restaurant-earnings" element={<RestaurantEarningsTable />} />
-           <Route path="restaurant-chats" element={<AdminRestaurantChatDashboard />} />
-           <Route path="restaurant-earnings-summary/:restaurantId" element={<RestaurantEarningsv />} />
+          <Route path="restaurant-earnings" element={<RestaurantEarningsTable />} />
+          <Route path="restaurant-chats" element={<AdminRestaurantChatDashboard />} />
+          <Route path="restaurant-earnings-summary/:restaurantId" element={<RestaurantEarningsv />} />
 
         {/* Restuarnt */}
             <Route path="merchants/merchant-details/:id" element={<MerchantDetailsPage/>}  />
@@ -219,10 +281,14 @@ function App() {
                 {/* <Route path="admin-promotions-promo" element={<PromoCodeManager/>}  /> */}
                 <Route path="admin-promotions-promo" element={<PromoCodesPage/>}  />
                 <Route  path="promotions-offer"  element={<OfferManagement/>} />
+                <Route  path="promotions-offer-report"  element={<AdminOfferUsage/>} />
+                <Route  path="promotions-promo-report"  element={<AdminPromoCodeUsage/>} />
+
+
              
                 <Route  path="promotions-discount"  element={<DiscountPage/>} />
                 <Route path="promotion-loyalty-points" element={<CreateLoyaltyPoints/>} />
-                 <Route path="promotion-referal" element={<ReferralPromotions/>}  />
+                <Route path="promotion-referal" element={<ReferralPromotions/>}  />
                 {/* push campings */}
                 <Route path="campaigns-customer" element={<CustomerCampaigns/>} />
                 <Route path="campaigns-restaurant" element={<RestaurantCampaigns/>} />
@@ -308,10 +374,17 @@ function App() {
 
 
 <Route path="/admin/agent-dashboard/agent/list"   element={<AgentList/>} />
+<Route path="/admin/agent-dashboard/agent/approval"   element={<AgentKYCApproval/>} />
+
 
 <Route path="/admin/agent-dashboard/agent/details"   element={<AgentDetails/>} />
 <Route path="/admin/agent-dashboard/agent/details"   element={<AgentDetails/>} />
 <Route path="/admin/agent-dashboard/agent-selfie"   element={<AgentSelfieLogs/>} />
+<Route path="/admin/agent-dashboard/agent-leave"   element={<AgentLeave/>} />
+<Route path="/admin/agent-dashboard/warings-termination"   element={<AgentWarningTerm/>} />
+
+
+
 
 
 

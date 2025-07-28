@@ -13,7 +13,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzM
 
 
 
-const MapView = ({ agents = [] }) => {
+const MapView = ({ agents = [] ,selectedOrder,selectedAgent}) => {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,6 +32,9 @@ const MapView = ({ agents = [] }) => {
   const [liveAgents, setLiveAgents] = useState(agents);
   const routeLayerRef = useRef(null);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [routeGeoJSON, setRouteGeoJSON] = useState(null);
+
+
 
   const fetchRouteGeoJSON = useCallback(async (start, end) => {
     const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
@@ -58,41 +61,87 @@ const MapView = ({ agents = [] }) => {
     }
   }, [fetchRouteGeoJSON]);
 
-  const drawRouteOnMap = useCallback((routeGeoJSON) => {
-    const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+const drawRouteOnMap = useCallback((routeGeoJSON) => {
+  const map = mapRef.current;
+  if (!map || !map.isStyleLoaded()) return;
 
-    // Remove existing route if any
-    if (routeLayerRef.current) {
-      if (map.getLayer('route-line')) map.removeLayer('route-line');
-      if (map.getSource('route-line')) map.removeSource('route-line');
-      routeLayerRef.current = null;
+  // 1. First remove any existing layers that use the source
+  if (map.getLayer('route-arrows')) {
+    map.removeLayer('route-arrows');
+  }
+  if (map.getLayer('route-line')) {
+    map.removeLayer('route-line');
+  }
+
+  // 2. Then remove the source if it exists
+  if (map.getSource('route-line')) {
+    map.removeSource('route-line');
+  }
+
+  // 3. Now add the new source
+  map.addSource('route-line', {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      geometry: routeGeoJSON,
+      properties: {}
     }
+  });
 
-    map.addSource('route-line', {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        geometry: routeGeoJSON
-      }
-    });
+  // 4. Add the line layer
+  map.addLayer({
+    id: 'route-line',
+    type: 'line',
+    source: 'route-line',
+    layout: {
+      'line-cap': 'round',
+      'line-join': 'round'
+    },
+    paint: {
+      'line-color': '#3b82f6',
+      'line-width': 4,
+      'line-opacity': 0.8
+    }
+  });
 
-    map.addLayer({
-      id: 'route-line',
-      type: 'line',
-      source: 'route-line',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round'
-      },
-      paint: {
-        'line-color': '#ff5733',
-        'line-width': 5
-      }
-    });
+  // 5. Add arrows (optional)
+  map.addLayer({
+    id: 'route-arrows',
+    type: 'symbol',
+    source: 'route-line',
+    layout: {
+      'symbol-placement': 'line',
+      'text-field': '▶',
+      'text-size': 14,
+      'symbol-spacing': 50,
+      'text-keep-upright': false
+    },
+    paint: {
+      'text-color': '#3b82f6',
+      'text-halo-color': 'white',
+      'text-halo-width': 1
+    }
+  });
+}, []);
+// Add this useEffect to handle agent selection
+useEffect(() => {
+  console.log("Selected Agent:", selectedAgent);
+  if (!mapRef.current || !selectedAgent) return;
 
-    routeLayerRef.current = true;
-  }, []);
+  const { location } = selectedAgent;
+  if (!location || !location.lat || !location.lng) return;
+
+  mapRef.current.flyTo({
+    center: [location.lng, location.lat],
+    zoom: 15,
+    essential: true
+  });
+
+}, [selectedAgent]);
+
+
+
+
 
   const updateAgentMarkerStatus = useCallback((agentId, status) => {
     if (!agentMarkersRef.current[agentId]) return;
@@ -150,6 +199,240 @@ const MapView = ({ agents = [] }) => {
     };
   }, []);
 
+useEffect(() => {
+  if (!mapRef.current || !selectedOrder) return;
+
+  // Clear existing route and markers
+  clearRouteAndMarkers();
+
+  // Extract coordinates from the selected order
+  const restaurantCoords = selectedOrder.restaurantLocation?.coordinates || [0, 0];
+  const deliveryCoords = selectedOrder.deliveryLocation || [0, 0];
+
+  // Add markers
+  addLocationMarkers(restaurantCoords, deliveryCoords);
+
+  // Create and draw the route
+  if (isValidCoordinates(restaurantCoords) && isValidCoordinates(deliveryCoords)) {
+
+     console.log("Drawing route between:", deliveryCoords);
+    createAndDrawRoute(restaurantCoords, deliveryCoords);
+    fitMapToLocations(restaurantCoords, deliveryCoords);
+  }
+
+}, [selectedOrder]);
+
+
+
+const clearRouteAndMarkers = () => {
+  const map = mapRef.current;
+  if (!map) return;
+
+  // Clear route
+  if (map.getLayer('route-line')) map.removeLayer('route-line');
+  if (map.getSource('route-line')) map.removeSource('route-line');
+  setRouteGeoJSON(null);
+
+  // Clear markers
+  if (map.getLayer('restaurant-marker')) map.removeLayer('restaurant-marker');
+  if (map.getSource('restaurant-marker')) map.removeSource('restaurant-marker');
+  if (map.getLayer('delivery-marker')) map.removeLayer('delivery-marker');
+  if (map.getSource('delivery-marker')) map.removeSource('delivery-marker');
+};
+
+const isValidCoordinates = (coords) => {
+  return coords[0] !== 0 && coords[1] !== 0;
+};
+
+const addLocationMarkers = (restaurantCoords, deliveryCoords) => {
+  const map = mapRef.current;
+  if (!map) return;
+
+  // Add restaurant marker (using the coordinates array directly)
+  map.addLayer({
+    id: 'restaurant-marker',
+    type: 'circle',
+    source: {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: restaurantCoords  // [lng, lat]
+        }
+      }
+    },
+    paint: {
+      'circle-radius': 10,
+      'circle-color': '#FF0000',
+      'circle-stroke-width': 2,
+      'circle-stroke-color': '#FFFFFF'
+    }
+  });
+
+  // Add delivery marker
+  map.addLayer({
+    id: 'delivery-marker',
+    type: 'circle',
+    source: {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: deliveryCoords  // [lng, lat]
+        }
+      }
+    },
+    paint: {
+      'circle-radius': 10,
+      'circle-color': '#3B82F6',
+      'circle-stroke-width': 2,
+      'circle-stroke-color': '#FFFFFF'
+    }
+  });
+};
+const createAndDrawRoute = (start, end) => {
+  // Calculate midpoint for the curve
+  const midPoint = [
+    (start[0] + end[0]) / 2,
+    (start[1] + end[1]) / 2
+  ];
+  
+  // Add some curvature by offsetting the midpoint
+  const offset = 0.1; // Adjust this value for more/less curvature
+  const curvedMidPoint = [
+    midPoint[0] + (end[1] - start[1]) * offset,
+    midPoint[1] - (end[0] - start[0]) * offset
+  ];
+
+  // Create a quadratic bezier curve
+  const curve = {
+    type: 'LineString',
+    coordinates: [
+      start,
+      curvedMidPoint,
+      end
+    ]
+  };
+
+  setRouteGeoJSON(curve);
+};
+const fitMapToLocations = (restaurantCoords, deliveryCoords) => {
+  const map = mapRef.current;
+  if (!map) return;
+
+  const bounds = new mapboxgl.LngLatBounds();
+  bounds.extend(restaurantCoords);
+  bounds.extend(deliveryCoords);
+  map.fitBounds(bounds, { padding: 100, duration: 1000 });
+};
+
+
+
+// When routeGeoJSON changes, update the line on map
+useEffect(() => {
+  const map = mapRef.current;
+  if (!map || !routeGeoJSON) return;
+
+  // Remove old layer & source if it exists
+  if (map.getLayer('route-line')) map.removeLayer('route-line');
+  if (map.getSource('route')) map.removeSource('route');
+
+  map.addSource('route', {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      geometry: routeGeoJSON,
+    },
+  });
+
+  map.addLayer({
+    id: 'route-line',
+    type: 'line',
+    source: 'route',
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round',
+    },
+    paint: {
+      'line-color': '#3b82f6', // blue
+      'line-width': 4,
+      'line-dasharray': [2, 2], // dashed look like a delivery route
+    },
+  });
+}, [routeGeoJSON]);
+
+// useEffect(() => {
+//   const map = mapRef.current;
+//   if (!map || !map.isStyleLoaded() || !routeGeoJSON) return;
+
+//   // Remove existing route if any
+//   if (map.getLayer('route-line')) map.removeLayer('route-line');
+//   if (map.getSource('route-line')) map.removeSource('route-line');
+
+//   // Add the new route
+//   map.addSource('route-line', {
+//     type: 'geojson',
+//     data: {
+//       type: 'Feature',
+//       geometry: routeGeoJSON
+//     }
+//   });
+
+//   map.addLayer({
+//     id: 'route-line',
+//     type: 'line',
+//     source: 'route-line',
+//     layout: {
+//       'line-cap': 'round',
+//       'line-join': 'round'
+//     },
+//     paint: {
+//       'line-color': '#3B82F6',
+//       'line-width': 3,
+//       'line-opacity': 0.7,
+//       'line-dasharray': [2, 2] // For dashed line (remove for solid line)
+//     }
+//   });
+
+
+
+//   // In your draw route effect:
+// map.addLayer({
+//   id: 'route-line',
+//   type: 'line',
+//   source: 'route-line',
+//   layout: {
+//     'line-cap': 'round',
+//     'line-join': 'round'
+//   },
+//   paint: {
+//     'line-color': '#3B82F6',
+//     'line-width': 3
+//   }
+// });
+
+// // Add arrow symbols along the line
+// map.addLayer({
+//   id: 'route-arrows',
+//   type: 'symbol',
+//   source: 'route-line',
+//   layout: {
+//     'symbol-placement': 'line',
+//     'text-field': '▶',
+//     'text-size': 14,
+//     'symbol-spacing': 50, // Adjust spacing between arrows
+//     'text-keep-upright': false
+//   },
+//   paint: {
+//     'text-color': '#3B82F6',
+//     'text-halo-color': 'white',
+//     'text-halo-width': 1
+//   }
+// });
+
+// }, [routeGeoJSON]);
   // Socket connection and event handlers
  useEffect(() => {
   const handleLocationUpdate = (data) => {

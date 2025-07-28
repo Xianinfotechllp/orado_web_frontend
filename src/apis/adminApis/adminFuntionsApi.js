@@ -417,3 +417,19 @@ export const addProduct = async (restaurantId, productData) => {
     throw error;
   }
 };
+
+
+
+
+export const saveFcmToken = async ({  token,  platform = 'web' }) => {
+  try {
+    const response = await apiClient.post('/admin/save-fcm-token', {
+    token,
+      platform,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error saving FCM token:", error.response?.data?.message || error.message);
+    throw error;
+  }
+}

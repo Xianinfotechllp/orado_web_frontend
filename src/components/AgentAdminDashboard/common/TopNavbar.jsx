@@ -11,16 +11,18 @@ const TopNavbar = () => {
 
 const menuItems = [
   { name: "Dashboard", path: "/admin/agent-dashboard" },
-  { name: "Agent", path: "/admin/agent-dashboard/agents" },
-  { name: "Customers", path: "/admin/agent-dashboard/customers" },
-  { name: "Routes", path: "/admin/agent-dashboard/routes" },
-  { name: "Analytics", path: "/admin/agent-dashboard/analytics" },
-  { name: "AI Prediction", path: "/admin/agent-dashboard/ai-prediction" },
+  { name: "Agent Aprrovals", path: "/admin/agent-dashboard/agent/approval" },
+  { name: "Agent List", path: "/admin/agent-dashboard/agent/list" },
+  { name: "Agent Selfie logs", path: "/admin/agent-dashboard/agent-selfie" },
+  { name: "Agent leave approvals", path: "/admin/agent-dashboard/agent-leave" },
+  { name: "Agent warngis and termination", path: "/admin/agent-dashboard/warings-termination" },
+
+
+
+
   { name: "Settings", path: "/admin/agent-dashboard/settings" },
-  { name: "Hippo Chat", path: "/admin/agent-dashboard/hippo-chat" },
-  { name: "Extensions", path: "/admin/agent-dashboard/extensions" },
-  { name: "What's New", path: "/admin/agent-dashboard/whats-new" },
-  { name: "Share My Agents", path: "/admin/agent-dashboard/share-agents" }
+
+
 ];
   return (
     <>

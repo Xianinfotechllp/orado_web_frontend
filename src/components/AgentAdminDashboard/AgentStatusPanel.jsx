@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import apiClient from "../../apis/apiClient/apiClient";
 
-const AgentStatusPanel = () => {
+const AgentStatusPanel = ({onAgentSelect}) => {
   const [agents, setAgents] = useState([]);
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -9,10 +10,10 @@ const AgentStatusPanel = () => {
   useEffect(() => {
     const fetchAgents = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/admin/agent/list");
-        if (res.data.messageType === "success") {
+        const res = await  apiClient.get("/admin/agent/list");
+        if (res.data) {
           setAgents(res.data.data);
-        }
+        } 
       } catch (error) {
         console.error("Failed to fetch agent list", error);
       }
@@ -126,6 +127,8 @@ const AgentStatusPanel = () => {
             <div
               key={agent.id}
               className="flex items-center p-3 bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+
+                          onClick={() => onAgentSelect(agent)} 
             >
               <div className="relative">
                 <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold">
