@@ -80,6 +80,18 @@ const Sidebar = () => {
             </Link>
           </div>
 
+
+
+           <div className="mb-1">
+            <Link 
+              to="/admin/agent-dashboard" 
+              className="flex items-center px-4 py-3 hover:bg-[#f16a4e] text-white rounded-lg mx-2 cursor-pointer"
+            >
+              <FiPieChart className="mr-3" />
+              <span>Agent Dashboard</span>
+            </Link>
+          </div>
+
           {/* Approvals */}
           <div className="mb-1">
             <div 

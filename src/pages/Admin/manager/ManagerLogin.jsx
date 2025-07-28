@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { loginManager } from "../../../apis/managerApi/mangerAuthapi";
 import axios from "axios";
+import apiClient from "../../../apis/apiClient/apiClient";
 
 const ManagerLogin = () => {
   const [email, setEmail] = useState("");
@@ -29,7 +30,7 @@ const ManagerLogin = () => {
   setIsSubmitting(true);
 
   try {
-    const response = await axios.post("http://localhost:5000/manager/login",{
+    const response = await apiClient.post("/manager/login",{
         email:email,password:password
     });
     

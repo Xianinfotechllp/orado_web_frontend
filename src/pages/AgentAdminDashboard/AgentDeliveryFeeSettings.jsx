@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, MoreVertical, Calculator, MapPin, Clock, Settings, Target, Save, X, Edit, Trash2, DollarSign, Navigation, Zap } from 'lucide-react';
+import { fetchGlobalSettings, saveGlobalSettings } from '../../apis/adminApis/agentEarnigSetting';
+import { toast } from 'react-toastify';
 
 const AgentDeliveryFeeSettings = () => {
   const [activeTab, setActiveTab] = useState('global');
@@ -11,7 +13,7 @@ const AgentDeliveryFeeSettings = () => {
   const [globalSettings, setGlobalSettings] = useState({
     baseFee: 25,
     baseDistance: 2,
-    perKmFee: 3,
+    perKmFeeBeyondBase: 3,
     peakHourBonus: 10,
     zoneBonus: 5,
     allowManualOverrides: true
@@ -25,7 +27,7 @@ const AgentDeliveryFeeSettings = () => {
       enabled: true,
       baseFee: 30,
       baseDistance: 3,
-      perKmFee: 4,
+      perKmFeeBeyondBase: 4,
       peakHourBonus: 15,
       zoneBonus: 8,
       allowManualOverrides: true
@@ -36,7 +38,7 @@ const AgentDeliveryFeeSettings = () => {
       enabled: true,
       baseFee: 28,
       baseDistance: 2.5,
-      perKmFee: 3.5,
+      perKmFeeBeyondBase: 3.5,
       peakHourBonus: 12,
       zoneBonus: 6,
       allowManualOverrides: true
@@ -53,7 +55,31 @@ const AgentDeliveryFeeSettings = () => {
 
   const availableCities = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Kolkata', 'Pune', 'Hyderabad','Gwalior','Bhopal','Indore','Ujjain'];
 
-  // ✅ FIXED: Input handling that allows empty values
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchGlobalSettings()
+        const data = response.data;
+        
+        setGlobalSettings({
+          baseFee: data.baseFee,
+          baseDistance: data.baseKm,
+          perKmFeeBeyondBase: data.perKmFeeBeyondBase,
+          peakHourBonus: data.peakHourBonus,
+          zoneBonus: data.rainBonus,
+          allowManualOverrides: true
+        });
+      } catch (error) {
+        console.error("Failed to fetch global settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
   const handleGlobalSettingsChange = (field, value) => {
     setGlobalSettings(prev => ({ ...prev, [field]: value }));
   };
@@ -90,7 +116,7 @@ const AgentDeliveryFeeSettings = () => {
     
     if ((previewData.distance || 0) > (settings.baseDistance || 0)) {
       const extraDistance = (previewData.distance || 0) - (settings.baseDistance || 0);
-      totalFee += extraDistance * (settings.perKmFee || 0);
+      totalFee += extraDistance * (settings.perKmFeeBeyondBase || 0);
     }
     
     if (previewData.isPeakHour) {
@@ -103,18 +129,41 @@ const AgentDeliveryFeeSettings = () => {
 
     return {
       baseFee: settings.baseFee || 0,
-      extraDistance: (previewData.distance || 0) > (settings.baseDistance || 0) ? ((previewData.distance || 0) - (settings.baseDistance || 0)) * (settings.perKmFee || 0) : 0,
+      extraDistance: (previewData.distance || 0) > (settings.baseDistance || 0) ? ((previewData.distance || 0) - (settings.baseDistance || 0)) * (settings.perKmFeeBeyondBase || 0) : 0,
       peakBonus: previewData.isPeakHour ? (settings.peakHourBonus || 0) : 0,
       zoneBonus: previewData.isHighDemandZone ? (settings.zoneBonus || 0) : 0,
       total: totalFee
     };
   };
 
-  const handleSaveGlobalSettings = () => {
-    setLoading(true);
-    setTimeout(() => {
+  const handleSaveGlobalSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await saveGlobalSettings({
+        mode: 'global',
+        baseFee: globalSettings.baseFee,
+        baseKm: globalSettings.baseDistance,
+        perKmFeeBeyondBase: globalSettings.perKmFeeBeyondBase,
+        peakHourBonus: globalSettings.peakHourBonus,
+        rainBonus: globalSettings.zoneBonus
+      });
+      console.log("Global settings saved successfully:", response);
+      toast.success("Global settings saved successfully", {
+  position: "top-right",
+  autoClose: 3000,
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
+  progress: undefined,
+  theme: "colored", // or "light", "dark"
+  icon: "✅", // or custom icon component
+});
+    } catch (error) {
+      console.error("Failed to save global settings:", error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleSaveCitySettings = (cityId) => {
@@ -262,6 +311,15 @@ const AgentDeliveryFeeSettings = () => {
 
 // ✅ FIXED: Global Settings Tab Component with proper input handling
 const GlobalSettingsTab = ({ settings, onChange, onSave, loading }) => {
+
+
+
+
+
+
+
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-3">
@@ -307,8 +365,8 @@ const GlobalSettingsTab = ({ settings, onChange, onSave, loading }) => {
               <input
                 type="number"
                 step="0.1"
-                value={settings.perKmFee === 0 ? '' : settings.perKmFee}
-                onChange={(e) => onChange('perKmFee', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                value={settings.perKmFeeBeyondBase === 0 ? '' : settings.perKmFeeBeyondBase}
+                onChange={(e) => onChange('perKmFeeBeyondBase', e.target.value === '' ? '' : parseFloat(e.target.value))}
                 className="w-full pl-8 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 hover:shadow-md"
                 placeholder="3"
               />

@@ -3,6 +3,7 @@ import axios from "axios";
 import { Settings, User, Layout, LogOut, Map } from "lucide-react";
 import AllocationMethodSelector from "../../components/AgentAdminDashboard/SettingPage/AutoAllocation/AllocationMethodSelector";
 import { toast } from "react-toastify";
+import apiClient from "../../apis/apiClient/apiClient";
 
 const AgentDashboardSettings = () => {
   const [activeTab, setActiveTab] = useState("Preferences");
@@ -101,8 +102,8 @@ const AgentDashboardSettings = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:5000/admin/allocation-settings"
+        const res = await apiClient.get(
+          "/admin/allocation-settings"
         );
 
         if (res.data.success) {
@@ -305,8 +306,8 @@ const AgentDashboardSettings = () => {
       },
     };
 
-    axios
-      .put("http://localhost:5000/admin/allocation-settings", requestBody)
+    apiClient
+      .put("/admin/allocation-settings", requestBody)
       .then((res) => {
         console.log("Settings saved successfully", res.data);
         toast.success("Allocation settings updated successfully");
@@ -318,8 +319,8 @@ const AgentDashboardSettings = () => {
   };
   const handleToggleAutoAllocation = async () => {
     try {
-      const res = await axios.patch(
-        "http://localhost:5000/admin/allocation-settings/toggle-auto-allocation"
+      const res = await apiClient.patch(
+        "/admin/allocation-settings/toggle-auto-allocation"
       );
       if (res.data.data) {
         setAutoAllocationEnabled(res.data.data.isAutoAllocationEnabled);

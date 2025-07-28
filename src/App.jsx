@@ -117,6 +117,7 @@ import AgentKYCApproval from "./pages/AgentAdminDashboard/AgentKYCApproval";
 import AgentLeave from "./pages/AgentAdminDashboard/AgentLeave";
 import AgentWarningsApprovalsTerminationsDash from "./pages/AgentAdminDashboard/AgentWarningsApprovalsTerminationsDash";
 import AgentWarningTerm from "./pages/AgentAdminDashboard/AgentWarningTerm";
+import AgentDeliveryFeeSettings from "./pages/AgentAdminDashboard/AgentDeliveryFeeSettings";
 
 function App() {
   // const [count, setCount] = useState(0);
@@ -382,6 +383,7 @@ useEffect(() => {
 <Route path="/admin/agent-dashboard/agent-selfie"   element={<AgentSelfieLogs/>} />
 <Route path="/admin/agent-dashboard/agent-leave"   element={<AgentLeave/>} />
 <Route path="/admin/agent-dashboard/warings-termination"   element={<AgentWarningTerm/>} />
+<Route path="/admni/agent-dahsboard/agent-earnigs-settings"  element={<AgentDeliveryFeeSettings/>}   />
 
 
 

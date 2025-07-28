@@ -4,6 +4,7 @@ import AgentStatusPanel from "../components/AgentAdminDashboard/AgentStatusPanel
 import MapView from "../components/AgentAdminDashboard/MapView";
 import { useEffect ,useState} from "react";
 import axios from "axios";
+import apiClient from "../apis/apiClient/apiClient";
 const AdminAgentDashboardLayout = () => {
 
    const [agents, setAgents] = useState([]);
@@ -17,7 +18,7 @@ const AdminAgentDashboardLayout = () => {
   useEffect(() => {
     const fetchAgents = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/admin/agent/list");
+        const res = await apiClient.get("/admin/agent/list");
         if (res.data.messageType === "success") {
           setAgents(res.data.data);
         }

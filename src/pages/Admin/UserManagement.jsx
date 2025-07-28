@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, Phone, Mail, Wallet, Star, X, Shield, UserCheck, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import apiClient from '../../apis/apiClient/apiClient';
 
 const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
@@ -17,21 +18,19 @@ const UserManagement = () => {
   });
 
   // API client function to fetch customers with search and pagination
-  const fetchCustomers = async (page = 1, limit = 20, search = '') => {
+ const fetchCustomers = async (page = 1, limit = 20, search = '') => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `http://localhost:5000/admin/customer-list?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`
-      );
+      const response = await apiClient.get('/admin/customer-list', {
+        params: {
+          page,
+          limit,
+          search
+        }
+      });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        const transformedUsers = data.data.customers.map(customer => ({
+      if (response.data.success) {
+        const transformedUsers = response.data.data.customers.map(customer => ({
           _id: customer.userId,
           name: customer.name,
           email: customer.email,
@@ -52,18 +51,17 @@ const UserManagement = () => {
         }));
         
         setUsers(transformedUsers);
-        setPagination(data.data.pagination);
+        setPagination(response.data.data.pagination);
       } else {
-        throw new Error(data.message || 'Failed to fetch customers');
+        throw new Error(response.data.message || 'Failed to fetch customers');
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Failed to fetch customers');
       console.error('Error fetching customers:', err);
     } finally {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchCustomers(pagination.page, pagination.limit, searchQuery);
   }, [pagination.page, pagination.limit, searchQuery]);

@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import apiClient from "../../apis/apiClient/apiClient";
 
 const DispatchSidebar = ({ onOrderSelect}) => {
   const [activeTab, setActiveTab] = useState("unassigned");
@@ -32,8 +33,8 @@ const DispatchSidebar = ({ onOrderSelect}) => {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(
-        "http://localhost:5000/admin/order/dispatch-status"
+      const res = await apiClient.get(
+        "/admin/order/dispatch-status"
       );
       if (res.data.messageType === "success") {
         setDispatchOrders(res.data.data);
@@ -51,7 +52,7 @@ const DispatchSidebar = ({ onOrderSelect}) => {
   const fetchAvailableAgents = async () => {
     setIsLoadingAgents(true);
     try {
-      const res = await axios.get("http://localhost:5000/admin/agent/list");
+      const res = await apiClient.get("/admin/agent/list");
       if (res.data.messageType === "success") {
         const availableAgents = res.data.data.filter(
           (agent) =>

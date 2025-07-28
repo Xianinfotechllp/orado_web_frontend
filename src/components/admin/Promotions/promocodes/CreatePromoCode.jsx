@@ -3,6 +3,7 @@ import axios from "axios";
 import { fetchRestaurantsDropdown } from "../../../../apis/adminApis/adminFuntionsApi";
 import { getCities } from "../../../../apis/adminApis/cityApi";
 import { ChevronDown } from "lucide-react";
+import apiClient from "../../../../apis/apiClient/apiClient";
 
 const CreatePromoCode = ({ onAddPromoCode, onCancel }) => {
   const [promoData, setPromoData] = useState({
@@ -138,7 +139,7 @@ const CreatePromoCode = ({ onAddPromoCode, onCancel }) => {
 };
 
 
-      const response = await axios.post('http://localhost:5000/promo', apiData);
+      const response = await apiClient.post('/promo', apiData);
       onAddPromoCode?.(response.data);
     } catch (error) {
       console.error("Error creating promo:", error);

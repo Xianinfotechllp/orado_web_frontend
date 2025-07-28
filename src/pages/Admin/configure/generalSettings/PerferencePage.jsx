@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import apiClient from '../../../../apis/apiClient/apiClient';
 
 const PreferencesPage = () => {
   // Initialize state with default values
@@ -64,7 +65,7 @@ const PreferencesPage = () => {
   useEffect(() => {
     const fetchPreferences = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/preferences');
+        const response = await apiClient.get('/preferences');
         if (response.data && response.data.data) {
           // Transform the API data to match our state structure
           const apiData = response.data.data;
@@ -142,7 +143,7 @@ const PreferencesPage = () => {
         }
       };
       
-      await axios.post('http://localhost:5000/preferences', dataToSave);
+      await apiClient.post('/preferences', dataToSave);
       // Show success message
       toast.success("Preferences saved successfully!")
 

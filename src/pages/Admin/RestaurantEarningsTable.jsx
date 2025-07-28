@@ -73,7 +73,7 @@ const RestaurantEarningsTable = () => {
     try {
       setLoading(true);
       const response = await apiClient.get(
-        `http://localhost:5000/restaurants/${restaurantId}/earnigsv2`,
+        `/restaurants/${restaurantId}/earnigsv2`,
         {
           headers: {
             Authorization: `Bearer ${token}`

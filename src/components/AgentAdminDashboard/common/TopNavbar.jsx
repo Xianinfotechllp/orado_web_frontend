@@ -14,7 +14,12 @@ const menuItems = [
   { name: "Agent Aprrovals", path: "/admin/agent-dashboard/agent/approval" },
   { name: "Agent List", path: "/admin/agent-dashboard/agent/list" },
   { name: "Agent Selfie logs", path: "/admin/agent-dashboard/agent-selfie" },
+  { name: "Agent allocation methods", path: "/admin/agent-dashboard/settings/allocation-method" },
+
+
   { name: "Agent leave approvals", path: "/admin/agent-dashboard/agent-leave" },
+  { name: "Agent Earingis settings", path: "/admni/agent-dahsboard/agent-earnigs-settings" },
+
   { name: "Agent warngis and termination", path: "/admin/agent-dashboard/warings-termination" },
 
 

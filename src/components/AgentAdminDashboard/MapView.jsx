@@ -436,32 +436,32 @@ useEffect(() => {
   // Socket connection and event handlers
  useEffect(() => {
   const handleLocationUpdate = (data) => {
-    setLiveAgents(prev => {
-      // Update existing agent or add new one
-      const existingIndex = prev.findIndex(a => a.id === data.agentId);
-      
-      if (existingIndex >= 0) {
-        const updated = [...prev];
-        updated[existingIndex] = { 
-          ...updated[existingIndex],
+    console.log(data)
+     setLiveAgents(prev => {
+    const existingIndex = prev.findIndex(a => a.id === data.agentId);
+    
+    if (existingIndex >= 0) {
+      const updated = [...prev];
+      updated[existingIndex] = { 
+        ...updated[existingIndex],
+        location: { lat: data.lat, lng: data.lng },
+        deviceInfo: data.deviceInfo || updated[existingIndex].deviceInfo, // Store device info
+        currentStatus: data.currentStatus || updated[existingIndex].currentStatus
+      };
+      return updated;
+    } else {
+      return [
+        ...prev,
+        {
+          id: data.agentId,
+          name: `Agent ${data.agentId}`,
           location: { lat: data.lat, lng: data.lng },
-          currentStatus: data.currentStatus || updated[existingIndex].currentStatus,
-          accuracy: data.accuracy || updated[existingIndex].accuracy
-        };
-        return updated;
-      } else {
-        return [
-          ...prev,
-          {
-            id: data.agentId,
-            name: `Agent ${data.agentId}`,
-            location: { lat: data.lat, lng: data.lng },
-            currentStatus: data.currentStatus || 'AVAILABLE',
-            accuracy: data.accuracy || null
-          }
-        ];
-      }
-    });
+          deviceInfo: data.deviceInfo || null, // Include device info for new agents
+          currentStatus: data.currentStatus || 'AVAILABLE'
+        }
+      ];
+    }
+  });
   };
 
   socket.on('admin:updateLocation', handleLocationUpdate);
@@ -486,87 +486,110 @@ useEffect(() => {
     };
     fetchData();
   }, []);
+// Add this effect to initialize agent markers from props
 useEffect(() => {
-  console.log('Attempting to connect to socket...');
-  socket.on('connect', () => {
-    console.log('Socket connected:', socket.id);
-    setSocketConnected(true);
-  });
-  
-  socket.on('disconnect', () => {
-    console.log('Socket disconnected');
-    setSocketConnected(false);
-  });
-  
-  socket.on('connect_error', (err) => {
-    console.error('Socket connection error:', err);
+  const map = mapRef.current;
+  if (!map || !map.isStyleLoaded()) return;
+
+  // Clear existing markers
+  Object.values(agentMarkersRef.current).forEach(marker => marker.remove());
+  agentMarkersRef.current = {};
+
+  // Create markers for initial agents (from props)
+  agents.forEach(agent => {
+    if (agent?.location) {
+      createAgentMarker({
+        id: agent.id,
+        name: agent.name,
+        location: agent.location,
+        currentStatus: agent.currentStatus,
+        accuracy: agent.location?.accuracy,
+        deviceInfo: agent.deviceInfo // Make sure deviceInfo is included in initial props
+      });
+    }
   });
 
-  // Your existing location update handler
-const handleLocationUpdate = (data) => {
-  if (!mounted) return;
+  // Also set them as live agents
+  setLiveAgents(agents);
+}, [agents]);
+
+// Simplified socket connection handler
+useEffect(() => {
+  let mounted = true;
+
+  const onConnect = () => {
+    if (!mounted) return;
+    console.log('Socket connected:', socket.id);
+    setSocketConnected(true);
+  };
   
-  setLiveAgents(prev => {
-    const existingIndex = prev.findIndex(a => a.id === data.agentId);
+  const onDisconnect = () => {
+    if (!mounted) return;
+    console.log('Socket disconnected');
+    setSocketConnected(false);
+  };
+
+  const handleLocationUpdate = (data) => {
+    if (!mounted) return;
     
-    if (existingIndex >= 0) {
-      const updated = [...prev];
-      const prevLocation = updated[existingIndex].location;
-      const newLocation = { lat: data.lat, lng: data.lng };
+    setLiveAgents(prev => {
+      const existingIndex = prev.findIndex(a => a.id === data.agentId);
       
-      // Animate the marker if it exists
-      if (agentMarkersRef.current[data.agentId]) {
-        animateMarkerMovement(
-          agentMarkersRef.current[data.agentId],
-          newLocation,
-          1000 // 1 second animation
-        );
-      }
-      
-      updated[existingIndex] = { 
-        ...updated[existingIndex],
-        location: newLocation,
-        currentStatus: data.currentStatus || updated[existingIndex].currentStatus,
-        accuracy: data.accuracy || updated[existingIndex].accuracy,
-        deviceInfo: data.deviceInfo || updated[existingIndex].deviceInfo,
-        name: data.name || updated[existingIndex].name
-      };
-      return updated;
-    } else {
-      // New agent - create marker
-      createAgentMarker({
-        id: data.agentId,
-        name: data.name || `Agent ${data.agentId}`,
-        location: { lat: data.lat, lng: data.lng },
-        currentStatus: data.currentStatus || 'AVAILABLE',
-        accuracy: data.accuracy || null,
-        deviceInfo: data.deviceInfo || null
-      });
-      
-      return [
-        ...prev,
-        {
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        const prevLocation = updated[existingIndex].location;
+        const newLocation = { lat: data.lat, lng: data.lng };
+        
+        if (agentMarkersRef.current[data.agentId]) {
+          animateMarkerMovement(
+            agentMarkersRef.current[data.agentId],
+            newLocation,
+            1000
+          );
+        }
+        
+        updated[existingIndex] = { 
+          ...updated[existingIndex],
+          location: newLocation,
+          currentStatus: data.currentStatus || updated[existingIndex].currentStatus
+        };
+        return updated;
+      } else {
+        createAgentMarker({
           id: data.agentId,
           name: data.name || `Agent ${data.agentId}`,
           location: { lat: data.lat, lng: data.lng },
-          currentStatus: data.currentStatus || 'AVAILABLE',
-          accuracy: data.accuracy || null,
-          deviceInfo: data.deviceInfo || null
-        }
-      ];
-    }
-  });
-};
+          currentStatus: data.currentStatus || 'AVAILABLE'
+        });
+        
+        return [
+          ...prev,
+          {
+            id: data.agentId,
+            name: data.name || `Agent ${data.agentId}`,
+            location: { lat: data.lat, lng: data.lng },
+            currentStatus: data.currentStatus || 'AVAILABLE'
+          }
+        ];
+      }
+    });
+  };
 
+  socket.on('connect', onConnect);
+  socket.on('disconnect', onDisconnect);
   socket.on('admin:updateLocation', handleLocationUpdate);
 
+  // Manually connect the socket
+  socket.connect();
+
   return () => {
+    mounted = false;
+    socket.off('connect', onConnect);
+    socket.off('disconnect', onDisconnect);
     socket.off('admin:updateLocation', handleLocationUpdate);
-    socket.off('connect');
-    socket.off('disconnect');
-    socket.off('connect_error');
+    socket.disconnect();
   };
-}, []);
+}, []); // Empty dependency array to run only once
 
   // Add restaurant markers
   useEffect(() => {
@@ -715,15 +738,15 @@ useEffect(() => {
 
 // Add this helper function to your component
 const createAgentMarker = (agent) => {
-  if (!mapRef.current || !agent?.location) return;
+  const map = mapRef.current;
+  if (!map || !map.isStyleLoaded() || !agent?.location) return;
 
   const status = agent.currentStatus || "AVAILABLE";
-  const color =
+  const color = 
     status === 'AVAILABLE' ? '#2a9d8f' :
     status === 'ORDER_ASSIGNED' ? '#e63946' :
     status === 'PICKED_UP' ? '#f4a261' : '#ccc';
 
-  // Use first name initial if name is long
   const displayInitial = agent.name 
     ? agent.name.split(' ')[0].charAt(0).toUpperCase()
     : 'A';
@@ -743,49 +766,32 @@ const createAgentMarker = (agent) => {
       color: white;
       font-weight: bold;
       font-size: 10px;
-      transition: transform 0.5s ease-out;
     ">
       ${displayInitial}
     </div>
-    <div style="
-      position: absolute;
-      bottom: -5px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 5px solid transparent;
-      border-right: 5px solid transparent;
-      border-top: 5px solid ${color};
-    "></div>
   `;
 
-  const marker = new mapboxgl.Marker({ 
+  const marker = new mapboxgl.Marker({
     element: el,
-    // Enable marker rotation
     rotationAlignment: 'map',
     pitchAlignment: 'map'
   })
     .setLngLat([agent.location.lng, agent.location.lat])
-    .addTo(mapRef.current);
+    .addTo(map);
 
-  // Store the marker element for animation
-  marker.getElement().style.transition = 'transform 0.5s ease-out';
-  
   marker.getElement().addEventListener('click', () => {
     setSelectedLocation({
       ...agent,
       type: 'agent',
       currentStatus: status,
       accuracy: agent.location.accuracy,
-      deviceInfo: agent.deviceInfo
+      deviceInfo: agent.deviceInfo // Make sure deviceInfo is passed through
     });
   });
 
   agentMarkersRef.current[agent.id] = marker;
+  return marker;
 };
-
-
 
 // Add these helper functions to your component
 const animateMarkerMovement = (marker, newLngLat, duration = 1000) => {
@@ -950,69 +956,40 @@ const handleLocationUpdate = (data) => {
 };
 // Update your agent markers useEffect to handle initial markers
 // Add/update agent markers
+// Add/update agent markers
+// Add/update agent markers
 useEffect(() => {
-  if (!mapRef.current) return;
-
   const map = mapRef.current;
-  
+  if (!map || !map.isStyleLoaded()) return;
+
+  // Create new markers for new agents
   liveAgents.forEach(agent => {
     if (!agent?.location) return;
-    
-    // Update existing marker
-    if (agentMarkersRef.current[agent.id]) {
+
+    if (!agentMarkersRef.current[agent.id]) {
+      createAgentMarker(agent);
+    } else {
+      // Update existing marker position and status
       agentMarkersRef.current[agent.id].setLngLat([agent.location.lng, agent.location.lat]);
       updateAgentMarkerStatus(agent.id, agent.currentStatus);
-    } 
-    // Create new marker
-    else {
-      const color = 
-        agent.currentStatus === 'AVAILABLE' ? '#2a9d8f' :
-        agent.currentStatus === 'ORDER_ASSIGNED' ? '#e63946' :
-        agent.currentStatus === 'PICKED_UP' ? '#f4a261' : '#ccc';
-      
-      const el = document.createElement('div');
-      el.className = 'agent-marker';
-      el.innerHTML = `
-        <div style="
-          width: 24px;
-          height: 24px;
-          background: ${color};
-          border-radius: 50%;
-          border: 2px solid white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-weight: bold;
-          font-size: 10px;
-        ">
-          ${agent.name?.charAt(0) || 'A'}
-        </div>
-      `;
-
-      const marker = new mapboxgl.Marker({ element: el })
-        .setLngLat([agent.location.lng, agent.location.lat])
-        .addTo(map);
-
-      marker.getElement().addEventListener('click', () => {
-        setSelectedLocation({
-          ...agent,
-          type: 'agent'
-        });
-      });
-
-      agentMarkersRef.current[agent.id] = marker;
     }
   });
 
-  // Cleanup removed agents
+  // Remove markers for agents that are no longer present
   Object.keys(agentMarkersRef.current).forEach(agentId => {
     if (!liveAgents.some(a => a.id === agentId)) {
       agentMarkersRef.current[agentId].remove();
       delete agentMarkersRef.current[agentId];
     }
   });
-}, [liveAgents]);
+
+  return () => {
+    // Cleanup on unmount
+    Object.values(agentMarkersRef.current).forEach(marker => marker.remove());
+    agentMarkersRef.current = {};
+  };
+}, [liveAgents, updateAgentMarkerStatus]);
+
   // Toggle marker visibility
   useEffect(() => {
     Object.values(restaurantMarkersRef.current).forEach(marker => {
@@ -1238,67 +1215,52 @@ useEffect(() => {
       {/* Selected Location Info */}
 
 {/* Selected Location Info - This should be outside any conditionals */}
-{selectedLocation && (
+{selectedLocation && selectedLocation.type === 'agent' && (
   <div className="absolute bottom-20 right-4 w-64 bg-white rounded-lg shadow-lg z-10 p-4">
-    {selectedLocation.type === 'agent' ? (
-      <>
-        <h3 className="font-bold text-lg">{selectedLocation.name}</h3>
-        <div className="mt-2 space-y-1">
-          <div className="flex items-center">
-            <div className={`w-3 h-3 rounded-full mr-2 ${
-              selectedLocation.currentStatus === 'AVAILABLE' ? 'bg-green-500' :
-              selectedLocation.currentStatus === 'ORDER_ASSIGNED' ? 'bg-red-500' : 
-              'bg-yellow-500'
-            }`}></div>
-            <span className="text-sm capitalize">
-              {selectedLocation.currentStatus?.toLowerCase().replace('_', ' ') || 'Unknown status'}
-            </span>
-          </div>
-          {selectedLocation.accuracy && (
-            <div className="text-sm text-gray-600">
-              Accuracy: {Math.round(selectedLocation.accuracy)} meters
-            </div>
-          )}
-          {selectedLocation.deviceInfo && (
-            <div className="mt-2 text-xs text-gray-600">
-              <div><span className="font-semibold">Device:</span> {selectedLocation.deviceInfo.model}</div>
-              <div><span className="font-semibold">OS:</span> {selectedLocation.deviceInfo.os} {selectedLocation.deviceInfo.osVersion}</div>
-              <div><span className="font-semibold">Battery:</span> {selectedLocation.deviceInfo.batteryLevel}%</div>
-              <div><span className="font-semibold">Network:</span> {selectedLocation.deviceInfo.networkType}</div>
-            </div>
-          )}
-        </div>
-      </>
-    ) : selectedLocation.type === 'restaurant' ? (
-      <>
-        <h3 className="font-bold text-lg">{selectedLocation.name}</h3>
-        <div className="flex items-center mt-1">
-          <span className="text-yellow-500">
-            {'★'.repeat(Math.floor(selectedLocation.rating || 0))}
-            {'☆'.repeat(5 - Math.floor(selectedLocation.rating || 0))}
-          </span>
-          <span className="ml-1 text-sm text-gray-600">{selectedLocation.rating || 0}</span>
-        </div>
-      </>
-    ) : (
-      <>
-        <h3 className="font-bold text-lg">Order {selectedLocation.orderId}</h3>
-        <div className={`mt-1 text-sm ${
-          selectedLocation.status === 'Delivered' ? 'text-green-500' : 
-          selectedLocation.status === 'In Transit' ? 'text-blue-500' : 
-          'text-yellow-500'
-        }`}>
-          Status: {selectedLocation.status || 'Pending'}
-        </div>
-        <div className="text-sm text-gray-600">
-          From: <span className="font-semibold">{selectedLocation?.restaurant?.name || 'Unknown'}</span>
-        </div>
-      </>
-    )}
+    <h3 className="font-bold text-lg">{selectedLocation.name || `Agent ${selectedLocation.id}`}</h3>
     
-    <button 
+    {/* Status Indicator */}
+    <div className="flex items-center mt-2">
+      <div className={`w-3 h-3 rounded-full mr-2 ${
+        selectedLocation.currentStatus === 'AVAILABLE' ? 'bg-green-500' :
+        selectedLocation.currentStatus === 'ORDER_ASSIGNED' ? 'bg-red-500' :
+        'bg-yellow-500'
+      }`} />
+      <span className="text-sm capitalize">
+        {selectedLocation.currentStatus?.toLowerCase().replace('_', ' ') || 'Unknown'}
+      </span>
+    </div>
+
+    {/* Device Info Section */}
+    {selectedLocation.deviceInfo && (
+      <div className="mt-3 text-sm space-y-1">
+        <div className="font-semibold">📱 Device Info</div>
+        <div className="flex justify-between">
+          <span className="text-gray-600">Model:</span>
+          <span>{selectedLocation.deviceInfo.model || 'Unknown'}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-600">OS:</span>
+          <span>{selectedLocation.deviceInfo.os} {selectedLocation.deviceInfo.osVersion}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-600">Battery:</span>
+          <span>{selectedLocation.deviceInfo.batteryLevel}%</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-600">Network:</span>
+          <span>{selectedLocation.deviceInfo.networkType || 'Unknown'}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-600">App Version:</span>
+          <span>{selectedLocation.deviceInfo.appVersion || 'Unknown'}</span>
+        </div>
+      </div>
+    )}
+
+    <button
       onClick={() => setSelectedLocation(null)}
-      className="mt-3 w-full py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors"
+      className="mt-3 w-full py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
     >
       Close
     </button>
