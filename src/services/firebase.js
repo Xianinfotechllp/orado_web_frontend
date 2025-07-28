@@ -1,32 +1,27 @@
-// firebase.js
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
-// ✅ 1. Your Firebase web configuration (from Firebase Console > Project Settings)
 const firebaseConfig = {
-  apiKey: "AIzaSyBtgvtkBj1aruNIL5KJJGIyO911hsZY5Qk",
-  authDomain: "oradosaleapp.firebaseapp.com",
-  projectId: "oradosaleapp",
-  storageBucket: "oradosaleapp.appspot.com",
-  messagingSenderId: "908590403140",
-  appId: "1:908590403140:web:860a272a880d59c3c0f611"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// ✅ 2. VAPID key (from Firebase Console > Project Settings > Cloud Messaging)
-const vapidKey = "BEKT_8o_j4QVvic3b-GB6hDdy0RiWEPoXA1PwGUZ7xj8mBPiHFtLauRVaAhHVl5BQkTg0R-MFAnaDGyD_YVnSDM";
+const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
 
-// ✅ 3. Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
-// ✅ 4. Request Permission and Get Token
 export const requestFirebaseNotificationPermission = async () => {
   try {
     const token = await getToken(messaging, { vapidKey });
     if (token) {
       console.log("FCM Token:", token);
-      return token; // Send this to your backend to store
-    } else {  
+      return token;
+    } else {
       console.warn("No token found.");
       return null;
     }
@@ -36,7 +31,6 @@ export const requestFirebaseNotificationPermission = async () => {
   }
 };
 
-// ✅ 5. Listen for foreground messages
 export const onMessageListener = (callback) => {
   onMessage(messaging, (payload) => {
     console.log("Message received in foreground:", payload);
