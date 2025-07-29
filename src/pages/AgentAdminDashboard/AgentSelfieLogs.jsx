@@ -9,9 +9,9 @@ import {
   FiChevronRight,
 } from "react-icons/fi";
 import { ChevronDown, Calendar } from "lucide-react";
-import axios from "axios";
 import { toast } from "react-toastify";
 import apiClient from "../../apis/apiClient/apiClient";
+import { reviewAgentSelfie } from "../../apis/adminApis/agentApi"; 
 
 const AgentSelfieLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,7 +26,7 @@ const AgentSelfieLogs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [imageLoaded, setImageLoaded] = useState(false);
-  
+
   // Date range state
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setDate(new Date().getDate() - 7)),
@@ -51,7 +51,6 @@ const AgentSelfieLogs = () => {
             endDate: dateRange.to.toISOString(),
           },
         });
-
         setLogs(
           response.data.selfies.map((selfie) => ({
             id: selfie._id,
@@ -59,7 +58,9 @@ const AgentSelfieLogs = () => {
             agentName: selfie.agentId.fullName || "Unknown Agent",
             phone: selfie.agentId.phoneNumber || "N/A",
             date: new Date(selfie.takenAt).toLocaleDateString(),
-            status: selfie.status || "Pending",
+            status: selfie.status
+              ? selfie.status.charAt(0).toUpperCase() + selfie.status.slice(1)
+              : "Pending",
             selfieUrl: selfie.imageUrl,
             zone: selfie.agentId.zone || "N/A",
           }))
@@ -95,13 +96,8 @@ const AgentSelfieLogs = () => {
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const firstDay = new Date(year, month, 1).getDay();
       const days = [];
-
-      for (let i = 0; i < firstDay; i++) {
-        days.push(null);
-      }
-      for (let i = 1; i <= daysInMonth; i++) {
-        days.push(i);
-      }
+      for (let i = 0; i < firstDay; i++) days.push(null);
+      for (let i = 1; i <= daysInMonth; i++) days.push(i);
       return days;
     };
 
@@ -121,15 +117,8 @@ const AgentSelfieLogs = () => {
     const changeMonth = (increment) => {
       let newMonth = currentMonth + increment;
       let newYear = currentYear;
-
-      if (newMonth < 0) {
-        newMonth = 11;
-        newYear--;
-      } else if (newMonth > 11) {
-        newMonth = 0;
-        newYear++;
-      }
-
+      if (newMonth < 0) { newMonth = 11; newYear--; }
+      else if (newMonth > 11) { newMonth = 0; newYear++; }
       setCurrentMonth(newMonth);
       setCurrentYear(newYear);
     };
@@ -153,19 +142,13 @@ const AgentSelfieLogs = () => {
     return (
       <div className="absolute z-50 top-full left-0 mt-1 bg-white shadow-lg rounded-lg border border-gray-200 p-3 w-full max-w-[280px]">
         <div className="flex items-center justify-between mb-2">
-          <button
-            onClick={() => changeMonth(-1)}
-            className="p-1 rounded hover:bg-gray-100 transition-colors"
-          >
+          <button onClick={() => changeMonth(-1)} className="p-1 rounded hover:bg-gray-100 transition-colors">
             <ChevronDown className="w-3 h-3 rotate-90" />
           </button>
           <span className="text-sm font-medium text-gray-700">
             {months[currentMonth]} {currentYear}
           </span>
-          <button
-            onClick={() => changeMonth(1)}
-            className="p-1 rounded hover:bg-gray-100 transition-colors"
-          >
+          <button onClick={() => changeMonth(1)} className="p-1 rounded hover:bg-gray-100 transition-colors">
             <ChevronDown className="w-3 h-3 -rotate-90" />
           </button>
         </div>
@@ -177,9 +160,9 @@ const AgentSelfieLogs = () => {
           ))}
         </div>
         <div className="grid grid-cols-7 gap-1">
-          {days.map((day, index) => (
+          {days.map((day, idx) => (
             <div
-              key={index}
+              key={idx}
               onClick={() => handleDateClick(day)}
               className={`text-center text-sm p-2 cursor-pointer rounded transition-colors ${
                 isSelected(day)
@@ -231,7 +214,7 @@ const AgentSelfieLogs = () => {
   });
 
   // Pagination logic
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / itemsPerPage));
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
@@ -239,14 +222,22 @@ const AgentSelfieLogs = () => {
   // Update selfie status
   const handleStatusChange = async (id, newStatus) => {
     try {
-      await apiClient.patch(`/agent/selfies/${id}/status`, {
-        status: newStatus,
+      let action, rejectionReason = undefined;
+      if (newStatus === "Approved") action = "approve";
+      else if (newStatus === "Rejected") action = "reject";
+      else action = "pending";
+      if (action === "reject") {
+        rejectionReason = prompt("Enter rejection reason:", "Not clear/Face not visible");
+        if (rejectionReason === null) return;
+      }
+      await reviewAgentSelfie({
+        selfieId: id,
+        action,
+        ...(rejectionReason ? { rejectionReason } : {}),
       });
-
       setLogs(
         logs.map((log) => (log.id === id ? { ...log, status: newStatus } : log))
       );
-
       toast.success(`Selfie ${newStatus.toLowerCase()} successfully`);
     } catch (err) {
       console.error("Error updating status:", err);
@@ -254,17 +245,15 @@ const AgentSelfieLogs = () => {
     }
   };
 
-  // Bulk approve selected selfies
+  // Bulk approve selected selfies (optional, kept as-is; your backend must support)
   const bulkApprove = async () => {
     try {
-      await axios.post("/agent/selfies/bulk-approve", { ids: selectedLogs });
-
+      await apiClient.post("/agent/selfies/bulk-approve", { ids: selectedLogs });
       setLogs(
         logs.map((log) =>
           selectedLogs.includes(log.id) ? { ...log, status: "Approved" } : log
         )
       );
-
       setSelectedLogs([]);
       toast.success(`${selectedLogs.length} selfies approved`);
     } catch (err) {
@@ -276,7 +265,7 @@ const AgentSelfieLogs = () => {
   // Export to CSV
   const exportToCSV = async () => {
     try {
-      const response = await axios.get("/agent/selfies/export", {
+      const response = await apiClient.get("/agent/selfies/export", {
         params: {
           status: statusFilter !== "All" ? statusFilter.toLowerCase() : undefined,
           search: searchTerm || undefined,
@@ -285,7 +274,6 @@ const AgentSelfieLogs = () => {
         },
         responseType: "blob",
       });
-
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -296,7 +284,6 @@ const AgentSelfieLogs = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-
       toast.success("CSV exported successfully");
     } catch (err) {
       console.error("Error exporting CSV:", err);
@@ -305,17 +292,9 @@ const AgentSelfieLogs = () => {
   };
 
   // Pagination controls
-  const goToNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  };
-
-  const goToPrevPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
+  const goToNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const goToPrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+  const handlePageChange = (page) => setCurrentPage(page);
 
   if (loading) {
     return (
@@ -333,7 +312,9 @@ const AgentSelfieLogs = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-sm text-center max-w-md border border-gray-200">
           <FiX className="w-12 h-12 mx-auto mb-4 text-red-600" />
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Data</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            Error Loading Data
+          </h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -355,7 +336,9 @@ const AgentSelfieLogs = () => {
             <FiEye size={26} className="text-orange-600" />
             Agent Selfie Logs
           </h1>
-          <p className="text-gray-600 text-sm mt-1">Monitor and verify agent identity submissions</p>
+          <p className="text-gray-600 text-sm mt-1">
+            Monitor and verify agent identity submissions
+          </p>
         </div>
 
         {/* Filters */}
@@ -374,7 +357,6 @@ const AgentSelfieLogs = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-orange-600"
               />
             </div>
-
             {/* Status Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -391,7 +373,6 @@ const AgentSelfieLogs = () => {
                 <option value="Rejected">Rejected</option>
               </select>
             </div>
-
             {/* From Date */}
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -409,7 +390,6 @@ const AgentSelfieLogs = () => {
               </div>
               {showDatePicker === "from" && <DatePicker type="from" />}
             </div>
-
             {/* To Date */}
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -427,7 +407,6 @@ const AgentSelfieLogs = () => {
               </div>
               {showDatePicker === "to" && <DatePicker type="to" />}
             </div>
-
             {/* Actions */}
             <div className="flex items-end gap-2">
               <button
@@ -446,7 +425,6 @@ const AgentSelfieLogs = () => {
               </button>
             </div>
           </div>
-
           {/* Results Count */}
           <div className="mt-4 text-sm text-gray-600">
             Found <span className="font-medium text-orange-600">{filteredLogs.length}</span> selfie logs
@@ -499,7 +477,6 @@ const AgentSelfieLogs = () => {
                   <th className="px-6 py-3 text-left font-medium">Date</th>
                   <th className="px-6 py-3 text-left font-medium">Status</th>
                   <th className="px-6 py-3 text-left font-medium">Selfie</th>
-                  {/* <th className="px-6 py-3 text-left font-medium">Actions</th> */}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -549,26 +526,6 @@ const AgentSelfieLogs = () => {
                           View
                         </button>
                       </td>
-                      {/* <td className="px-6 py-3">
-                        {log.status === "Pending" ? (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleStatusChange(log.id, "Approved")}
-                              className="text-green-600 hover:text-green-800 transition-colors"
-                            >
-                              <FiCheck size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleStatusChange(log.id, "Rejected")}
-                              className="text-red-600 hover:text-red-800 transition-colors"
-                            >
-                              <FiX size={16} />
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </td> */}
                     </tr>
                   ))
                 ) : (
@@ -606,7 +563,6 @@ const AgentSelfieLogs = () => {
                     <FiChevronLeft size={14} />
                     Previous
                   </button>
-
                   <div className="flex gap-1">
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                       <button
@@ -622,7 +578,6 @@ const AgentSelfieLogs = () => {
                       </button>
                     ))}
                   </div>
-
                   <button
                     onClick={goToNextPage}
                     disabled={currentPage === totalPages}
