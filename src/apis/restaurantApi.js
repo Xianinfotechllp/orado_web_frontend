@@ -103,7 +103,7 @@ export const getRestaurantsBySearchQuery = async ({
 
 
 // creating restaurant 
-export const createRestaurant = async (formData) => {
+export const  createRestaurant = async (formData) => {
   try {
     console.log("Creating restaurant with data:");
     // Log form data contents

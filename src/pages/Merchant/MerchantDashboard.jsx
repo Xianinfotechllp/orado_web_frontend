@@ -30,7 +30,7 @@ const MerchantDashboard = () => {
       case "menu":
         return <CreateMenu />;
       case "orders":
-        return <OrderManager />;
+        return <OrderManagement />;
       case "service-areas":
         return <ServiceAreaManagement />;
       case "restaurant":

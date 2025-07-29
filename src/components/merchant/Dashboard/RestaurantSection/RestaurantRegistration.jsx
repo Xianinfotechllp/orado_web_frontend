@@ -25,6 +25,7 @@ const RestaurantRegistration = ({ onBack, onComplete }) => {
     name: "",
     ownerId: user.id,
     foodType: "both",
+    storeType: "",
     address: {
       street: "",
       city: "",
@@ -265,7 +266,7 @@ const handleBusinessHoursChange = (day, field, value) => {
   }
 
   const renderStepContent = () => {
-    switch (currentStep) {
+    switch (currentStep) {  
       case 1:
         return (
           <div className="space-y-6">
@@ -280,38 +281,55 @@ const handleBusinessHoursChange = (day, field, value) => {
                 <p className="text-gray-600">Tell us about your restaurant</p>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Restaurant Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
-                  placeholder="Enter restaurant name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Food Type *
-                </label>
-                <select
-                  value={formData.foodType}
-                  onChange={(e) =>
-                    handleInputChange("foodType", e.target.value)
-                  }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
-                >
-                  {foodTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Restaurant Name *
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+                placeholder="Enter restaurant name"
+              />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Store Type *
+              </label>
+              <select
+                value={formData.storeType}
+                onChange={(e) => handleInputChange("storeType", e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+              >
+                <option value="">Select type</option>
+                <option value="restaurant">Restaurant</option>
+                <option value="grocery">Grocery</option>
+                <option value="meat">Meat</option>
+                <option value="pharmacy">Pharmacy</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Food Type *
+              </label>
+              <select
+                value={formData.foodType}
+                onChange={(e) =>
+                  handleInputChange("foodType", e.target.value)
+                }
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg  focus:border-transparent transition-all duration-200"
+              >
+                {foodTypes.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
            
           </div>
         );
