@@ -1,62 +1,52 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Minus, Trash2, RefreshCw, ShoppingCart } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
+import { ShoppingCart, RefreshCw } from "lucide-react";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getCart } from "../../apis/cartApi";
 import { setCart } from "../../slices/cartSlice";
 
-export default function CartSummary() {
-  const [items, setItems] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export default function CartSummary({ useWallet, setUseWallet }) {
+  // 1. Get products directly from Redux, not local state!
+  const products = useSelector(state => state.cart.products || []);
+  const user = useSelector(state => state.auth.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.user);
 
-  const fetchCartData = async () => {
-    if (!user?._id) return;
-    try {
-      setError(null);
+  const total = products.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // 2. One-time fetch if not yet in Redux (on first mount)
+  useEffect(() => {
+    if (!user?._id || products.length) return;
+    async function fetchCart() {
       setLoading(true);
-      const cart = await getCart();
-      if (cart?._id) {
-        dispatch(setCart(cart));
-        setItems(cart.products || []);
-        calculateTotal(cart.products || []);
-      } else {
-        setItems([]);
-        setTotal(0);
+      setError(null);
+      try {
+        const cart = await getCart();
+        if (cart?._id) dispatch(setCart(cart));
+      } catch (err) {
+        setError("Failed to load your cart. Please try again.");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching cart:", error);
-      setError("Failed to load your cart. Please try again.");
-      setItems([]);
-      setTotal(0);
+    }
+    fetchCart();
+  }, [user?._id, products.length, dispatch]);
+
+  // 3. Manual refresh
+  const handleRefresh = async () => {
+    setLoading(true); setError(null);
+    try {
+      const cart = await getCart();
+      if (cart?._id) dispatch(setCart(cart));
+    } catch (err) {
+      setError("Failed to refresh your cart.");
     } finally {
       setLoading(false);
     }
   };
-
-  const calculateTotal = (cartItems) => {
-    const calculatedTotal = cartItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-    setTotal(calculatedTotal);
-  };
-
-  useEffect(() => {
-    fetchCartData();
-  }, [user?._id]);
-
-  if (loading) {
-    return (
-      <div className="text-center py-4 font-medium text-gray-600">
-        Loading your cart...
-      </div>
-    );
-  }
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -67,7 +57,7 @@ export default function CartSummary() {
           <h3 className="font-semibold">Your Order</h3>
         </div>
         <button
-          onClick={fetchCartData}
+          onClick={handleRefresh}
           className="p-1 rounded-full hover:bg-orange-600 transition-colors"
           title="Refresh cart"
         >
@@ -84,18 +74,20 @@ export default function CartSummary() {
 
       {/* Cart Items */}
       <div className="max-h-64 overflow-y-auto">
-        {items.length === 0 ? (
-          <div className="text-center py-6 text-gray-500">
-            Your cart is empty
+        {loading ? (
+          <div className="text-center py-4 font-medium text-gray-600">
+            Loading your cart...
           </div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-6 text-gray-500">Your cart is empty</div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {items.map((item) => (
-              <div key={item.productId._id} className="p-3">
+            {products.map((item) => (
+              <div key={item.productId._id || item.productId} className="p-3">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-800">
-                      {item.productId.name}
+                      {item.productId?.name || item.productId}
                     </h4>
                     <div className="flex items-center gap-4 mt-1">
                       <span className="text-sm text-gray-600">
@@ -116,7 +108,7 @@ export default function CartSummary() {
       </div>
 
       {/* Cart Total */}
-      {items.length > 0 && (
+      {products.length > 0 && (
         <div className="border-t border-gray-200 p-3 bg-gray-50">
           <div className="flex justify-between items-center">
             <span className="font-semibold">Total:</span>
@@ -129,15 +121,15 @@ export default function CartSummary() {
       <div className="p-3">
         <button
           onClick={() => navigate("/add-to-cart")}
-          disabled={items.length === 0}
+          disabled={products.length === 0 || loading}
           className={`w-full py-2 px-4 rounded-lg font-medium flex items-center justify-center gap-2 ${
-            items.length === 0
+            products.length === 0 || loading
               ? "bg-gray-200 text-gray-500 cursor-not-allowed"
               : "bg-orange-600 text-white hover:bg-orange-700"
           }`}
         >
           <ShoppingCart size={18} />
-          {items.length > 0 ? "View & Checkout" : "Cart is Empty"}
+          {products.length > 0 ? "View & Checkout" : "Cart is Empty"}
         </button>
       </div>
     </div>

@@ -28,7 +28,7 @@ import OrderSuccessModal from "./OrderSuccessfullModal";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-export default function MyBasket({ useWallet, setUseWallet }) {
+export default function  MyBasket({ useWallet, setUseWallet }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
