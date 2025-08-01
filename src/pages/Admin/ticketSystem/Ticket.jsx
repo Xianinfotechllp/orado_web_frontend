@@ -26,6 +26,89 @@ import {
 import axios from 'axios';
 import LoadingForAdmins from '../AdminUtils/LoadingForAdmins';
 import apiClient from '../../../apis/apiClient/apiClient';
+import { Send, Plus } from 'lucide-react';
+
+
+
+
+
+// Create this new component in your Ticket.js file
+const TicketReplySection = ({ ticket, onReplySubmit }) => {
+  const [replyMessage, setReplyMessage] = useState('');
+  const [isReplying, setIsReplying] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!replyMessage.trim()) return;
+    
+    try {
+      setIsReplying(true);
+      await onReplySubmit(ticket._id, replyMessage);
+      setReplyMessage('');
+    } finally {
+      setIsReplying(false);
+    }
+  };
+
+  return (
+    <div className="mt-6 border-t border-gray-100 pt-4">
+      <h4 className="text-sm font-medium text-gray-700 mb-3">Replies ({ticket.replies?.length || 0})</h4>
+      
+      <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
+        {ticket.replies?.length > 0 ? (
+          ticket.replies.map((reply, index) => (
+            <div 
+              key={index} 
+              className={`p-3 rounded-lg ${reply.sender === 'admin' ? 'bg-blue-50' : 'bg-gray-50'}`}
+            >
+              <div className="flex justify-between items-start mb-1">
+                <span className={`text-xs font-medium ${reply.sender === 'admin' ? 'text-blue-700' : 'text-gray-700'}`}>
+                  {reply.sender === 'admin' ? 'Admin' : 'Customer'}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {new Date(reply.createdAt).toLocaleString()}
+                </span>
+              </div>
+              <p className="text-sm text-gray-800">{reply.message}</p>
+            </div>
+          ))
+        ) : (
+          <p className="text-sm text-gray-500 italic">No replies yet</p>
+        )}
+      </div>
+
+      <form onSubmit={handleSubmit} className="mt-2">
+        <div className="flex items-start space-x-2">
+          <textarea
+            value={replyMessage}
+            onChange={(e) => setReplyMessage(e.target.value)}
+            placeholder="Type your reply..."
+            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
+            rows={3}
+          />
+          <button
+            type="submit"
+            disabled={isReplying || !replyMessage.trim()}
+            className="p-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-orange-400 transition-colors"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+
+
+
+
+
+
+
+
+
+
 
 const Ticket = () => {
   const [tickets, setTickets] = useState([]);
@@ -72,6 +155,39 @@ const Ticket = () => {
   useEffect(() => {
     fetchTickets();
   }, []);
+
+
+  // Add this inside your Ticket component, with your other handlers
+const handleAddReply = async (ticketId, message) => {
+  try {
+    const token = sessionStorage.getItem('adminToken');
+    
+    const response = await apiClient.post(
+      `/tickets/admin/ticket/${ticketId}/reply`,
+      { message },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    // Update the local state with the new reply
+    setTickets(prevTickets => 
+      prevTickets.map(ticket => 
+        ticket._id === ticketId 
+          ? { ...ticket, replies: response.data.ticket.replies } 
+          : ticket
+      )
+    );
+    
+    return response.data;
+  } catch (err) {
+    console.error('Error adding reply:', err);
+    throw err;
+  }
+};
 
   // Update ticket status
   const handleStatusUpdate = async (ticketId, newStatus) => {
@@ -550,6 +666,11 @@ const Ticket = () => {
                       </div>
                     </div>
                   )}
+                    <TicketReplySection 
+        ticket={ticket} 
+        onReplySubmit={handleAddReply}
+      />
+    
                 </div>
               </div>
             ))

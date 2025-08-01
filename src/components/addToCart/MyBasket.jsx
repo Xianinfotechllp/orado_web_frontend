@@ -18,7 +18,12 @@ export default function MyBasket() {
   const [loading, setLoading] = useState(true);
   const [bill, setBill] = useState({});
   const [buttonLoading, setButtonLoading] = useState(null);
+  const [promoCodes, setPromoCodes] = useState([]);
+  const [showPromoCodes, setShowPromoCodes] = useState(false);
+  const [selectedPromo, setSelectedPromo] = useState(null);
+  const [promoLoading, setPromoLoading] = useState(false);
 
+  
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const selectedAddress = useSelector((state) => state.address.selectedAddress);

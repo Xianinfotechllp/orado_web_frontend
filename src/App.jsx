@@ -118,6 +118,10 @@ import AgentLeave from "./pages/AgentAdminDashboard/AgentLeave";
 import AgentWarningsApprovalsTerminationsDash from "./pages/AgentAdminDashboard/AgentWarningsApprovalsTerminationsDash";
 import AgentWarningTerm from "./pages/AgentAdminDashboard/AgentWarningTerm";
 import AgentDeliveryFeeSettings from "./pages/AgentAdminDashboard/AgentDeliveryFeeSettings";
+import AgentMilestonePanel from "./pages/AgentAdminDashboard/AgentMilestonePanel"
+import AgentIncentivePlanSettings from "./pages/AgentAdminDashboard/AgentIncentivePlanSettings"
+import AgentCODDashboard from "./pages/AgentAdminDashboard/AgentCODDashboard";
+import PushNotificationPanel from "./pages/Admin/Marketing/pushCampaigns/PushNotificationPanel";
 
 function App() {
   // const [count, setCount] = useState(0);
@@ -292,8 +296,12 @@ useEffect(() => {
                 <Route path="promotion-referal" element={<ReferralPromotions/>}  />
                 {/* push campings */}
                 <Route path="campaigns-customer" element={<CustomerCampaigns/>} />
+                <Route path="campaigns-customer" element={<CustomerCampaigns/>} />
+
                 <Route path="campaigns-restaurant" element={<RestaurantCampaigns/>} />
+               
                 <Route path="campaigns-merchant" element={<MerchantCampaigns/>} />
+                <Route path="campaigns-pushnotification" element={<PushNotificationPanel/>} />
                 
 
 
@@ -384,6 +392,10 @@ useEffect(() => {
 <Route path="/admin/agent-dashboard/agent-leave"   element={<AgentLeave/>} />
 <Route path="/admin/agent-dashboard/warings-termination"   element={<AgentWarningTerm/>} />
 <Route path="/admni/agent-dahsboard/agent-earnigs-settings"  element={<AgentDeliveryFeeSettings/>}   />
+<Route path="/admin/agent-dahsboard/agent-milestone-rules"  element={<AgentMilestonePanel/>}  />
+<Route path="/admin/agent-dahsboard/agent-incentive-plan"  element={<AgentIncentivePlanSettings />}  />
+<Route path="/admin/agent-dahsboard/agent-cod-limit"  element={<AgentCODDashboard />}  />
+
 
 
 
