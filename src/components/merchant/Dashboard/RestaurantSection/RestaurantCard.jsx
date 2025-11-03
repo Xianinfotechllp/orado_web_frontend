@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { toast } from 'react-hot-toast';
 import { deleteRestaurant, getRestaurantById } from "../../../../apis/restaurantApi";
+import Lottie from "lottie-react";
+import loadingAnimation from "../../../../assets/animations/SpoonLoader.json";
 
 const RestaurantCard = ({ restaurant: initialRestaurant, onClick, onEdit, onDelete, onViewDetails }) => {
   const [restaurant, setRestaurant] = useState(null);
@@ -94,7 +96,12 @@ const RestaurantCard = ({ restaurant: initialRestaurant, onClick, onEdit, onDele
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 flex justify-center items-center h-48">
-        <div className="animate-pulse">Loading restaurant details...</div>
+<Lottie
+        animationData={loadingAnimation}
+        loop
+        autoplay
+      style={{ width: 50, height: 50}}
+      />
       </div>
     );
   }

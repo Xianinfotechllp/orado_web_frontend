@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, use } from "react";
 import {
   Filter,
   RefreshCw,
@@ -444,7 +444,13 @@ const OrderRow = ({
   const isExpanded = expandedOrderId === order._id;
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const statusDropdownRef = useRef(null);
+  const [progress, setProgress] = useState(0);
+  const [timeElapsed, setTimeElapsed] = useState(0);
 
+  // use actual values from order
+  const orderTime = order.createdAt;
+
+  const preparationTime = 4; // in minutes
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -460,6 +466,26 @@ const OrderRow = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (!orderTime || !preparationTime) return;
+
+    const timer = setInterval(() => {
+      const now = new Date();
+      const orderDate = new Date(orderTime);
+      const elapsed = (now - orderDate) / 1000; // seconds
+      const totalTime = preparationTime * 60; // seconds
+
+      setTimeElapsed(Math.min(elapsed, totalTime));
+
+      const calculatedProgress = Math.min((elapsed / totalTime) * 100, 100);
+
+      console.log("Calculated Progress:", calculatedProgress);
+      setProgress(calculatedProgress);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [orderTime, preparationTime]);
 
   // Helper functions for new columns
   const getPaymentStatus = () => {
@@ -497,6 +523,32 @@ const OrderRow = ({
     };
     return statusFlow[currentStatus] || [];
   };
+const getProgressColor = (progress) => {
+  if (progress < 50) return "linear-gradient(to right, #34D399, #10B981)"; // green
+  if (progress < 80) return "linear-gradient(to right, #FBBF24, #F59E0B)"; // yellow
+  return "linear-gradient(to right, #F87171, #EF4444)"; // red
+};
+// helpers/dateUtils.js
+ const formatOrderTime = (orderDateString) => {
+  const orderDate = new Date(orderDateString);
+  const today = new Date();
+
+  const isToday =
+    orderDate.getDate() === today.getDate() &&
+    orderDate.getMonth() === today.getMonth() &&
+    orderDate.getFullYear() === today.getFullYear();
+
+  const timeString = orderDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  if (isToday) {
+    return `Today ${timeString}`;
+  } else {
+    const dateString = orderDate.toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" });
+    return `${dateString} ${timeString}`;
+  }
+};
+
+
 
   return (
     <>
@@ -571,10 +623,9 @@ const OrderRow = ({
           </div>
         </td>
         <td className="px-4 py-3 text-sm text-gray-500">
-          {new Date(order.createdAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+         
+
+          {formatOrderTime(order.createdAt)}
         </td>
         <td className="px-4 py-3 text-sm text-gray-900">
           {order.customerId?.name || "N/A"}
@@ -593,7 +644,24 @@ const OrderRow = ({
           {formatPaymentMethod(order.paymentMethod)}
         </td>
         <td className="px-4 py-3 text-sm text-gray-500">
-          {order.preparationTime || "N/A"}
+          {/* {order.preparationTime || "N/A"} */}
+
+          <div className="mb-8">
+            <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden shadow-inner">
+              <div
+                className="h-full transition-all duration-500 ease-linear rounded-full"
+                style={{ width: `${progress}%`,  
+                background:getProgressColor(progress)
+              
+              }}
+              />
+            </div>
+            <div className="flex justify-between text-xs text-purple-200 mt-2">
+              <span>0:00</span>
+              <span>{Math.round(progress)}%</span>
+              <span>{preparationTime}:00 min</span>
+            </div>
+          </div>
         </td>
         <td className="px-4 py-3 text-sm">
           <button
@@ -888,6 +956,30 @@ const OrderManagement = ({ onOrderClick }) => {
     });
   };
 
+  const testNotification = () => {
+    const testData = {
+      _id: "order_" + Math.random().toString(36).substring(2, 8),
+      orderNumber: Math.floor(Math.random() * 10000),
+      totalAmount: Math.floor(Math.random() * 500) + 100,
+      customerId: {
+        name: ["John", "Jane", "Mike", "Sarah"][Math.floor(Math.random() * 4)],
+      },
+      deliveryAddress: {
+        street:
+          ["Main St", "Park Ave", "Oak Rd", "Pine Ln"][
+            Math.floor(Math.random() * 4)
+          ] +
+          " " +
+          Math.floor(Math.random() * 1000),
+      },
+      itemCount: Math.floor(Math.random() * 5) + 1,
+      estimatedTime: "20-30 min",
+    };
+
+    // Trigger the notification handler
+    handleNewOrder(testData);
+  };
+
   useEffect(() => {
     if (!currentRestaurantId) return;
 
@@ -913,7 +1005,7 @@ const OrderManagement = ({ onOrderClick }) => {
     try {
       setLoading(true);
       const response = await getOrdersByMerchant(restaurantId);
-      console.log("response order id--------", response)
+      console.log("response order id--------", response);
       setOrders(response.orders || []);
     } catch (err) {
       setError(err.message);
@@ -1070,10 +1162,29 @@ const OrderManagement = ({ onOrderClick }) => {
               <ExternalLink className="w-5 h-5 text-gray-800" />
             </button>
             <button className="bg-[#0f172a] hover:bg-gray-100 text-white px-3 py-1.5 rounded-md text-sm font-medium">
-              Create Order
+              Create Ordersss
             </button>
           </div>
         </div>
+
+        <button
+          onClick={testNotification}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+        >
+          <span>Test Notification</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
       </div>
 
       {/* Restaurant Slider Component */}

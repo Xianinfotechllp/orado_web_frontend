@@ -1,113 +1,107 @@
 import React, { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
+import * as turf from "@turf/turf";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-// Set your Mapbox access token
-mapboxgl.accessToken = 'pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w';
+mapboxgl.accessToken = "pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w";
 
-const PolygonMap = ({ polygonCoordinates, restaurantLocation, userLocation,restaurantName  }) => {
+const PolygonMap = ({ serviceArea, restaurantLocation, restaurantName }) => {
   const mapContainer = useRef(null);
   const map = useRef(null);
 
-  // Calculate center of polygon
-  const getCenter = (coordinates) => {
-    const lats = coordinates[0].map(c => c[1]);
-    const lngs = coordinates[0].map(c => c[0]);
-    return [
-      (Math.min(...lngs) + Math.max(...lngs)) / 2,
-      (Math.min(...lats) + Math.max(...lats)) / 2
-    ];
-  };
-
   useEffect(() => {
-    if (!mapContainer.current || !polygonCoordinates) return;
+    if (!mapContainer.current) return;
 
-    // Initialize Map
+    // Determine map center
+    let initialCenter = restaurantLocation || [0, 0];
+    if (serviceArea.type === "Polygon" && serviceArea.area?.coordinates) {
+      const coords = serviceArea.area.coordinates[0];
+      const lats = coords.map(c => c[1]);
+      const lngs = coords.map(c => c[0]);
+      initialCenter = [
+        (Math.min(...lngs) + Math.max(...lngs)) / 2,
+        (Math.min(...lats) + Math.max(...lats)) / 2,
+      ];
+    } else if (serviceArea.type === "Circle" && serviceArea.center) {
+      initialCenter = serviceArea.center;
+    }
+
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: getCenter(polygonCoordinates),
-      zoom: 13,
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: initialCenter,
+      zoom: 12,
     });
 
     map.current.on("load", () => {
-      // Add polygon geojson
-      map.current.addSource("service-area", {
-        type: "geojson",
-        data: {
-          type: "Feature",
-          geometry: {
-            type: "Polygon",
-            coordinates: polygonCoordinates,
+      // Polygon
+      if (serviceArea.type === "Polygon" && serviceArea.area?.coordinates) {
+        map.current.addSource("polygon-area", {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            geometry: {
+              type: "Polygon",
+              coordinates: serviceArea.area.coordinates,
+            },
           },
-        },
-      });
+        });
 
-      // Fill layer
-      map.current.addLayer({
-        id: "service-area-fill",
-        type: "fill",
-        source: "service-area",
-        paint: {
-          "fill-color": "#FF5722",
-          "fill-opacity": 0.4,
-        },
-      });
+        map.current.addLayer({
+          id: "polygon-fill",
+          type: "fill",
+          source: "polygon-area",
+          paint: { "fill-color": "#FF5722", "fill-opacity": 0.4 },
+        });
 
-      // Outline layer
-      map.current.addLayer({
-        id: "service-area-outline",
-        type: "line",
-        source: "service-area",
-        paint: {
-          "line-color": "#FF5722",
-          "line-width": 2,
-        },
-      });
+        map.current.addLayer({
+          id: "polygon-outline",
+          type: "line",
+          source: "polygon-area",
+          paint: { "line-color": "#FF5722", "line-width": 2 },
+        });
+      }
 
-      // Add restaurant location marker (if available)
-     if (restaurantLocation?.length === 2) {
+      // Circle
+      if (serviceArea.type === "Circle" && serviceArea.center && serviceArea.radius) {
+        const circleFeature = turf.circle(serviceArea.center, serviceArea.radius, {
+          steps: 64,
+          units: "meters",
+        });
 
+        map.current.addSource("circle-area", {
+          type: "geojson",
+          data: circleFeature,
+        });
 
+        map.current.addLayer({
+          id: "circle-fill",
+          type: "fill",
+          source: "circle-area",
+          paint: { "fill-color": "#2196F3", "fill-opacity": 0.3 },
+        });
 
-       map.current.flyTo({
-    center: restaurantLocation,
-    zoom: 12,          // zoom level you prefer
-    speed: 1.5,        // animation speed (default is 1.2)
-    curve: 1.42,       // smoothing of the animation
-    essential: true    // this ensures animation happens even if user has prefers-reduced-motion enabled
-  });
-  // Create the marker
-  const marker = new mapboxgl.Marker({ color: "green" })
-    .setLngLat(restaurantLocation)
-    .addTo(map.current);
+        map.current.addLayer({
+          id: "circle-outline",
+          type: "line",
+          source: "circle-area",
+          paint: { "line-color": "#2196F3", "line-width": 2 },
+        });
+      }
 
-  // Create a popup with restaurant name
-  const popup = new mapboxgl.Popup({ offset: 25 }).setText(restaurantName);
-
-  // Attach popup to marker
-  marker.setPopup(popup).togglePopup();  // `togglePopup()` will open it by default
-}
-
-      // Add user location marker (if available)
-      if (userLocation) {
-        new mapboxgl.Marker({ color: "blue" })
-          .setLngLat(userLocation)
+      // Restaurant marker
+      if (restaurantLocation?.length === 2) {
+        new mapboxgl.Marker({ color: "green" })
+          .setLngLat(restaurantLocation)
+          .setPopup(new mapboxgl.Popup().setText(restaurantName))
           .addTo(map.current);
       }
     });
 
-    return () => {
-      if (map.current) map.current.remove();
-    };
-  }, [polygonCoordinates, restaurantLocation, userLocation]);
+    return () => map.current?.remove();
+  }, [serviceArea, restaurantLocation, restaurantName]);
 
-  return (
-    <div
-      ref={mapContainer}
-      style={{ width: "100%", height: "500px", border: "1px solid #ddd" }}
-    />
-  );
+  return <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />;
 };
 
 export default PolygonMap;

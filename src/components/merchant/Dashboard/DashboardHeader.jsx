@@ -77,12 +77,12 @@ const DashboardHeader = ({ onMenuToggle }) => {
       <header className="bg-white border-b border-gray-200 px-4 py-3 lg:px-6 lg:py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <button 
+            {/* <button 
               className="lg:hidden  rounded-md text-gray-500 hover:text-gray-700"
               onClick={onMenuToggle}
             >
               <Menu className="h-6 w-6" />
-            </button>
+            </button> */}
             
             <div>
               <h1 className="text-lg lg:text-2xl font-bold text-gray-900 line-clamp-1">

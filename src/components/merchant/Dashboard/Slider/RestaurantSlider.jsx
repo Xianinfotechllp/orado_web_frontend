@@ -7,7 +7,8 @@ const RestaurantSlider = ({
   onRestaurantsLoad, 
   selectedIndex = null,
   className = "",
-  showError = true 
+  showError = true ,
+
 }) => {
   const user = useSelector((state) => state.auth.user);
   const [restaurants, setRestaurants] = useState([]);

@@ -119,7 +119,7 @@ const Partner = () => {
         token: response.token, 
         user: response.user 
       }));
-      navigate("/merchant");
+      navigate("/merchant/dashboard/orders");
     } catch (error) {
       console.error("Login error:", error);
 

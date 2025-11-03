@@ -7,7 +7,8 @@ import { getServiceAreas } from "../../../../apis/restaurantApi";
 import PolygonMap from "./PolygonMap";
 
 // Set Mapbox access token
-mapboxgl.accessToken = "pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w";
+mapboxgl.accessToken =
+  "pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w";
 
 const ServiceAreaManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,6 +24,7 @@ const ServiceAreaManagement = () => {
     setLoading(true);
     try {
       const response = await getServiceAreas(selectedRestaurant.id);
+      console.log("Fetched service areas:", response);
       if (response.messageType === "success") {
         setServiceAreas(response.data || []);
       }
@@ -162,7 +164,8 @@ const ServiceAreaManagement = () => {
           <h3 className="text-lg font-semibold text-gray-800">Service Areas</h3>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">
-              {serviceAreas.length} area{serviceAreas.length !== 1 ? "s" : ""} found
+              {serviceAreas.length} area{serviceAreas.length !== 1 ? "s" : ""}{" "}
+              found
             </span>
             <button
               onClick={handleAddService}
@@ -179,9 +182,15 @@ const ServiceAreaManagement = () => {
               key={area._id || index}
               className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
             >
-              <div className="h-64">
-              <PolygonMap polygonCoordinates={area.area?.coordinates || area.coordinates}    restaurantLocation={selectedRestaurant?.location?.coordinates}     restaurantName={selectedRestaurant?.name}  />
+              <div className="h-96">
+                <PolygonMap
+                  key={area._id}
+                  serviceArea={area} // pass the whole object
+                  restaurantLocation={selectedRestaurant?.location?.coordinates}
+                  restaurantName={selectedRestaurant?.name}
+                />
               </div>
+
               <div className="p-4">
                 <div className="flex justify-between items-start">
                   <div>
@@ -189,7 +198,7 @@ const ServiceAreaManagement = () => {
                       {area.name || `Service Area ${index + 1}`}
                     </h4>
                     <p className="text-gray-500 text-sm">
-                      ID: {area._id || 'N/A'}
+                      ID: {area._id || "N/A"}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -240,7 +249,7 @@ const ServiceAreaManagement = () => {
       </div>
     );
   };
-console.log("location corde r of rest ", selectedRestaurant)
+  console.log("location corde r of rest ", selectedRestaurant);
   return (
     <>
       <RestaurantSlider
@@ -253,14 +262,14 @@ console.log("location corde r of rest ", selectedRestaurant)
           {renderServiceAreas()}
         </div>
 
-       <AddServiceModal
-  isOpen={isModalOpen}
-  onClose={handleCloseModal}
-  restaurantId={selectedRestaurant?.id}   // Or .id if that's your key
-  onServiceAdded={handleServiceAdded}
-  restaurantLocation={selectedRestaurant?.location?.coordinates}  // [lng, lat]
-  restaurantName={selectedRestaurant?.name}
-/>
+        <AddServiceModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          restaurantId={selectedRestaurant?.id} // Or .id if that's your key
+          onServiceAdded={handleServiceAdded}
+          restaurantLocation={selectedRestaurant?.location?.coordinates} // [lng, lat]
+          restaurantName={selectedRestaurant?.name}
+        />
       </div>
     </>
   );

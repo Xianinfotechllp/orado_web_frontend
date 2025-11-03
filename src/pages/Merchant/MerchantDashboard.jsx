@@ -27,7 +27,7 @@ const MerchantDashboard = () => {
         return <RestaurantEarnings  />
       case "restaurantManagement":
          return <RestaurantEditSection/>;
-      case "menu":
+      case "menu":  
         return <CreateMenu />;
       case "orders":
         return <OrderManagement />;

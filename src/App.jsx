@@ -7,7 +7,7 @@ import Login from "./pages/Auth/Login";
 import Home from "./pages/Home/Home";
 
 import AddToCart from "./pages/AddToCart/AddToCart";
-import OrderManagement from "./pages/OrderManagement/OrderManagement";
+import OrderManagement from "./components/merchant/Dashboard/OrderSection/OrderManagement";
 
 import RestaurantDeatils from "./pages/RestaurantDetails/RestaurantDeatils";
 import Signup from "./pages/Auth/SignUp";
@@ -38,8 +38,20 @@ import About from "./pages/Merchant/AboutMerchant";
 import Partner from "./pages/Merchant/Partner";
 import MerchantDashboard from "./pages/Merchant/MerchantDashboard";
 import RestaurantCategories from "./components/merchant/Dashboard/MenuSection/RestaurantCategories";
-import CategoryItems from "./components/merchant/Dashboard/MenuSection/CategoryItems";
-
+import CategoryItemsEnhanced from "./components/merchant/Dashboard/MenuSection/CategoryItemsEnhanced";
+import MerchantProfile from "./pages/Merchant/MerchantProfile";
+import DashboardLayout from "./layouts/DashboardLayout";
+import RestaurantManagement from "./components/merchant/Dashboard/RestaurantSection/RestaurantManagement";
+import DashboardOverView from "./components/merchant/Dashboard/EarningsSection/DashboardOverView";
+import RestaurantEarnings from "./components/merchant/Dashboard/EarningsSection/RestaurantEarnings";
+import RestaurantEditSection from "./components/merchant/Dashboard/RestaurantEdit/RestaurantEditSection"
+import CreateMenu from "./components/merchant/Dashboard/MenuSection/MenuManagement";
+import ServiceAreaManagement from "./components/merchant/Dashboard/ServiceSection/ServiceAreaManagement";
+import ReviewsManagement from "./components/merchant/Dashboard/ReviewSection/ReviewsManagement";
+import OffersManagement from "./components/merchant/Dashboard/OffersAndCoupon/OffersManagement";
+import RestaurantChatDashboard from "./components/merchant/CustomerChats/RestruantChatDashboard";
+import RestaurantAdminChat from "./components/merchant/AdminRestaurantChat/RestaurantAdminChat";
+import CatelogManagement from "./pages/Merchant/CatelogManagment/CatelogManagement";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -113,8 +125,37 @@ function App() {
         <Route path="/merchant-detail" element={<About />} />
         <Route path="/partner-with-orado" element={<Partner />} />
         <Route path="/merchant" element={<MerchantDashboard />} />
+
+         <Route path="/merchant/dashboard" element={<DashboardLayout/>}>
+           <Route path="merchant/:id" element={<MerchantProfile />} />
+           <Route path="merchant"  element={<RestaurantManagement />}  />
+           <Route path="earnings-dashboard"  element={<DashboardOverView />}  /> 
+           <Route path="earnings"  element={<RestaurantEarnings />}  /> 
+           <Route path="edit" element={<RestaurantEditSection />} />
+           <Route path="menu" element={<CreateMenu />} />
+           <Route path="menu/:restaurantId" element={<CatelogManagement />} />
+
+           <Route path="orders" element={<OrderManagement />} />
+           <Route path="serive-area" element={<ServiceAreaManagement />} />
+       
+           <Route path="reviews" element={<ReviewsManagement />} />
+
+           <Route path="offers" element={<OffersManagement />} />
+           <Route path="customer-chat" element={<RestaurantChatDashboard />} />
+
+           <Route path="admin-chat" element={<RestaurantAdminChat />} />
+
+
+
+
+
+
+        </Route>
+        
+
+
         <Route path="/restaurants/:restaurantId/categories" element={<RestaurantCategories />} />
-        <Route path="/restaurants/:restaurantId/categories/:categoryId/items" element={<CategoryItems />} />
+        <Route path="/restaurants/:restaurantId/categories/:categoryId/items" element={<CategoryItemsEnhanced />} />
 
         {/* Admin-Side */}
         {/* <Route path="admin/login" element={<AdminLogin />} /> */}
