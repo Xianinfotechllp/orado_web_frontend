@@ -40,16 +40,39 @@ const ManageAddresses = ({ userId }) => {
     }
   };
 
-  const handleAddNewAddress = async (newAddress) => {
-    try {
-      const res = await addAddress(newAddress);
-      setAddresses(prev => [...prev, res.data]);
-      setShowAddForm(false);
-    } catch (error) {
-      console.error("Failed to add address:", error);
-      alert("Failed to add new address. Please try again.");
+const handleAddNewAddress = async (newAddress) => {
+  try {
+    // validate fields
+    if (
+      !newAddress.type ||
+      !newAddress.street ||
+      !newAddress.city ||
+      !newAddress.state ||
+      !newAddress.zip ||
+      !newAddress.latitude ||
+      !newAddress.longitude
+    ) {
+      throw new Error("Please fill all required address fields");
     }
-  };
+
+    const formattedAddress = {
+      ...newAddress,
+      location: {
+        type: "Point",
+        coordinates: [newAddress.longitude, newAddress.latitude],
+      },
+    };
+
+    await addAddress(userId, formattedAddress);
+
+    // instead of manually updating local state, re-fetch addresses from backend
+    await fetchAddresses();
+    setShowAddForm(false);
+  } catch (error) {
+    console.error("Failed to add address:", error);
+    setError(error.message || "Failed to add new address. Please try again.");
+  }
+};
 
   const handleUpdateAddress = async (updatedAddress) => {
       try {

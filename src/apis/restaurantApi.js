@@ -10,7 +10,7 @@ export const getRestaurantMenu = async (restaurantId, options = {}) => {
         productLimit: options.productLimit || 30,
       },
     });
-
+    console.log("Restaurant menu response:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching restaurant menu:", error);
@@ -24,6 +24,7 @@ export const getRecommendedRestaurants = async (latitude, longitude) => {
     const response = await apiClient.get("/location/nearby-restaurants/recommended", {
       params: { latitude, longitude },
     });
+    console.log("Recommended restaurants response:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching recommended restaurants:", error);
@@ -32,14 +33,17 @@ export const getRecommendedRestaurants = async (latitude, longitude) => {
 };
 
 // Fetch nearby categories
-export const getNearbyCategories = async (latitude, longitude) => {
+export const getNearbyCategories = async ({ latitude, longitude, distance }) => {
   try {
-    const response = await apiClient.get("/location/nearby-categories", {
-      params: { latitude, longitude },
+    const response = await apiClient.get('/location/nearby-categories', {
+      params: {
+        latitude,
+        longitude,
+        distance
+      }
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching nearby categories:", error);
     throw error;
   }
 };
@@ -48,6 +52,7 @@ export const getNearbyCategories = async (latitude, longitude) => {
 export const getRestaurantById = async (restaurantId) => {
   try {
     const response = await apiClient.get(`/restaurants/${restaurantId}`);
+    console.log("Fetched restaurant details:", response.data);
     return response.data;
   } catch (error) {
     console.error("Failed to fetch restaurant by ID:", error);
@@ -58,7 +63,7 @@ export const getRestaurantById = async (restaurantId) => {
 
 
 // fetch retruants by category and location
-export const getRestaurantsByLocationAndCategory = async (latitude, longitude, categoryName, distance = 5000) => {
+export const getRestaurantsByLocationAndCategory = async (latitude, longitude, categoryName, distance = 10000) => {
   try {
     const response = await apiClient.get(`/location/nearby-restaurants/category/${categoryName}`, {
       params: { latitude, longitude, distance },

@@ -1,75 +1,194 @@
-import React, { useState } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import React, { useEffect, useRef, useCallback } from "react";
+import mapboxgl from "mapbox-gl";
+import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import axios from "axios";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import "mapbox-gl/dist/mapbox-gl.css";
+import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
-// Fix default icon issue in leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-});
+mapboxgl.accessToken = "pk.eyJ1IjoiYW1hcm5hZGg2NSIsImEiOiJjbWJ3NmlhcXgwdTh1MmlzMWNuNnNvYmZ3In0.kXrgLZhaz0cmbuCvyxOd6w";
 
-function LocationMarker({ onSelectLocation }) {
-  const [position, setPosition] = useState(null);
+export default function LocationPicker({ onSelectLocation }) {
+  const mapContainerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const geocoderRef = useRef(null);
 
-  useMapEvents({
-    async click(e) {
-      setPosition(e.latlng);
+  // Memoize the handler functions
+  const handleGeocoderResult = useCallback((result) => {
+    const { center, place_name, context } = result;
 
-      // Fetch address details using Nominatim reverse geocoding
-      const { lat, lng } = e.latlng;
-      try {
-        const response = await axios.get(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
-        );
+    if (markerRef.current) markerRef.current.remove();
 
-        const address = response.data.address;
-        const locationDetails = {
-          latitude: lat,
-          longitude: lng,
-          street: address.road || "",
-          city: address.city || address.town || address.village || "",
-          state: address.state || "",
-          zip: address.postcode || "",
-          displayName: response.data.display_name,
-        };
+    const marker = new mapboxgl.Marker().setLngLat(center).addTo(mapRef.current);
+    markerRef.current = marker;
 
-     
+    const city = context?.find(c => c.id.includes("place"))?.text || "";
+    const state = context?.find(c => c.id.includes("region"))?.text || "";
+    const zip = context?.find(c => c.id.includes("postcode"))?.text || "";
 
-        if (onSelectLocation) {
-          onSelectLocation(locationDetails);
+    onSelectLocation({
+      latitude: center[1],
+      longitude: center[0],
+      street: place_name,
+      city,
+      state,
+      zip,
+    });
+
+    mapRef.current.flyTo({ center, zoom: 14 });
+  }, [onSelectLocation]);
+
+  const handleLocationSelection = useCallback(async (lng, lat) => {
+    if (markerRef.current) markerRef.current.remove();
+
+    const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(mapRef.current);
+    markerRef.current = marker;
+
+    try {
+      const response = await axios.get(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json`,
+        { 
+          params: { 
+            access_token: mapboxgl.accessToken,
+            types: 'address,place,locality,neighborhood,region,postcode'
+          } 
         }
-      } catch (error) {
-        console.error("Error fetching address:", error);
+      );
+
+      const place = response.data.features[0];
+      const address = place?.place_name || `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+      const context = place?.context || [];
+      const city = context.find(c => c.id.includes("place"))?.text || "";
+      const state = context.find(c => c.id.includes("region"))?.text || "";
+      const zip = context.find(c => c.id.includes("postcode"))?.text || "";
+
+      if (geocoderRef.current) {
+        geocoderRef.current.setInput(address);
       }
-    },
+
+      onSelectLocation({
+        latitude: lat,
+        longitude: lng,
+        street: address,
+        city,
+        state,
+        zip,
+      });
+
+      mapRef.current.flyTo({ center: [lng, lat], zoom: 14 });
+    } catch (err) {
+      console.error("Reverse geocoding failed", err);
+      const fallbackAddress = `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      
+      if (geocoderRef.current) {
+        geocoderRef.current.setInput(fallbackAddress);
+      }
+
+      onSelectLocation({
+        latitude: lat,
+        longitude: lng,
+        street: fallbackAddress,
+        city: "",
+        state: "",
+        zip: "",
+      });
+    }
+  }, [onSelectLocation]);
+
+  const locateMe = useCallback(async () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation not supported by your browser.");
+      return;
+    }
+
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
+      });
+
+      const { latitude, longitude } = position.coords;
+      
+      mapRef.current.flyTo({ 
+        center: [longitude, latitude], 
+        zoom: 14,
+        essential: true
+      });
+
+      await handleLocationSelection(longitude, latitude);
+    } catch (error) {
+      console.error("Error getting location:", error);
+      alert("Unable to retrieve your location. Please ensure location services are enabled.");
+    }
+  }, [handleLocationSelection]);
+
+useEffect(() => {
+  // Initialize map only once
+  if (mapRef.current) return;
+
+  const map = new mapboxgl.Map({
+    container: mapContainerRef.current,
+    style: "mapbox://styles/mapbox/streets-v12",
+    center: [77.5946, 12.9716],
+    zoom: 5,
   });
 
-  return position === null ? null : <Marker position={position}></Marker>;
-}
+  mapRef.current = map;
 
-const LocationPicker = ({ onSelectLocation }) => {
+  const geocoder = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    mapboxgl: mapboxgl,
+    placeholder: "Search location in India",
+    countries: "IN",
+    marker: false,
+  });
+
+  map.addControl(geocoder, 'top-left');
+  geocoderRef.current = geocoder;
+
+  // Store the current handlers in variables
+  const currentGeocoderHandler = (result) => handleGeocoderResult(result);
+  const currentClickHandler = async (e) => {
+    const { lng, lat } = e.lngLat;
+    await handleLocationSelection(lng, lat);
+  };
+
+  // Use the variables in the event listeners
+  geocoder.on("result", currentGeocoderHandler);
+  map.on("click", currentClickHandler);
+
+  return () => {
+    // Clean up using the same handler references
+    if (geocoderRef.current) {
+      geocoderRef.current.off("result", currentGeocoderHandler);
+    }
+    if (mapRef.current) {
+      mapRef.current.off("click", currentClickHandler);
+      mapRef.current.remove();
+      mapRef.current = null;
+    }
+  };
+}, []); 
+
   return (
-    <div className="w-full h-[400px] rounded overflow-hidden border">
-      <MapContainer
-        center={[9.9312, 76.2673]}
-        zoom={13}
-        style={{ height: "100%", width: "100%" }}
-      >
-        <TileLayer
-          attribution="&copy; OpenStreetMap contributors"
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <LocationMarker onSelectLocation={onSelectLocation} />
-      </MapContainer>
+    <div className="w-full h-full rounded-lg relative">
+      <div className="absolute top-2 right-2 z-10 flex gap-2">
+        <button
+          onClick={locateMe}
+          className="bg-blue-600 text-white px-3 py-1 rounded-md shadow hover:bg-blue-700 transition-colors flex items-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Locate Me
+        </button>
+      </div>
+      <div ref={mapContainerRef} className="w-full h-full rounded-lg" />
     </div>
   );
-};
-
-export default LocationPicker;
+}

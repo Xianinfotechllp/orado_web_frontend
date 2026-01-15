@@ -30,7 +30,13 @@ const persistConfig = {
   storage: storageSession,
   whitelist: ["auth", "location", "address", "cart"],
   migrate: (state) => {
-    if (state.cart?._persistCleared) {
+    // Initialize state if it's undefined
+    if (!state) {
+      return Promise.resolve(undefined); // Let redux-persist handle initial state
+    }
+    
+    // Check if cart exists and has _persistCleared flag
+    if (state.cart && state.cart._persistCleared) {
       return Promise.resolve({
         ...state,
         cart: {
@@ -43,7 +49,6 @@ const persistConfig = {
     return Promise.resolve(state);
   }
 };
-
 // Create a persisted reducer
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 

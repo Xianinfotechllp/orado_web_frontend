@@ -3,11 +3,13 @@ import apiClient from "./apiClient/apiClient";
 export const getBillSummary = async (data) => {
   try {
     const response = await apiClient.post(`/order/pricesummary`, data);
+    
     console.log("Fetched bill summary:", response.data);
     return response.data;
   } catch (error) {
-    console.error("Error fetching bill summary:", error.response?.data || error.message);
-    throw error;
+    const errorMessage = error.response?.data?.error || "Something went wrong while fetching bill summary.";
+    console.error("Error fetching bill summary:", errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
@@ -105,6 +107,18 @@ export const sendOrderDelayReason = async (orderId, delayReason, preparationTime
       "sendOrderDelayReason error:",
       error.response?.data || error.message
     );
+    throw error;
+  }
+};
+
+
+
+export const verifyPayment = async (paymentData) => {
+  try {
+    const response = await apiClient.post(`/order/payments/verify`, paymentData);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to verify payment:", error);
     throw error;
   }
 };

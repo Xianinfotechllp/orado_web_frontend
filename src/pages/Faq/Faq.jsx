@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../../components/layout/Navbar";
 import axios from "axios";
+import apiClient from "../../apis/apiClient/apiClient";
 
 export default function Faq() {
   const [faqData, setFaqData] = useState([]);
@@ -10,7 +11,7 @@ export default function Faq() {
   useEffect(() => {
     const fetchFAQs = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/faq"); // Update if your API prefix is different
+        const res = await apiClient.get("/faq"); // Update if your API prefix is different
         setFaqData(res.data.faqs);
         console.log(res)
       } catch (err) {

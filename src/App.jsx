@@ -30,13 +30,29 @@ import WalletTopUpPage from "./pages/UserProfile/WalletTopUpPage";
 
 import AdminLogin from "./pages/Admin/AdminLogin";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
-import { ToastContainer } from "react-toastify";
+import { Toaster, toast } from "react-hot-toast";
+
 import RestaurantApprovalsPage from "./pages/Admin/RestaurantApprovalsPage";
 import RestaurantApplicationDetails from "./pages/Admin/RestaurantApplicationDetails";
 
 import About from "./pages/Merchant/AboutMerchant";
 import Partner from "./pages/Merchant/Partner";
 import MerchantDashboard from "./pages/Merchant/MerchantDashboard";
+
+import 'react-toastify/dist/ReactToastify.css';
+
+import TicketSystemPage from "./pages/UserProfile/TicketSytemPage";
+import LoginWithOtp from "./pages/Auth/LoginwithOtp";
+import LoyalityPointsPage from "./pages/UserProfile/LoyalityPointsPage";
+import LandingPage from "./pages/LandinPage/LandingPage";
+import GroceryHome from "./pages/Grocery/Home";
+import StoreDetailPage from "./pages/Grocery/StoreDetailPage";
+import MeatHome from "./pages/Meat/Home";
+import MeatStoreDetailPage from "./pages/Meat/MeatStoreDetailPage";
+import MedicineHome from "./pages/Medicine/Home"
+import MedicineStoreDetailPage from "./pages/Medicine/MedicineStoreDetailPage";
+import InviteEarnPage from "./pages/UserProfile/InviteEarnPage";
+
 
 
 function App() {
@@ -49,7 +65,9 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/" element={<Home />} />
+        <Route path="/login-with-otp" element={<LoginWithOtp/>} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/restaurants" element={<Home />} />
         <Route path="/restaurant/details/:restaurantId" element={<RestaurantDeatils />} />
         <Route path="/faq" element={<Faq />} />
         <Route path="/category/:categoryName" element={<CategoryRestaurants />} />
@@ -94,6 +112,12 @@ function App() {
         <Route path="/my-account/wallet" element={
           <ProtectedRoute><WalletTopUpPage /></ProtectedRoute>
         } />
+        <Route path="/my-account/loyality" element={
+          <ProtectedRoute><LoyalityPointsPage /></ProtectedRoute>
+        } />
+        <Route path="/my-account/invite" element={
+          <ProtectedRoute><InviteEarnPage /></ProtectedRoute>
+        } />
 
         <Route
           path="/restaurant/details/:restaurantId"
@@ -101,6 +125,23 @@ function App() {
         />
         <Route path="/faq" element={<Faq />} />
         <Route path="/notifications" element={<NotificationPage />} />
+
+
+        {/* Grocery Section  */}
+        <Route path="/grocery" element={<GroceryHome />} />
+        <Route path="/store/:id" element={<StoreDetailPage />} />
+
+
+
+        {/* Meat Section */}
+        <Route path="/meat-delivery" element={<MeatHome />} />
+        <Route path="/meat-store/:id" element={<MeatStoreDetailPage />} />
+
+
+        {/* Medicine Sectione */}
+        <Route path="/medicine-delivery" element = {<MedicineHome />} />
+        <Route path="/medicine-store/:id" element= {<MedicineStoreDetailPage />} />
+
 
         {/* Merchant side */}
         <Route path="/merchant-detail" element={<About />} />
@@ -120,8 +161,52 @@ function App() {
           />
           {/* Add more nested routes as needed */}
         </Route>
+        <Route path="/my-account/tickets" element={
+          <ProtectedRoute><TicketSystemPage /></ProtectedRoute>
+        } />
       </Routes>
-      <ToastContainer />
+
+
+
+
+     <Toaster 
+  position="top-center"
+  toastOptions={{
+    duration: 2000,
+    style: {
+      background: '#363636',
+      color: '#fff',
+      fontSize: '18px',        // Extra large font size
+      padding: '20px 32px',    // Even more padding
+      minWidth: '450px',       // Extra wide
+      borderRadius: '16px',    // More rounded
+      lineHeight: '1.6',       // Better text spacing
+    },
+    success: {
+      duration: 3000,
+      style: {
+        background: '#4BB543',
+        fontSize: '18px',
+        padding: '20px 32px',
+        minWidth: '450px',
+        borderRadius: '16px',
+        lineHeight: '1.6',
+      },
+    },
+    error: {
+      duration: 4000,
+      style: {
+        background: '#FF3333',
+        fontSize: '18px',
+        padding: '20px 32px',
+        minWidth: '450px',
+        borderRadius: '16px',
+        lineHeight: '1.6',
+      },
+    },
+  }}
+/>
+
     </>
   );
 }

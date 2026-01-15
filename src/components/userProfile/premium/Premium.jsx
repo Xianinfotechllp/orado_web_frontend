@@ -1,5 +1,5 @@
 import React from 'react';
-import AppStore from '../../../assets/appStore.avif';
+import AppStore from '../../../assets/appStore.png';
 import GooglePlay from '../../../assets/googleplay.avif';
 
 const OradoOne = () => {

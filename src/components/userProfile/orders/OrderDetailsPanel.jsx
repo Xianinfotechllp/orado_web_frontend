@@ -25,8 +25,8 @@ const OrderDetailsPanel = ({ order, onClose }) => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "completed":
-        return <HiCheckCircle className="h-4 w-4 text-green-500" />;
+    case "delivered":  // This will now represent "Delivered"
+      return <HiCheckCircle className="h-4 w-4 text-green-500" />;
       case "cancelled_by_customer":
       case "rejected_by_agent":
       case "rejected_by_restaurant":
@@ -47,41 +47,40 @@ const OrderDetailsPanel = ({ order, onClose }) => {
         return <HiClock className="h-4 w-4 text-gray-500" />;
     }
   };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case "pending":
-        return "Pending";
-      case "pending_agent_acceptance":
-        return "Awaiting Agent Acceptance";
-      case "awaiting_agent_assignment":
-        return "Awaiting Agent Assignment";
-      case "accepted_by_restaurant":
-        return "Accepted by Restaurant";
-      case "rejected_by_restaurant":
-        return "Rejected by Restaurant";
-      case "preparing":
-        return "Preparing";
-      case "ready":
-        return "Ready for Pickup";
-      case "assigned_to_agent":
-        return "Assigned to Agent";
-      case "picked_up":
-        return "Picked Up";
-      case "in_progress":
-        return "In Progress";
-      case "arrived":
-        return "Arrived";
-      case "completed":
-        return "Delivered";
-      case "cancelled_by_customer":
-        return "Cancelled by Customer";
-      case "rejected_by_agent":
-        return "Rejected by Agent";
-      default:
-        return status;
-    }
-  };
+const getStatusText = (status) => {
+  switch (status) {
+    case "pending":
+      return "Pending";
+    case "pending_agent_acceptance":
+      return "Awaiting Agent Acceptance";
+    case "awaiting_agent_assignment":
+      return "Awaiting Agent Assignment";
+    case "accepted_by_restaurant":
+      return "Accepted by Restaurant";
+    case "rejected_by_restaurant":
+      return "Rejected by Restaurant";
+    case "preparing":
+      return "Preparing";
+    case "ready":
+      return "Ready for Pickup";
+    case "assigned_to_agent":
+      return "Assigned to Agent";
+    case "picked_up":
+      return "Picked Up";
+    case "in_progress":
+      return "In Progress";
+    case "arrived":
+      return "Arrived";
+  case "delivered":
+      return "Delivered";;  // Changed from "completed" to "Delivered"
+    case "cancelled_by_customer":
+      return "Cancelled by Customer";
+    case "rejected_by_agent":
+      return "Rejected by Agent";
+    default:
+      return status;
+  }
+};
 
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
@@ -94,6 +93,11 @@ const OrderDetailsPanel = ({ order, onClose }) => {
       minute: '2-digit'
     };
     return date.toLocaleDateString('en-US', options);
+  };
+
+  // Helper function to round numbers to 2 decimal places
+  const roundToTwo = (num) => {
+    return Math.round((num + Number.EPSILON) * 100) / 100;
   };
 
   return (
@@ -124,7 +128,7 @@ const OrderDetailsPanel = ({ order, onClose }) => {
               {/* Header */}
               <div className="px-4 py-3 border-b border-gray-200 bg-white">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base font-medium text-gray-900">Order #{order._id.slice(-12)}</h2>
+                  <h2 className="text-base font-medium text-gray-900">Order #{order._id}</h2>
                   <button 
                     onClick={onClose} 
                     className="text-gray-400 hover:text-gray-500"
@@ -222,7 +226,7 @@ const OrderDetailsPanel = ({ order, onClose }) => {
                             {item.name} x {item.quantity}
                           </span>
                         </div>
-                        <span className="text-sm font-medium">₹ {item.totalPrice || (item.price * item.quantity)}</span>
+                        <span className="text-sm font-medium">₹ {roundToTwo(item.totalPrice || (item.price * item.quantity))}</span>
                       </motion.div>
                     ))}
                   </div>
@@ -238,47 +242,47 @@ const OrderDetailsPanel = ({ order, onClose }) => {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Item Total</span>
-                      <span className="text-sm font-medium">₹ {order.subtotal}</span>
+                      <span className="text-sm font-medium">₹ {roundToTwo(order.subtotal)}</span>
                     </div>
 
                     {order.deliveryCharge > 0 && (
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Order Packing Charges</span>
-                        <span className="text-sm font-medium">₹ {order.deliveryCharge}</span>
+                        <span className="text-sm font-medium">₹ {roundToTwo(order.deliveryCharge)}</span>
                       </div>
                     )}
 
                     {order.surgeCharge > 0 && (
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Platform Fee</span>
-                        <span className="text-sm font-medium">₹ {order.surgeCharge}</span>
+                        <span className="text-sm font-medium">₹ {roundToTwo(order.surgeCharge)}</span>
                       </div>
                     )}
 
                     {order.deliveryCharge > 0 && (
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Delivery partner fee</span>
-                        <span className="text-sm font-medium">₹ {order.deliveryCharge}</span>
+                        <span className="text-sm font-medium">₹ {roundToTwo(order.deliveryCharge)}</span>
                       </div>
                     )}
 
                     {order.discountAmount > 0 && (
                       <div className="flex justify-between">
                         <span className="text-sm text-green-600">Discount Applied</span>
-                        <span className="text-sm text-green-600">-₹ {order.discountAmount}</span>
+                        <span className="text-sm text-green-600">-₹ {roundToTwo(order.discountAmount)}</span>
                       </div>
                     )}
 
                     {order.tipAmount > 0 && (
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Extra discount for you</span>
-                        <span className="text-sm text-green-600">-₹ {order.tipAmount}</span>
+                        <span className="text-sm text-green-600">-₹ {roundToTwo(order.tipAmount)}</span>
                       </div>
                     )}
 
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Taxes</span>
-                      <span className="text-sm font-medium">₹ {order.tax}</span>
+                      <span className="text-sm font-medium">₹ {roundToTwo(order.tax)}</span>
                     </div>
 
                     <hr className="my-2" />
@@ -288,7 +292,7 @@ const OrderDetailsPanel = ({ order, onClose }) => {
                         <span className="text-sm text-gray-600">Paid Via {order.paymentMethod}</span>
                         <div className="text-lg font-semibold text-gray-900">BILL TOTAL</div>
                       </div>
-                      <span className="text-lg font-semibold">₹ {order.totalAmount}</span>
+                      <span className="text-lg font-semibold">₹ {roundToTwo(order.totalAmount)}</span>
                     </div>
                   </div>
                 </motion.div>
